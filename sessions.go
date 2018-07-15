@@ -8,21 +8,16 @@ import (
 	uuid "github.com/satori/go.uuid"
 )
 
-var currentSessions = map[string]session{} // sessionID : session
-var currentGame *bgaws.Game
-
-type session struct {
-	Username     string
-	lastActivity time.Time
-}
-
 func newGame(w http.ResponseWriter, req *http.Request) {
 	gameID, _ := uuid.NewV4()
 	currentGame = &bgaws.Game{
 		ID:          gameID.String(),
+		Name:        req.FormValue("gamename"),
 		StartedTime: time.Now(),
 		Started:     true,
 	}
+	user := getUser(w, req)
+	logger.Printf("%s created new game %s\n", user.Username, gameID.String())
 }
 
 func joinCurrentGame(w http.ResponseWriter, req *http.Request) {
@@ -38,6 +33,8 @@ func joinCurrentGame(w http.ResponseWriter, req *http.Request) {
 		Name:  "gameid",
 		Value: currentGame.ID,
 	})
+	user := getUser(w, req)
+	logger.Printf("%s joined game %s\n", user.Username, currentGame.ID)
 }
 
 func userInGame(w http.ResponseWriter, req *http.Request) bool {

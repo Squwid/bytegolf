@@ -10,15 +10,6 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// GolfResponse TODO
-type golfResponse struct {
-	User     *bgaws.User
-	Name     string
-	LoggedIn bool
-	Game     *bgaws.Game
-	GameName string
-}
-
 func index(w http.ResponseWriter, req *http.Request) {
 	u := getUser(w, req)
 	if req.Method == http.MethodPost {
@@ -26,9 +17,10 @@ func index(w http.ResponseWriter, req *http.Request) {
 			http.Redirect(w, req, "/login", http.StatusSeeOther)
 			return
 		}
+		// todo rest of the form values
 		// reqHoles = req.FormValue("holes")
 		// reqMaxPlayers = req.FormValue("maxplayers")
-		// reqName = req.FormValue("gamename")
+		// reqName := req.FormValue("gamename")
 		// reqPass = req.FormValue("password")
 		newGame(w, req)
 		cookie := &http.Cookie{

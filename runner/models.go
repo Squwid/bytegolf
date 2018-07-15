@@ -24,8 +24,11 @@ const (
 
 // CodeSubmission is what gets submitted to the
 type CodeSubmission struct {
-	Script   string
-	Language string
+	Script       string `json:"script"`
+	Language     string `json:"language"`
+	VersionIndex string `json:"versionIndex"`
+	ID           string `json:"clientId"`
+	Secret       string `json:"clientSecret"`
 }
 
 // CodeResponse is the response from the Code Runner API that gets a result
@@ -38,8 +41,8 @@ type CodeResponse struct {
 
 // Client is the client that allows the user to talk to the API
 type Client struct {
-	ID     string
-	Secret string
+	ID     string `json:"clientId"`
+	Secret string `json:"clientSecret"`
 }
 
 // NewClient returns a new client using the environmental variables
@@ -57,5 +60,16 @@ func NewClientWithCreds(id, secret string) *Client {
 	return &Client{
 		ID:     id,
 		Secret: secret,
+	}
+}
+
+// NewCodeSubmission todo:
+func NewCodeSubmission(language, code string, client *Client) *CodeSubmission {
+	return &CodeSubmission{
+		Script:       code,
+		Language:     language,
+		VersionIndex: "0",
+		ID:           client.ID,
+		Secret:       client.Secret,
 	}
 }

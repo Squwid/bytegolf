@@ -1,18 +1,19 @@
 {{define "submit"}}
 
-<!-- Submission -->
-<div class="content">
-    <div class="contentspace"></div>
-    <div class="lbcontainer">
-        <h2>Submission</h2>
-        <div class="playercontainer">
-            <div class="gamespace"></div>
-            <que>Hole Amount &nbsp;</que>
-            <que>Hole Amount &nbsp;</que>
-            {{.GameName}}
-            
-            <form method="POST" enctype="multipart/form-data">
-                <select name="language">
+    <!-- Submission -->
+    <div class="content">
+        <div class="contentspace">
+            <div class="golfcontainer">
+                <h2>Submission</h2>
+                <div class="golfoptions">
+                    <form method="POST" enctype="multipart/form-data">
+                        <que>Current Game &nbsp;</que>
+                        <br>
+                        {{.Name}}
+                        <br>
+                        <br>
+                        <que>Language</que>
+                        <select name="language">
                         <option value="java">Java</option>
                         <option value="c">C</option>
                         <option value="cpp">C++</option>
@@ -28,21 +29,27 @@
                         <option value="nodejs">NodeJS</option>
                         <option value="fsharp">F#</option>
                     </select>
-                <div class="gamespace"></div>
-                <div class="gamespace"></div>
-                <div class="gamespace"></div>
-                <div class="gamespace"></div>
-                <div class="gamespace"></div>
-                <div class="gamespace"></div>
-                <div class="gamespace"></div>
-                <div class="gamespace"></div>
-                <div class="gamespace"></div>
-                <input type="file" name="codefile">
-                <div class="gamespace"></div>
-                <div class="gamespace"></div>
-                <input type="submit" value="Submit" style="height:25px; width:80px">
-            </form>
+                        <div class="gamespace"></div>
+                        <div class="gamespace"></div>
+                        <div class="gamespace"></div>
+                        <div class="gamespace"></div>
+                        <div class="gamespace"></div>
+                        <div class="gamespace"></div>
+                        <div class="gamespace"></div>
+                        <div class="gamespace"></div>
+                        <div class="gamespace"></div>
+                        <br>
+                        <br>
+                        <que>Select Code File</que>
+                        <br>
+                        <br>
+                        <input type="file" name="codefile">
+                        <div class="gamespace"></div>
+                        <div class="gamespace"></div>
+                        <input type="submit" value="Submit" style="height:25px; width:80px">
+                    </form>
+                </div>
+            </div>
         </div>
     </div>
-</div>
 {{end}}

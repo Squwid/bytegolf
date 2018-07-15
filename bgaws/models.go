@@ -12,6 +12,7 @@ type User struct {
 // Game struct
 type Game struct {
 	ID          string
+	Name        string
 	StartedTime time.Time
 	Started     bool
 }

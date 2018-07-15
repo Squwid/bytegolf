@@ -2,70 +2,70 @@
 <html>
 
 <head>
-    <title>Byte Golf</title>
-    <link rel="stylesheet" type="text/css" href="\assets\css\style.css">
-    <!-- BOOTSTRAP -->
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+	<title>Byte Golf</title>
+	<link rel="stylesheet" type="text/css" href="\assets\css\style.css">
+	<!-- BOOTSTRAP -->
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
 
-    <!-- JQUERY -->
-    <script src="https://ajax.googleapis.com/ajax/libs/jquerawy/3.3.1/jquery.min.js"></script>
+	<!-- JQUERY -->
+	<script src="https://ajax.googleapis.com/ajax/libs/jquerawy/3.3.1/jquery.min.js"></script>
 
-    <!-- LAST SUPPORTED JAVASCRIPT -->
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+	<!-- LAST SUPPORTED JAVASCRIPT -->
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
 
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta charset="utf-8">
 </head>
 
 <body>
-    <!-- Banner in HTML -->
-    <div class="banner">
-        <div class="logospace"> logo space</div>
+	<!-- Banner in HTML -->
+	<div class="banner">
+		<div class="logospace"> logo space</div>
 
-        <div class="bannerlistspace"></div>
+		<div class="bannerlistspace"></div>
 
-        <a href="http://localhost:6017/golf">
-            <div class="bannerlist" a href="golf.html">
-                Tee Off
-            </div>
-        </a>
+		<a href="http://localhost:6017/golf">
+			<div class="bannerlist" a href="golf.html">
+				Tee Off
+			</div>
+		</a>
 
-        <div class="bannerlistspace"></div>
+		<div class="bannerlistspace"></div>
 
-        <div class="bannerlist">
-            Rules
-        </div>
-        <div class="bannerlistspace"></div>
+		<div class="bannerlist">
+			Rules
+		</div>
+		<div class="bannerlistspace"></div>
 
-        <a href="http://localhost:6017/leaderboards">
-            <div class="bannerlist">
-                Leaderboard
-            </div>
-        </a>
-        <div class="bannerlistspace"></div>
-        <div class="bannerlist">
-            Log in
-        </div>
-        <div class="bannerlistspace"></div>
-    </div>
+		<a href="http://localhost:6017/leaderboards">
+			<div class="bannerlist">
+				Leaderboard
+			</div>
+		</a>
+		<div class="bannerlistspace"></div>
+		<div class="bannerlist">
+			Log in
+		</div>
+		<div class="bannerlistspace"></div>
+	</div>
 
 
-    <!-- New Game in HTML -->
-    <div class="content">
-        <div class="contentspace"></div>
-        <div class="golfcontainer">
-            <h2>Create New Game</h2>
-            <div class="golfoptions">
-                <form>
-                    <que>Hole Amount &nbsp;</que>
-                    <input type="radio" name="holes" value="one"> 1 &nbsp; &nbsp;
-                    <input type="radio" name="holes" value="three" checked> 3 &nbsp; &nbsp;
-                    <input type="radio" name="holes" value="nine"> 9 &nbsp; &nbsp;
+	<!-- New Game in HTML -->
+	<div class="content">
+		<div class="contentspace"></div>
+		<div class="golfcontainer">
+			<h2>Create New Game</h2>
+			<div class="golfoptions">
+				<form method="post">
+					<que>Hole Amount &nbsp;</que>
+					<input type="radio" name="holes" value="one"> 1 &nbsp; &nbsp;
+					<input type="radio" name="holes" value="three" checked> 3 &nbsp; &nbsp;
+					<input type="radio" name="holes" value="nine"> 9 &nbsp; &nbsp;
 
-                    <br><br>
+					<br><br>
 
-                    <que>Max Players &nbsp;&nbsp;</que>
-                    <select name="maxplayers">
+					<que>Max Players &nbsp;&nbsp;</que>
+					<select name="maxplayers">
                         <option value="1" selected>1</option>
                         <option value="2">2</option>
                         <option value="3">3</option>
@@ -76,20 +76,20 @@
                         <option value="8">8</option>
                     </select>
 
-                    <br><br>
+					<br><br>
 
-                    <que>Game Name &nbsp;</que>
-                    <input type="text" name="gamename" placeholder=" name" maxlength="20">
+					<que>Game Name &nbsp;</que>
+					<input type="text" name="gamename" placeholder=" name" maxlength="20">
 
-                    <br><br>
+					<br><br>
 
-                    <que>Password &nbsp; &nbsp; &nbsp;</que>
-                    <input type="password" name="password" maxlength="20" placeholder=" password">
+					<que>Password &nbsp; &nbsp; &nbsp;</que>
+					<input type="password" name="password" maxlength="20" placeholder=" password">
 
-                    <br><br>
+					<br><br>
 
-                    <que>Language &nbsp; &nbsp; &nbsp;</que>
-                    <select name="language">
+					<que>Language &nbsp; &nbsp; &nbsp;</que>
+					<select name="language">
                         <option value="all">All</option>
                         <option value="python">Python</option>
                         <option value="go">Go</option>
@@ -97,95 +97,153 @@
                     </select>
 
 
-                    <br><br><br><br><br><br><br><br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;
-                    <input type="submit" value="Tee Off" style="height:25px; width:80px">
+					<br><br><br><br><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;
+					<input type="submit" value="Tee Off" style="height:25px; width:80px">
 
-                </form>
-            </div>
-        </div>
-    </div>
+				</form>
+			</div>
+		</div>
+	</div>
 
-    <!-- Current Games -->
+	<!-- Current Games -->
 
-    <div class="content">
-        <div class="contentspace"></div>
-        <div class="cgcontainer">
-            <h2>Current Games</h2>
-            <div class="gamecontainer">
-                <div class="gamespace"></div>
-                <div class="game">
-                    game1
-                </div>
-                <div class="gamespace"></div>
-                <div class="game">
-                    game2
-                </div>
-                <div class="gamespace"></div>
+	<div class="content">
+		<div class="contentspace"></div>
+		<div class="cgcontainer">
+			<h2>Current Games</h2>
+			<div class="gamecontainer">
+				<div class="gamespace"></div>
+				<div class="game">
+					game1
+				</div>
+				<div class="gamespace"></div>
+				<div class="game">
+					game2
+				</div>
+				<div class="gamespace"></div>
 
-            </div>
-        </div>
-    </div>
-
-
-    <!-- Leaderboards -->
-    <div class="content">
-        <div class="contentspace"></div>
-        <div class="lbcontainer">
-            <h2>Leaderboards</h2>
-            <div class="playercontainer">
-                <div class="gamespace"></div>
-                <div class="player1">
-                    player1
-                </div>
-                <div class="gamespace"></div>
-                <div class="player">
-                    player2
-                </div>
-                <div class="gamespace"></div>
-                <div class="player">
-                    player3
-                </div>
-                <div class="gamespace"></div>
-                <div class="player">
-                    player4
-                </div>
-                <div class="gamespace"></div>
-                <div class="player">
-                    player5
-                </div>
-                <div class="gamespace"></div>
-                <div class="player">
-                    player6
-                </div>
-                <div class="gamespace"></div>
-            </div>
-        </div>
-    </div>
+			</div>
+		</div>
+	</div>
 
 
-    <!-- Footer in HTML -->
-    <div class="footer">
-        <div class="footerspace"></div>
-        <div class="footercolumn">
-            <!-- First Footer Column Area -->
+	<!-- Leaderboards -->
+	<div class="content">
+		<div class="contentspace"></div>
+		<div class="lbcontainer">
+			<h2>Leaderboards</h2>
+			<div class="playercontainer">
+				<div class="gamespace"></div>
+				<div class="player1">
+					player1
+				</div>
+				<div class="gamespace"></div>
+				<div class="player">
+					player2
+				</div>
+				<div class="gamespace"></div>
+				<div class="player">
+					player3
+				</div>
+				<div class="gamespace"></div>
+				<div class="player">
+					player4
+				</div>
+				<div class="gamespace"></div>
+				<div class="player">
+					player5
+				</div>
+				<div class="gamespace"></div>
+				<div class="player">
+					player6
+				</div>
+				<div class="gamespace"></div>
+			</div>
+		</div>
+	</div>
 
-            Footer column 1
+	<!-- Login -->
+	<div class="content">
+		<div class="contentspace">
+			<div class="golfcontainer">
+				<h2>Login</h2>
+				<div class="golfoptions">
+					<form method="post">
+						<que>Username&nbsp;</que>
+						<br>
 
-        </div>
-        <div class="footerspace"></div>
-        <div class="footercolumn">
-            <!-- Second Footer Column Area -->
-            Footer column 2
+						<input type="text" name="username" placeholder=" Username">
+						<br>
+						<br>
 
-        </div>
-        <div class="footerspace"></div>
-        <div class="footercolumn">
-            <!-- Second Footer Column Area -->
-            Footer column 3
+						<que>Password</que>
+						<br>
+						<input type="password" name="password" placeholder="Password">
+						<br>
+						<br>
+						<input type="submit">
+					</form>
+					<h3><a href="/signup">signup</a></h3>
+				</div>
+			</div>
+			<div class="gamespace">
 
-        </div>
-        <div class="footerspace"></div>
-    </div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Signup -->
+	<div class="content">
+		<div class="contentspace">
+			<div class="golfcontainer">
+				<h2>Sign up</h2>
+				<div class="golfoptions">
+					<form method="post">
+						<que>Username&nbsp;</que>
+						<br>
+
+						<input type="text" name="username" placeholder=" Username">
+						<br>
+						<que>Password</que>
+						<br>
+						<input type="password" name="password" placeholder="Password">
+						<br>
+						<br>
+						<input type="submit">
+					</form>
+					<h3><a href="/login">Login</a></h3>
+				</div>
+			</div>
+			<div class="gamespace">
+
+			</div>
+		</div>
+	</div>
+
+
+	<!-- Footer in HTML -->
+	<div class="footer">
+		<div class="footerspace"></div>
+		<div class="footercolumn">
+			<!-- First Footer Column Area -->
+
+			Footer column 1
+
+		</div>
+		<div class="footerspace"></div>
+		<div class="footercolumn">
+			<!-- Second Footer Column Area -->
+			Footer column 2
+
+		</div>
+		<div class="footerspace"></div>
+		<div class="footercolumn">
+			<!-- Second Footer Column Area -->
+			Footer column 3
+
+		</div>
+		<div class="footerspace"></div>
+	</div>
 
 
 </body>

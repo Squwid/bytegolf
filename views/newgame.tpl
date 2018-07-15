@@ -8,9 +8,9 @@
 		<div class="golfoptions">
 			<form method="post">
 				<que>Hole Amount &nbsp;</que>
-				<input type="radio" name="holes" value="one"> 1 &nbsp; &nbsp;
-				<input type="radio" name="holes" value="three" checked> 3 &nbsp; &nbsp;
-				<input type="radio" name="holes" value="nine"> 9 &nbsp; &nbsp;
+				<input type="radio" name="holes" value="1"> 1 &nbsp; &nbsp;
+				<input type="radio" name="holes" value="3" checked> 3 &nbsp; &nbsp;
+				<input type="radio" name="holes" value="9"> 9 &nbsp; &nbsp;
 
 				<br><br>
 
@@ -25,16 +25,18 @@
                         <option value="7">7</option>
                         <option value="8">8</option>
                     </select>
-
+				<br><br>
+				<que>Difficulty &nbsp;&nbsp;</que>
+				<select name="difficulty">
+						<option value="beginner" selected>Beginner</option>
+                        <option value="easy">Easy</option>
+                        <option value="medium" selected>Medium</option>
+                        <option value="hard">Hard</option>
+                    </select>
 				<br><br>
 
 				<que>Game Name &nbsp;</que>
 				<input type="text" name="gamename" placeholder=" name" maxlength="20">
-
-				<br><br>
-
-				<que>Password &nbsp; &nbsp; &nbsp;</que>
-				<input type="password" name="password" maxlength="20" placeholder=" password">
 
 				<br><br><br><br><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;
 				<input type="submit" value="Tee Off" style="height:25px; width:80px">

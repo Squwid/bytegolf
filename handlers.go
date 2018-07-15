@@ -1,72 +1,128 @@
 package main
 
 import (
-	"fmt"
+	"io/ioutil"
 	"net/http"
 	"time"
 
 	"github.com/Squwid/bytegolf/bgaws"
+	"github.com/Squwid/bytegolf/runner"
 	uuid "github.com/satori/go.uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
 func index(w http.ResponseWriter, req *http.Request) {
-	u := getUser(w, req)
+	user := getUser(w, req)
+	// If there is a post on index that means that the user is
+	// creating a new game
 	if req.Method == http.MethodPost {
 		if !currentlyLoggedIn(w, req) {
 			http.Redirect(w, req, "/login", http.StatusSeeOther)
 			return
 		}
-		// todo rest of the form values
-		// reqHoles = req.FormValue("holes")
-		// reqMaxPlayers = req.FormValue("maxplayers")
-		// reqName := req.FormValue("gamename")
-		// reqPass = req.FormValue("password")
-		newGame(w, req)
-		cookie := &http.Cookie{
+		err := CreateNewGame(w, req)
+		if err != nil {
+			logger.Println(err.Error())
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		gameCookie := &http.Cookie{
 			Name:  "gameid",
 			Value: currentGame.ID,
 		}
-		http.SetCookie(w, cookie)
-
+		http.SetCookie(w, gameCookie)
 		http.Redirect(w, req, "/currentgame", http.StatusSeeOther)
 		return
 	}
 	// if they send the get method
 	tpl.ExecuteTemplate(w, "index.html", golfResponse{
-		User:     u,
-		Name:     u.Username,
+		User:     user,
+		Name:     user.Username,
 		Game:     currentGame,
 		LoggedIn: currentlyLoggedIn(w, req),
 	})
 }
 
 func current(w http.ResponseWriter, req *http.Request) {
-	cookie, _ := req.Cookie("gameid")
-	fmt.Println("CurrentGameID:", currentGame.ID, "CookieString:", cookie.Value)
-	// if the player is not currently logged in
+	// if the player isnt logged in send them to the login screen
 	if !currentlyLoggedIn(w, req) {
 		http.Redirect(w, req, "/login", http.StatusSeeOther)
 		return
 	}
+	user := getUser(w, req)
 
-	// if the user is not in a game yet
 	if !userInGame(w, req) {
-		fmt.Println("user not in game")
-		http.Redirect(w, req, "/", http.StatusSeeOther)
+		if !currentGame.Started {
+			http.Error(w, "there is not a current game", http.StatusNoContent)
+			// if the game exists
+			gameCookie := &http.Cookie{
+				Name:  "gameid",
+				Value: currentGame.ID,
+			}
+			http.SetCookie(w, gameCookie)
+		}
+		gameCookie := &http.Cookie{
+			Name:  "gameid",
+			Value: currentGame.ID,
+		}
+		currentGame.CurrentPlayers++
+		logger.Printf("%s added to game %s\n", user.Username, currentGame.Name)
+		logger.Printf("there are now %v people in game %s\n", currentGame.CurrentPlayers, currentGame.Name)
+		http.SetCookie(w, gameCookie)
+	}
+
+	if req.Method == http.MethodPost {
+		// open submitted file
+		file, fileHead, err := req.FormFile("codefile")
+		lang := req.FormValue("language")
+		if err != nil {
+			logger.Println(err.Error())
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer file.Close()
+
+		logger.Printf("%s uploading file %s\n", user.Username, fileHead.Filename)
+
+		// read
+		bs, err := ioutil.ReadAll(file)
+		if err != nil {
+			logger.Println(err.Error())
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		client := runner.NewClient()
+		sub := runner.NewCodeSubmission(lang, string(bs), client)
+		_, err = sub.Send() // todo: reply goes here but we dont deal with it yet
+		if err != nil {
+			logger.Println(err.Error())
+			http.Error(w, "an unexpected error has occured", http.StatusInternalServerError)
+			return
+		}
+	}
+	_, err := req.Cookie("gameid")
+	if err != nil {
+		logger.Println(err.Error())
+		http.Error(w, "an unexpected error has occured", http.StatusInternalServerError)
 		return
 	}
-	user := getUser(w, req)
+	// fmt.Println("CurrentGameID:", currentGame.ID, "CookieString:", cookie.Value)
 	tpl.ExecuteTemplate(w, "currentgame.html", golfResponse{
 		User:     user,
 		Name:     user.Username,
 		Game:     currentGame,
-		GameName: currentGame.ID,
+		GameName: currentGame.Name,
 		LoggedIn: currentlyLoggedIn(w, req),
 	})
 }
 
 func leaderboard(w http.ResponseWriter, req *http.Request) {
+	// if the player isnt logged in send them to the login screen
+	if !currentlyLoggedIn(w, req) {
+		http.Redirect(w, req, "/login", http.StatusSeeOther)
+		return
+	}
 	user := getUser(w, req)
 	tpl.ExecuteTemplate(w, "leaderboards.html", golfResponse{
 		User:     user,
@@ -77,18 +133,28 @@ func leaderboard(w http.ResponseWriter, req *http.Request) {
 }
 
 func dev(w http.ResponseWriter, req *http.Request) {
-	user := getUser(w, req)
+	// if the player isnt logged in send them to the login screen
 	if !currentlyLoggedIn(w, req) {
 		http.Redirect(w, req, "/login", http.StatusSeeOther)
 		return
 	}
+	user := getUser(w, req)
+	logger.Printf("%s is trying to access DEV page\n", user.Username)
 	if user.Role != "dev" {
 		http.Redirect(w, req, "/", http.StatusSeeOther)
 		return
 	}
+
+	tpl.ExecuteTemplate(w, "devtools.html", golfResponse{
+		User:     user,
+		Name:     user.Username,
+		LoggedIn: currentlyLoggedIn(w, req),
+		Game:     currentGame,
+	})
 }
 
 func signup(w http.ResponseWriter, req *http.Request) {
+	// if the user is already logged in then send them to the home screen
 	if currentlyLoggedIn(w, req) {
 		http.Redirect(w, req, "/", http.StatusSeeOther)
 		return
@@ -96,44 +162,56 @@ func signup(w http.ResponseWriter, req *http.Request) {
 	// process form submission
 	if req.Method == http.MethodPost {
 		// get form values
-		un := req.FormValue("username")
-		p := req.FormValue("password")
-		// username taken?
-		if bgaws.UserExist(un) {
+		reqName := req.FormValue("username")
+		reqPassword := req.FormValue("password")
+
+		// Check if username is already taken
+		if bgaws.UserExist(reqName) {
+			logger.Printf("user tried to register with %s but it was taken\n", reqName)
 			http.Error(w, "Username already taken", http.StatusForbidden)
 			return
 		}
-		// create session
-		sID, _ := uuid.NewV4()
-		c := &http.Cookie{
-			Name:  "session",
-			Value: sID.String(),
-		}
-		// c.MaxAge = sessionLength
-		http.SetCookie(w, c)
-		currentSessions[c.Value] = session{un, time.Now()}
-		// store user in dbUsers
-		bs, err := bcrypt.GenerateFromPassword([]byte(p), bcrypt.MinCost)
+		// username is not taken so sign them up and create session
+		// todo: encrypt passwords
+
+		bs, err := bcrypt.GenerateFromPassword([]byte(reqPassword), bcrypt.MinCost)
 		if err != nil {
 			http.Error(w, "Internal server error", http.StatusInternalServerError)
 			return
 		}
-		u := &bgaws.User{
-			Username: un,
+
+		newUser := &bgaws.User{
+			Username: reqName,
+			// Password: reqPassword,
 			Password: string(bs),
 		}
-		bgaws.CreateUser(u)
-		// redirect
+		err = bgaws.CreateUser(newUser)
+		if err != nil {
+			logger.Println(err.Error())
+			http.Error(w, "an unexpected error occured", http.StatusInternalServerError)
+			return
+		}
+
+		sessionID, _ := uuid.NewV4()
+		c := &http.Cookie{
+			Name:  "session",
+			Value: sessionID.String(),
+		}
+
+		http.SetCookie(w, c)
+		currentSessions[c.Value] = session{
+			Username:     newUser.Username,
+			lastActivity: time.Now(),
+		}
+		logger.Printf("%s successfully signed up\n", newUser.Username)
 		http.Redirect(w, req, "/", http.StatusSeeOther)
 		return
 	}
 
 	tpl.ExecuteTemplate(w, "signup.html", golfResponse{
-		User:     nil,
-		Name:     "",
-		LoggedIn: true,
+		Game:     currentGame,
+		LoggedIn: false,
 	})
-
 }
 
 func login(w http.ResponseWriter, req *http.Request) {
@@ -148,34 +226,38 @@ func login(w http.ResponseWriter, req *http.Request) {
 		reqPass := req.FormValue("password")
 
 		if !bgaws.UserExist(reqName) {
+			logger.Printf("user tried to login with %s but it does not exist\n", reqName)
 			http.Error(w, "That user does not exist", http.StatusForbidden)
 			return
 		}
-		//TODO: encryption
-		// err := bcrypt.CompareHashAndPassword(u.Password, p)
+
 		user, _ := bgaws.GetUser(reqName)
-		if user.Password != reqPass {
+		err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(reqPass))
+		// if user.Password != reqPass {
+		if err != nil {
+			logger.Printf("%s tried to login with incorrect password\n", user.Username)
 			http.Error(w, "Username and/or password do not match", http.StatusForbidden)
 			return
 		}
+
 		// Password entered was correct so create new session
 		sessionID, _ := uuid.NewV4()
 		cookie := &http.Cookie{
 			Name:  "session",
 			Value: sessionID.String(),
 		}
+
 		http.SetCookie(w, cookie)
 		currentSessions[cookie.Value] = session{
 			Username:     reqName,
 			lastActivity: time.Now(),
 		}
+		logger.Printf("%s successfully logged in\n", user.Username)
 		http.Redirect(w, req, "/", http.StatusSeeOther)
 		return
 	}
-	// if the user uses a get method just return the login screen with
-	// no name on it
+
 	tpl.ExecuteTemplate(w, "login.html", golfResponse{
-		User:     nil,
 		Game:     currentGame,
 		LoggedIn: false,
 	})

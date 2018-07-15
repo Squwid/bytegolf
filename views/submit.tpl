@@ -2,14 +2,14 @@
 
     <!-- Submission -->
     <div class="content">
-        <div class="contentspace">
+        <div class="contentspace"></div>
             <div class="golfcontainer">
                 <h2>Submission</h2>
                 <div class="golfoptions">
                     <form method="POST" enctype="multipart/form-data">
                         <que>Current Game &nbsp;</que>
                         <br>
-                        {{.Name}}
+                        {{.Game.Name}}
                         <br>
                         <br>
                         <que>Language</que>
@@ -49,7 +49,6 @@
                         <input type="submit" value="Submit" style="height:25px; width:80px">
                     </form>
                 </div>
-            </div>
         </div>
     </div>
 {{end}}

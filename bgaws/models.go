@@ -1,7 +1,5 @@
 package bgaws
 
-import "time"
-
 // User todo
 type User struct {
 	Username string `json:"username"`
@@ -9,10 +7,12 @@ type User struct {
 	Role     string `json:"role"`
 }
 
-// Game struct
-type Game struct {
-	ID          string
-	Name        string
-	StartedTime time.Time
-	Started     bool
+// Question struct
+type Question struct {
+	ID         string `json:"id"`
+	Name       string `json:"name"`
+	Question   string `json:"question"`
+	Answer     string `json:"answer"`
+	Difficulty string `json:"difficulty"`
+	Source     string `json:"source"`
 }

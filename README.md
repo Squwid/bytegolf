@@ -17,9 +17,3 @@ My roommates and I came up with the idea of making Byte Golf a web app for us to
 My current idea is to create a simple web app that players can clone and compile locally, and host a LAN server. The LAN server the user runs on their local machine will use an AWS Lambda that I will setup to deal with a global leaderboard system as well as the code compiler using DynamoDB and S3. Different langauges can give players more points because they aren't the best programming language Bash.
 
 ![Design](https://i.imgur.com/SVmaRN6.jpg "Design")
-
-## Calender
-
-### Days
-
-* 6.30.2018 Day 1 I guess, I bought the byte.golf domain so ill probably do something with that at a later point. Also started the html/css design and I think it matches the style. I hate css alot so my site might not look good on bigger screens so you probably have to reduce the window size

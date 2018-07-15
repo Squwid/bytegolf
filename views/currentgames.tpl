@@ -12,10 +12,6 @@
                 game1
             </div>
             <div class="gamespace"></div>
-            <div class="game">
-                game2
-            </div>
-            <div class="gamespace"></div>
 
         </div>
     </div>

@@ -10,17 +10,32 @@ import (
 	"github.com/Squwid/bytegolf/bgaws"
 )
 
-var tpl *template.Template
-var currentSessions = map[string]session{} // sessionID : session
-var currentGame *bgaws.Game
-var logger *log.Logger
+var (
+	tpl             *template.Template
+	currentSessions = map[string]session{} // sessionID : session
+	currentGame     *Game
+	logger          *log.Logger
+)
+
+// Game struct
+type Game struct {
+	ID             string
+	Name           string
+	Password       string
+	CurrentPlayers int
+	MaxPlayers     int
+	Holes          int
+	Difficulty     string
+	StartedTime    time.Time
+	Started        bool
+}
 
 // GolfResponse TODO
 type golfResponse struct {
 	User     *bgaws.User
 	Name     string
 	LoggedIn bool
-	Game     *bgaws.Game
+	Game     *Game
 	GameName string
 }
 

@@ -24,7 +24,7 @@
 
         <div class="bannerlistspace"></div>
 
-        <a href="http://localhost:6017/golf">
+        <a href="/">
             <div class="bannerlist" a href="golf.html">
                 Tee Off
             </div>
@@ -37,17 +37,20 @@
         </div>
         <div class="bannerlistspace"></div>
 
-        <a href="http://localhost:6017/leaderboards">
+        <a href="/leaderboards">
             <div class="bannerlist">
                 Leaderboard
             </div>
         </a>
         <div class="bannerlistspace"></div>
-        <div class="bannerlist">
-            Log in
-        </div>
+        <a href="/login">
+            <div class="bannerlist">
+                {{if .LoggedIn}} {{.Name}} {{else}} Log in/Sign up {{end}}
+            </div>
+        </a>
         <div class="bannerlistspace"></div>
     </div>
+
 
 
     <!-- New Game in HTML -->
@@ -86,17 +89,6 @@
                     <que>Password &nbsp; &nbsp; &nbsp;</que>
                     <input type="password" name="password" maxlength="20" placeholder=" password">
 
-                    <br><br>
-
-                    <que>Language &nbsp; &nbsp; &nbsp;</que>
-                    <select name="language">
-                        <option value="all">All</option>
-                        <option value="python">Python</option>
-                        <option value="go">Go</option>
-                        <option value="cplusplus">C++</option>
-                    </select>
-
-
                     <br><br><br><br><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;
                     <input type="submit" value="Tee Off" style="height:25px; width:80px">
 
@@ -106,7 +98,6 @@
     </div>
 
     <!-- Current Games -->
-
     <div class="content">
         <div class="contentspace"></div>
         <div class="cgcontainer">
@@ -162,6 +153,7 @@
         </div>
     </div>
 
+
     <!-- Login -->
     <div class="content">
         <div class="contentspace">
@@ -170,14 +162,12 @@
                 <div class="golfoptions">
                     <form method="post">
                         <que>Username&nbsp;</que>
-                        <br>
 
                         <input type="text" name="username" placeholder=" Username">
                         <br>
                         <br>
 
-                        <que>Password</que>
-                        <br>
+                        <que>Password&nbsp;</que>
                         <input type="password" name="password" placeholder="Password">
                         <br>
                         <br>
@@ -191,6 +181,7 @@
             </div>
         </div>
     </div>
+
 
     <!-- Signup -->
     <div class="content">
@@ -215,33 +206,24 @@
                 </div>
             </div>
             <div class="gamespace">
+
             </div>
         </div>
     </div>
 
+    <!-- Question -->
+    <div class="content">
+        <div class="contentspace">
+            <div class="golfcontainer">
+                <br>
+                <div class="qoptions">
+                    <h4>{{.Question}}</h4>
+                </div>
+            </div>
+            <div class="gamespace">
 
-    <!-- Footer in HTML -->
-    <div class="footer">
-        <div class="footerspace"></div>
-        <div class="footercolumn">
-            <!-- First Footer Column Area -->
-
-            Footer column 1
-
+            </div>
         </div>
-        <div class="footerspace"></div>
-        <div class="footercolumn">
-            <!-- Second Footer Column Area -->
-            Footer column 2
-
-        </div>
-        <div class="footerspace"></div>
-        <div class="footercolumn">
-            <!-- Second Footer Column Area -->
-            Footer column 3
-
-        </div>
-        <div class="footerspace"></div>
     </div>
 
     <!-- Submission -->
@@ -252,8 +234,7 @@
                 <div class="golfoptions">
                     <form method="POST" enctype="multipart/form-data">
                         <que>Current Game &nbsp;</que>
-                        <br>
-                        {{.GameName}}
+                        <br> {{.Name}}
                         <br>
                         <br>
                         <que>Language</que>
@@ -280,21 +261,43 @@
                         <div class="gamespace"></div>
                         <div class="gamespace"></div>
                         <div class="gamespace"></div>
-                        <div class="gamespace"></div>
-                        <div class="gamespace"></div>
                         <br>
                         <br>
                         <que>Select Code File</que>
                         <br>
                         <br>
                         <input type="file" name="codefile">
-                        <div class="gamespace"></div>
-                        <div class="gamespace"></div>
-                        <input type="submit" value="Submit" style="height:25px; width:80px">
+                        <br><br><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;
+                        <input type="submit" value="Tee Off" style="height:25px; width:80px">
+
                     </form>
                 </div>
             </div>
         </div>
+    </div>
+
+    <!-- Footer in HTML -->
+    <div class="footer">
+        <div class="footerspace"></div>
+        <div class="footercolumn">
+            <!-- First Footer Column Area -->
+
+            Footer column 1
+
+        </div>
+        <div class="footerspace"></div>
+        <div class="footercolumn">
+            <!-- Second Footer Column Area -->
+            Footer column 2
+
+        </div>
+        <div class="footerspace"></div>
+        <div class="footercolumn">
+            <!-- Second Footer Column Area -->
+            Footer column 3
+
+        </div>
+        <div class="footerspace"></div>
     </div>
 
 

@@ -1,7 +1,6 @@
 {{define "currentgames"}}
 
 <!-- Current Games -->
-
 <div class="content">
     <div class="contentspace"></div>
     <div class="cgcontainer">
@@ -20,4 +19,5 @@
         </div>
     </div>
 </div>
+
 {{end}}

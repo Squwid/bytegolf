@@ -34,18 +34,18 @@ footer {
 }
 
 .banner a {
-    color:black;
+    color: black;
 }
 
 .banner a:link {
-    color:black;
+    color: black;
 }
 
 .banner a:visited {
-    color:black;
+    color: black;
 }
 
-.banner a:active{
+.banner a:active {
     background-color: lightgray;
 }
 
@@ -104,6 +104,22 @@ footer {
 }
 
 /* CODE GOLF FORM */
+
+.qoptions {
+    position: relative;
+
+    margin: 0 auto;
+    margin-left: 10px;
+    margin-right: 10px;
+
+    padding-left: 20px;
+    padding-top: 20px;
+
+    height: 415px;
+    text-align: center;
+
+    /*background-color: orange;*/
+}
 
 .golfcontainer {
     position: relative;

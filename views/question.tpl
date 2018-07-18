@@ -2,16 +2,15 @@
 
 <!-- Question -->
 <div class="content">
-    <div class="contentspace">
-        <div class="golfcontainer">
-            <br>
-            <div class="qoptions">
-                <h4>{{.Question}}</h4>
-            </div>
+    <div class="contentspace"></div>
+    <div class="golfcontainer">
+        <br>
+        <div class="qoptions">
+            <h4>{{.Question}}</h4>
         </div>
-        <div class="gamespace">
+    </div>
+    <div class="gamespace">
 
-        </div>
     </div>
 </div>
 

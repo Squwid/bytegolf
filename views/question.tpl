@@ -6,7 +6,9 @@
     <div class="golfcontainer">
         <br>
         <div class="qoptions">
-            <h4>{{.Question}}</h4>
+            <h2> {{.Question.Name}}
+            <br>
+            <h4>{{ .Question.Question}}</h4>
         </div>
     </div>
     <div class="gamespace">

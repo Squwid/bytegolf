@@ -8,9 +8,9 @@
         <div class="golfoptions">
             <form method="post">
                 <que>Hole Amount &nbsp;</que>
-                <input type="radio" name="holes" value="one"> 1 &nbsp; &nbsp;
-                <input type="radio" name="holes" value="three" checked> 3 &nbsp; &nbsp;
-                <input type="radio" name="holes" value="nine"> 9 &nbsp; &nbsp;
+                <input type="radio" name="holes" value="1"> 1 &nbsp; &nbsp;
+                <input type="radio" name="holes" value="3" checked> 3 &nbsp; &nbsp;
+                <input type="radio" name="holes" value="9"> 9 &nbsp; &nbsp;
 
                 <br><br>
 

@@ -1,6 +1,8 @@
 package bgaws
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestDynamoGet(t *testing.T) {
 	_, err := GetUser("phil")
@@ -40,4 +42,15 @@ func TestCreateQuestion(t *testing.T) {
 		t.Log(err)
 		t.Fail()
 	}
+}
+
+func TestGetQuestion(t *testing.T) {
+	qs, err := GetQuestions("medium", 3)
+	if err != nil {
+		t.Log(err)
+		t.Fail()
+	}
+
+	t.Logf("found %v from question medium\n", len(qs))
+	t.Logf("\t%v\n", qs)
 }

@@ -8,7 +8,7 @@
         <div class="golfoptions">
             <form method="POST" enctype="multipart/form-data">
                 <que>Current Game &nbsp;</que>
-                <br> {{.Name}}
+                <br> {{.GameName}}
                 <br>
                 <br>
                 <que>Language</que>

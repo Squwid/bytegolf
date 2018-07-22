@@ -20,17 +20,24 @@ func index(w http.ResponseWriter, req *http.Request) {
 			http.Redirect(w, req, "/login", http.StatusSeeOther)
 			return
 		}
+		// if there is already a current game
+		if currentGame.Started {
+			http.Redirect(w, req, "/currentgame", http.StatusSeeOther)
+			return
+		}
 		err := CreateNewGame(w, req)
 		if err != nil {
 			logger.Println(err.Error())
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		gameCookie := &http.Cookie{
-			Name:  "gameid",
-			Value: currentGame.ID,
+		err = addUserToCurrent(w, *user)
+		if err != nil {
+			logger.Println(err.Error())
+			http.Error(w, "an internal error occurred", http.StatusInternalServerError)
+			return
 		}
-		http.SetCookie(w, gameCookie)
+
 		http.Redirect(w, req, "/currentgame", http.StatusSeeOther)
 		return
 	}
@@ -49,51 +56,46 @@ func current(w http.ResponseWriter, req *http.Request) {
 		http.Redirect(w, req, "/login", http.StatusSeeOther)
 		return
 	}
+	// the user is logged in so get the user
 	user := getUser(w, req)
 
+	// if the user is not in a game check to see if there is a current game
 	if !userInGame(w, req) {
 		if !currentGame.Started {
 			http.Error(w, "there is not a current game", http.StatusNoContent)
-			// if the game exists
-			gameCookie := &http.Cookie{
-				Name:  "gameid",
-				Value: currentGame.ID,
-			}
-			http.SetCookie(w, gameCookie)
+			return
 		}
-		gameCookie := &http.Cookie{
-			Name:  "gameid",
-			Value: currentGame.ID,
+		// if the user is not in a game and there is a current game add them to it
+		err := addUserToCurrent(w, *user)
+		if err != nil {
+			http.Error(w, "an internal error occurred", http.StatusInternalServerError)
 		}
-		currentGame.CurrentPlayers++
-		logger.Printf("%s added to game %s\n", user.Username, currentGame.Name)
-		logger.Printf("there are now %v people in game %s\n", currentGame.CurrentPlayers, currentGame.Name)
-		http.SetCookie(w, gameCookie)
 	}
 
+	// if the user is submitting a file
 	if req.Method == http.MethodPost {
 		// open submitted file
-		file, fileHead, err := req.FormFile("codefile")
 		lang := req.FormValue("language")
+		file, fileHead, err := req.FormFile("codefile")
 		if err != nil {
 			logger.Println(err.Error())
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		defer file.Close()
-
 		logger.Printf("%s uploading file %s\n", user.Username, fileHead.Filename)
 
-		// read
-		bs, err := ioutil.ReadAll(file)
+		// read the file
+		bs, err := ioutil.ReadAll(file) // todo: check if buffer would be better here
 		if err != nil {
 			logger.Println(err.Error())
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
+		// Run the code given from the submission
 		client := runner.NewClient()
-		sub := runner.NewCodeSubmission(lang, string(bs), client)
+		sub := runner.NewCodeSubmission(user.Username, currentGame.ID, fileHead.Filename, lang, string(bs), client)
 		_, err = sub.Send() // todo: reply goes here but we dont deal with it yet
 		if err != nil {
 			logger.Println(err.Error())
@@ -101,18 +103,13 @@ func current(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 	}
-	_, err := req.Cookie("gameid")
-	if err != nil {
-		logger.Println(err.Error())
-		http.Error(w, "an unexpected error has occured", http.StatusInternalServerError)
-		return
-	}
-	// fmt.Println("CurrentGameID:", currentGame.ID, "CookieString:", cookie.Value)
+
 	tpl.ExecuteTemplate(w, "currentgame.html", golfResponse{
 		User:     user,
 		Name:     user.Username,
 		Game:     currentGame,
 		GameName: currentGame.Name,
+		Question: q,
 		LoggedIn: currentlyLoggedIn(w, req),
 	})
 }
@@ -261,4 +258,27 @@ func login(w http.ResponseWriter, req *http.Request) {
 		Game:     currentGame,
 		LoggedIn: false,
 	})
+}
+
+func logout(w http.ResponseWriter, req *http.Request) {
+	if !currentlyLoggedIn(w, req) {
+		http.Redirect(w, req, "/", http.StatusSeeOther)
+		return
+	}
+	user := getUser(w, req)
+	sessionCookie, err := req.Cookie("session")
+	if err != nil {
+		http.Error(w, "an unexpected error has occured", http.StatusInternalServerError)
+		return
+	}
+	// todo: delete game cookie on logout
+	delete(currentSessions, sessionCookie.Value)
+	// remove the cookie
+	sessionCookie = &http.Cookie{
+		Name:   "session",
+		Value:  "",
+		MaxAge: -1,
+	}
+	logger.Printf("%s successfully logged out\n", user.Username)
+	http.Redirect(w, req, "/login", http.StatusSeeOther)
 }

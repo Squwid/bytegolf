@@ -10,7 +10,6 @@ import (
 const (
 	usersTable = "bytegolf-users"
 	qsTable    = "bytegolf-questions"
-	s3Bucket   = "bytegolf-submissions"
 )
 
 // GetUser todo

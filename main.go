@@ -12,9 +12,10 @@ import (
 
 var (
 	tpl             *template.Template
-	currentSessions = map[string]session{} // sessionID : session
 	currentGame     *Game
 	logger          *log.Logger
+	currentSessions = map[string]session{} // sessionID : session
+	currentHoles    = map[string]string{}  // each player mapped to their current hole
 )
 
 // Game struct
@@ -28,6 +29,7 @@ type Game struct {
 	Difficulty     string
 	StartedTime    time.Time
 	Started        bool
+	Players        []string
 }
 
 // GolfResponse TODO
@@ -37,6 +39,7 @@ type golfResponse struct {
 	LoggedIn bool
 	Game     *Game
 	GameName string
+	Question *bgaws.Question
 }
 
 type session struct {
@@ -58,8 +61,29 @@ func main() {
 	http.HandleFunc("/dev", dev)
 	http.HandleFunc("/currentgame", current)
 	http.HandleFunc("/leaderboards", leaderboard)
+	http.HandleFunc("/logout", logout)
 
 	http.Handle("/favicon.ico", http.NotFoundHandler())
 	logger.Println("listening on port :6017")
 	http.ListenAndServe(":6017", nil)
+}
+
+func addUserToCurrent(w http.ResponseWriter, user bgaws.User) error {
+	gameCookie := &http.Cookie{
+		Name:  "gameid",
+		Value: currentGame.ID,
+	}
+	// set the user to the first hole
+	holeCookie := &http.Cookie{
+		Name:  "hole",
+		Value: "1",
+	}
+
+	currentGame.CurrentPlayers++ // add the player to list of players
+	currentGame.Players = append(currentGame.Players, user.Username)
+	logger.Printf("%s added to game %s\n", user.Username, currentGame.Name)
+	logger.Printf("there are now %v people in game %s\n", currentGame.CurrentPlayers, currentGame.Name)
+	http.SetCookie(w, gameCookie)
+
+	return nil
 }

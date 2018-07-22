@@ -29,6 +29,15 @@ type CodeSubmission struct {
 	VersionIndex string `json:"versionIndex"`
 	ID           string `json:"clientId"`
 	Secret       string `json:"clientSecret"`
+
+	Info *FileInfo
+}
+
+// FileInfo todo
+type FileInfo struct {
+	FileName string `json:"fileName"`
+	User     string `json:"user"`
+	Game     string `json:"game"`
 }
 
 // CodeResponse is the response from the Code Runner API that gets a result
@@ -37,6 +46,8 @@ type CodeResponse struct {
 	StatusCode int    `json:"statusCode"`
 	Memory     string `json:"memory"`
 	CPUTime    string `json:"cpuTime"`
+
+	Info *FileInfo
 }
 
 // Client is the client that allows the user to talk to the API
@@ -64,12 +75,17 @@ func NewClientWithCreds(id, secret string) *Client {
 }
 
 // NewCodeSubmission todo:
-func NewCodeSubmission(language, code string, client *Client) *CodeSubmission {
+func NewCodeSubmission(username, gameID, filename, language, code string, client *Client) *CodeSubmission {
 	return &CodeSubmission{
 		Script:       code,
 		Language:     language,
 		VersionIndex: "0",
 		ID:           client.ID,
 		Secret:       client.Secret,
+		Info: &FileInfo{
+			FileName: filename,
+			User:     username,
+			Game:     gameID,
+		},
 	}
 }

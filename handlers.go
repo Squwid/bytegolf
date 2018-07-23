@@ -3,6 +3,8 @@ package main
 import (
 	"io/ioutil"
 	"net/http"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/Squwid/bytegolf/bgaws"
@@ -72,6 +74,21 @@ func current(w http.ResponseWriter, req *http.Request) {
 		}
 	}
 
+	var Hole int
+	h := strings.TrimPrefix(req.URL.Path, "/currentgame/")
+	if len(h) == 1 {
+		i, err := strconv.Atoi(h)
+		Hole = i
+		if err != nil {
+			Hole = 1
+		}
+	} else {
+		Hole = 1
+	}
+	if Hole > currentGame.Holes {
+		Hole = currentGame.Holes // if the user goes over the limit set the hole to the max
+	}
+
 	// if the user is submitting a file
 	if req.Method == http.MethodPost {
 		// open submitted file
@@ -104,28 +121,20 @@ func current(w http.ResponseWriter, req *http.Request) {
 		}
 	}
 
+	q, ok := currentGame.Questions[Hole]
+	if !ok {
+		http.Error(w, "unable to find that hole", http.StatusInternalServerError)
+		return
+	}
+
 	tpl.ExecuteTemplate(w, "currentgame.html", golfResponse{
 		User:     user,
 		Name:     user.Username,
 		Game:     currentGame,
 		GameName: currentGame.Name,
+		Hole:     Hole,
 		Question: q,
 		LoggedIn: currentlyLoggedIn(w, req),
-	})
-}
-
-func leaderboard(w http.ResponseWriter, req *http.Request) {
-	// if the player isnt logged in send them to the login screen
-	if !currentlyLoggedIn(w, req) {
-		http.Redirect(w, req, "/login", http.StatusSeeOther)
-		return
-	}
-	user := getUser(w, req)
-	tpl.ExecuteTemplate(w, "leaderboards.html", golfResponse{
-		User:     user,
-		Name:     user.Username,
-		LoggedIn: currentlyLoggedIn(w, req),
-		Game:     currentGame,
 	})
 }
 
@@ -169,8 +178,6 @@ func signup(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 		// username is not taken so sign them up and create session
-		// todo: encrypt passwords
-
 		bs, err := bcrypt.GenerateFromPassword([]byte(reqPassword), bcrypt.MinCost)
 		if err != nil {
 			http.Error(w, "Internal server error", http.StatusInternalServerError)

@@ -53,7 +53,7 @@ func (s *CodeSubmission) Send() (*CodeResponse, error) {
 	}
 
 	r.Info = s.Info
-	r.store() // store response concurrently
+	go r.store() // store response concurrently
 
 	return &r, nil
 }

@@ -17,21 +17,31 @@ func CreateNewGame(w http.ResponseWriter, req *http.Request) error {
 		logger.Println(err)
 		return err
 	}
+	holes = 3 //todo: remove this. It is hardset to 3 right now because there are not enough
+	// questions in the bank
 	max, err := strconv.Atoi(req.FormValue("maxplayers"))
 	if err != nil {
 		logger.Println(err)
 		return err
 	}
-	currentGame = &Game{
+	diff := req.FormValue("difficulty")
+	logger.Printf("new game requested with %v holes at %s difficulty\n", holes, diff)
+	diff = "medium" // todo: this is the only difficulty that we currently have
+	qs, err := bgaws.GetQuestions(diff, 3)
+	if err != nil {
+		return err
+	}
+	currentGame = Game{
 		ID:             gameID.String(),
 		Name:           req.FormValue("gamename"),
 		Password:       req.FormValue("password"),
-		CurrentPlayers: 1,
+		CurrentPlayers: 0,
 		MaxPlayers:     max,
 		Holes:          holes,
-		Difficulty:     req.FormValue("difficulty"),
+		Difficulty:     diff,
 		StartedTime:    time.Now(),
 		Started:        true,
+		Questions:      qs,
 	}
 	user := getUser(w, req)
 	logger.Printf("%s created new game %s\n", user.Username, currentGame.Name)

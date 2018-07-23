@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"html/template"
 	"log"
 	"net/http"
@@ -12,10 +13,10 @@ import (
 
 var (
 	tpl             *template.Template
-	currentGame     *Game
+	currentGame     Game
 	logger          *log.Logger
 	currentSessions = map[string]session{} // sessionID : session
-	currentHoles    = map[string]string{}  // each player mapped to their current hole
+	holes           = map[string]int{}     // each player mapped to their current hole
 )
 
 // Game struct
@@ -30,6 +31,7 @@ type Game struct {
 	StartedTime    time.Time
 	Started        bool
 	Players        []string
+	Questions      map[int]bgaws.Question
 }
 
 // GolfResponse TODO
@@ -37,9 +39,10 @@ type golfResponse struct {
 	User     *bgaws.User
 	Name     string
 	LoggedIn bool
-	Game     *Game
+	Game     Game
 	GameName string
-	Question *bgaws.Question
+	Question bgaws.Question
+	Hole     int
 }
 
 type session struct {
@@ -59,8 +62,7 @@ func main() {
 	http.HandleFunc("/signup", signup)
 	http.HandleFunc("/login", login)
 	http.HandleFunc("/dev", dev)
-	http.HandleFunc("/currentgame", current)
-	http.HandleFunc("/leaderboards", leaderboard)
+	http.HandleFunc("/currentgame/", current)
 	http.HandleFunc("/logout", logout)
 
 	http.Handle("/favicon.ico", http.NotFoundHandler())
@@ -79,11 +81,17 @@ func addUserToCurrent(w http.ResponseWriter, user bgaws.User) error {
 		Value: "1",
 	}
 
+	if _, ok := holes[user.Username]; !ok {
+		holes[user.Username] = 1
+	} else {
+		return errors.New("that user already exists in the game")
+	}
+
 	currentGame.CurrentPlayers++ // add the player to list of players
 	currentGame.Players = append(currentGame.Players, user.Username)
 	logger.Printf("%s added to game %s\n", user.Username, currentGame.Name)
 	logger.Printf("there are now %v people in game %s\n", currentGame.CurrentPlayers, currentGame.Name)
 	http.SetCookie(w, gameCookie)
-
+	http.SetCookie(w, holeCookie)
 	return nil
 }

@@ -305,3 +305,9 @@ footer {
     width: 2%;
     display: inline-block;
 }
+
+
+/* ERRORS */
+error {
+    vertical-align:middle;
+}

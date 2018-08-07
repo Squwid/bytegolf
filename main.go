@@ -34,7 +34,7 @@ type Game struct {
 	Questions      map[int]bgaws.Question
 }
 
-// GolfResponse TODO
+// GolfResponse TODO:
 type golfResponse struct {
 	User     *bgaws.User
 	Name     string

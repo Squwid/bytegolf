@@ -31,7 +31,7 @@ func CreateNewGame(w http.ResponseWriter, req *http.Request) error {
 	if err != nil {
 		return err
 	}
-	currentGame = Game{
+	CurrentGame = Game{
 		ID:             gameID.String(),
 		Name:           req.FormValue("gamename"),
 		Password:       req.FormValue("password"),
@@ -44,7 +44,7 @@ func CreateNewGame(w http.ResponseWriter, req *http.Request) error {
 		Questions:      qs,
 	}
 	user := getUser(w, req)
-	logger.Printf("%s created new game %s\n", user.Username, currentGame.Name)
+	logger.Printf("%s created new game %s\n", user.Username, CurrentGame.Name)
 	return nil
 }
 
@@ -55,7 +55,7 @@ func userInGame(w http.ResponseWriter, req *http.Request) bool {
 	if err != nil {
 		return false
 	}
-	if currentGame.ID != cookie.Value {
+	if CurrentGame.ID != cookie.Value {
 		return false
 	}
 	return true

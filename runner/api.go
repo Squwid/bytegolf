@@ -81,6 +81,7 @@ func (s *CodeSubmission) store() {
 	}
 }
 
+// Store a code submission to an S3 bucket
 func (s *CodeResponse) store() {
 	sess := session.Must(session.NewSessionWithOptions(session.Options{
 		Config: aws.Config{Region: aws.String("us-east-1")},

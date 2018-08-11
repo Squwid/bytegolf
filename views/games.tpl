@@ -56,13 +56,13 @@
                 <br>
 
                 <que>Game Name &nbsp;</que>
-                <input type="text" name="gamename" placeholder=" name" maxlength="20">
+                <input type="text" name="gamename" placeholder=" Name" maxlength="15">
 
                 <br>
                 <br>
 
                 <que>Password &nbsp; &nbsp; &nbsp;</que>
-                <input type="password" name="password" maxlength="20" placeholder=" password">
+                <input type="password" name="password" maxlength="15" placeholder=" Password">
 
                 <br>
                 <br>

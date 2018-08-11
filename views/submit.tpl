@@ -70,7 +70,7 @@
         <div class="golfoptions">
             <form method="POST" enctype="multipart/form-data">
                 <que>Current Game &nbsp;</que>
-                <br> {{.GameName}}
+                <br> <h2>{{.GameName}}</h2>
                 <br>
                 <br>
                 <que>Language</que>
@@ -104,7 +104,7 @@
                 <br>
                 <input type="file" name="codefile">
                 <br><br><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;
-                <input type="submit" value="Tee Off" style="height:25px; width:80px">
+                <input type="submit" value="Sumbit" style="height:25px; width:80px">
 
             </form>
         </div>

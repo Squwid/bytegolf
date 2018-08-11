@@ -13,6 +13,9 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+/* FIXME: Currently I am returning a structure to each part of the handler but
+instead I should be returning an anon struct back */
+
 func index(w http.ResponseWriter, req *http.Request) {
 	user := getUser(w, req)
 	// If there is a post on index that means that the user is
@@ -23,7 +26,7 @@ func index(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 		// if there is already a current game
-		if currentGame.Started {
+		if CurrentGame.Started {
 			http.Redirect(w, req, "/currentgame", http.StatusSeeOther)
 			return
 		}
@@ -47,11 +50,12 @@ func index(w http.ResponseWriter, req *http.Request) {
 	tpl.ExecuteTemplate(w, "index.html", golfResponse{
 		User:     user,
 		Name:     user.Username,
-		Game:     currentGame,
+		Game:     CurrentGame,
 		LoggedIn: currentlyLoggedIn(w, req),
 	})
 }
 
+// current holds the code for the submission along with joining a current game
 func current(w http.ResponseWriter, req *http.Request) {
 	// if the player isnt logged in send them to the login screen
 	if !currentlyLoggedIn(w, req) {
@@ -63,7 +67,7 @@ func current(w http.ResponseWriter, req *http.Request) {
 
 	// if the user is not in a game check to see if there is a current game
 	if !userInGame(w, req) {
-		if !currentGame.Started {
+		if !CurrentGame.Started {
 			http.Error(w, "there is not a current game", http.StatusNoContent)
 			return
 		}
@@ -74,19 +78,20 @@ func current(w http.ResponseWriter, req *http.Request) {
 		}
 	}
 
-	var Hole int
+	// parse what hole the player is on
+	var hole int
 	h := strings.TrimPrefix(req.URL.Path, "/currentgame/")
 	if len(h) == 1 {
 		i, err := strconv.Atoi(h)
-		Hole = i
+		hole = i
 		if err != nil {
-			Hole = 1
+			hole = 1
 		}
 	} else {
-		Hole = 1
+		hole = 1
 	}
-	if Hole > currentGame.Holes {
-		Hole = currentGame.Holes // if the user goes over the limit set the hole to the max
+	if hole > CurrentGame.Holes {
+		hole = CurrentGame.Holes // if the user goes over the limit set the hole to the max
 	}
 
 	// if the user is submitting a file
@@ -103,7 +108,7 @@ func current(w http.ResponseWriter, req *http.Request) {
 		logger.Printf("%s uploading file %s\n", user.Username, fileHead.Filename)
 
 		// read the file
-		bs, err := ioutil.ReadAll(file) // todo: check if buffer would be better here
+		bs, err := ioutil.ReadAll(file)
 		if err != nil {
 			logger.Println(err.Error())
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -112,16 +117,22 @@ func current(w http.ResponseWriter, req *http.Request) {
 
 		// Run the code given from the submission
 		client := runner.NewClient()
-		sub := runner.NewCodeSubmission(user.Username, currentGame.ID, fileHead.Filename, lang, string(bs), client)
-		_, err = sub.Send() // todo: reply goes here but we dont deal with it yet
+		sub := runner.NewCodeSubmission(user.Username, CurrentGame.ID, fileHead.Filename, lang, string(bs), client)
+		resp, err := sub.Send()
 		if err != nil {
 			logger.Println(err.Error())
 			http.Error(w, "an unexpected error has occured", http.StatusInternalServerError)
 			return
 		}
+		q, ok := CurrentGame.Questions[hole]
+		if !ok {
+			http.Error(w, "unable to find that hole", http.StatusInternalServerError)
+		}
+		correct := checkResponse(resp, &q)
+		_ = correct //TODO: continue here
 	}
 
-	q, ok := currentGame.Questions[Hole]
+	q, ok := CurrentGame.Questions[hole]
 	if !ok {
 		http.Error(w, "unable to find that hole", http.StatusInternalServerError)
 		return
@@ -130,32 +141,11 @@ func current(w http.ResponseWriter, req *http.Request) {
 	tpl.ExecuteTemplate(w, "currentgame.html", golfResponse{
 		User:     user,
 		Name:     user.Username,
-		Game:     currentGame,
-		GameName: currentGame.Name,
-		Hole:     Hole,
+		Game:     CurrentGame,
+		GameName: CurrentGame.Name,
+		Hole:     hole,
 		Question: q,
 		LoggedIn: currentlyLoggedIn(w, req),
-	})
-}
-
-func dev(w http.ResponseWriter, req *http.Request) {
-	// if the player isnt logged in send them to the login screen
-	if !currentlyLoggedIn(w, req) {
-		http.Redirect(w, req, "/login", http.StatusSeeOther)
-		return
-	}
-	user := getUser(w, req)
-	logger.Printf("%s is trying to access DEV page\n", user.Username)
-	if user.Role != "dev" {
-		http.Redirect(w, req, "/", http.StatusSeeOther)
-		return
-	}
-
-	tpl.ExecuteTemplate(w, "devtools.html", golfResponse{
-		User:     user,
-		Name:     user.Username,
-		LoggedIn: currentlyLoggedIn(w, req),
-		Game:     currentGame,
 	})
 }
 
@@ -213,7 +203,7 @@ func signup(w http.ResponseWriter, req *http.Request) {
 	}
 
 	tpl.ExecuteTemplate(w, "signup.html", golfResponse{
-		Game:     currentGame,
+		Game:     CurrentGame,
 		LoggedIn: false,
 	})
 }
@@ -237,7 +227,6 @@ func login(w http.ResponseWriter, req *http.Request) {
 
 		user, _ := bgaws.GetUser(reqName)
 		err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(reqPass))
-		// if user.Password != reqPass {
 		if err != nil {
 			logger.Printf("%s tried to login with incorrect password\n", user.Username)
 			http.Error(w, "Username and/or password do not match", http.StatusForbidden)
@@ -262,7 +251,7 @@ func login(w http.ResponseWriter, req *http.Request) {
 	}
 
 	tpl.ExecuteTemplate(w, "login.html", golfResponse{
-		Game:     currentGame,
+		Game:     CurrentGame,
 		LoggedIn: false,
 	})
 }
@@ -280,7 +269,6 @@ func logout(w http.ResponseWriter, req *http.Request) {
 	}
 	// todo: delete game cookie on logout
 	delete(currentSessions, sessionCookie.Value)
-	// remove the cookie
 	sessionCookie = &http.Cookie{
 		Name:   "session",
 		Value:  "",

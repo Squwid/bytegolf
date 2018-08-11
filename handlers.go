@@ -18,8 +18,8 @@ instead I should be returning an anon struct back */
 
 func index(w http.ResponseWriter, req *http.Request) {
 	user := getUser(w, req)
-	// If there is a post on index that means that the user is
-	// creating a new game
+
+	// If there is a post on index that means that the user is creating a new game
 	if req.Method == http.MethodPost {
 		if !currentlyLoggedIn(w, req) {
 			http.Redirect(w, req, "/login", http.StatusSeeOther)
@@ -27,18 +27,19 @@ func index(w http.ResponseWriter, req *http.Request) {
 		}
 		// if there is already a current game
 		if CurrentGame.Started {
+			logger.Printf("%s tried to start a new game but one already exists\n", user.Username)
 			http.Redirect(w, req, "/currentgame", http.StatusSeeOther)
 			return
 		}
 		err := CreateNewGame(w, req)
 		if err != nil {
-			logger.Println(err.Error())
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			logger.Printf("an error occured creating a new game: %v\n", err)
+			http.Error(w, "an error occured creating a new game", http.StatusInternalServerError)
 			return
 		}
-		err = addUserToCurrent(w, *user)
+		err = CurrentGame.AddGameUser(user)
 		if err != nil {
-			logger.Println(err.Error())
+			logger.Printf("an error occurred adding a player to an existing game: %v\n", err)
 			http.Error(w, "an internal error occurred", http.StatusInternalServerError)
 			return
 		}
@@ -66,21 +67,25 @@ func current(w http.ResponseWriter, req *http.Request) {
 	user := getUser(w, req)
 
 	// if the user is not in a game check to see if there is a current game
-	if !userInGame(w, req) {
+	if !CurrentGame.UserInGame(user) {
 		if !CurrentGame.Started {
+			logger.Printf("%s tried to join a game but there is not one\n", user.Username)
 			http.Error(w, "there is not a current game", http.StatusNoContent)
 			return
 		}
 		// if the user is not in a game and there is a current game add them to it
-		err := addUserToCurrent(w, *user)
+		err := CurrentGame.AddGameUser(user)
 		if err != nil {
+			logger.Printf("an error occured adding a user to a game: %v\n", err)
 			http.Error(w, "an internal error occurred", http.StatusInternalServerError)
+			return
 		}
 	}
-
-	// parse what hole the player is on
-	var hole int
+	// the player is in the game now
+	// hole logic
+	hole := 1
 	h := strings.TrimPrefix(req.URL.Path, "/currentgame/")
+	// possible holes are only 1-9 for ~now~
 	if len(h) == 1 {
 		i, err := strconv.Atoi(h)
 		hole = i
@@ -100,17 +105,17 @@ func current(w http.ResponseWriter, req *http.Request) {
 		lang := req.FormValue("language")
 		file, fileHead, err := req.FormFile("codefile")
 		if err != nil {
-			logger.Println(err.Error())
+			logger.Printf("an error occurred opening a form file: %v\n", err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		defer file.Close()
-		logger.Printf("%s uploading file %s\n", user.Username, fileHead.Filename)
+		logger.Printf("%s uploading file to server %s\n", user.Username, fileHead.Filename)
 
-		// read the file
+		// read the file submitted
 		bs, err := ioutil.ReadAll(file)
 		if err != nil {
-			logger.Println(err.Error())
+			logger.Println("an error occured reading file", err.Error())
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -124,9 +129,11 @@ func current(w http.ResponseWriter, req *http.Request) {
 			http.Error(w, "an unexpected error has occured", http.StatusInternalServerError)
 			return
 		}
-		q, ok := CurrentGame.Questions[hole]
+		q, ok := CurrentGame.Questions[hole] //get the question from the current game
 		if !ok {
+			logger.Printf("unable to find hole %v for %s\n", hole, user.Username)
 			http.Error(w, "unable to find that hole", http.StatusInternalServerError)
+			return
 		}
 		correct := checkResponse(resp, &q)
 		_ = correct //TODO: continue here
@@ -170,13 +177,13 @@ func signup(w http.ResponseWriter, req *http.Request) {
 		// username is not taken so sign them up and create session
 		bs, err := bcrypt.GenerateFromPassword([]byte(reqPassword), bcrypt.MinCost)
 		if err != nil {
+			logger.Printf("an error occurred generating password: %v\n", err)
 			http.Error(w, "Internal server error", http.StatusInternalServerError)
 			return
 		}
 
 		newUser := &bgaws.User{
 			Username: reqName,
-			// Password: reqPassword,
 			Password: string(bs),
 		}
 		err = bgaws.CreateUser(newUser)
@@ -267,7 +274,6 @@ func logout(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, "an unexpected error has occured", http.StatusInternalServerError)
 		return
 	}
-	// todo: delete game cookie on logout
 	delete(currentSessions, sessionCookie.Value)
 	sessionCookie = &http.Cookie{
 		Name:   "session",

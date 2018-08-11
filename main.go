@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"html/template"
 	"log"
 	"net/http"
@@ -17,6 +18,13 @@ var CurrentGame Game
 var tpl *template.Template
 var logger *log.Logger
 var currentSessions = map[string]session{}
+
+// Errors
+var (
+	ErrGameFull = errors.New("game already has maximum amount of players")
+)
+
+// var currentGame = map[string]Game{} // maps a players name to a game
 
 // Player struct that holds each players hole submissions
 type Player struct {
@@ -37,7 +45,7 @@ type Game struct {
 	Difficulty     string
 	StartedTime    time.Time
 	Started        bool
-	Players        []string
+	Players        []*Player
 	Questions      map[int]bgaws.Question
 }
 
@@ -79,24 +87,47 @@ func main() {
 	http.ListenAndServe(":6017", nil)
 }
 
-func addUserToCurrent(w http.ResponseWriter, user bgaws.User) error {
-	gameCookie := &http.Cookie{
-		Name:  "gameid",
-		Value: CurrentGame.ID,
+func createPlayer(user *bgaws.User) *Player {
+	return &Player{
+		User:          *user,
+		Scores:        make(map[int]int64),
+		Correct:       make(map[int]bool),
+		CorrectAmount: 0,
 	}
-	// set the user to the first hole
-	holeCookie := &http.Cookie{
-		Name:  "hole",
-		Value: "1",
-	}
+}
 
-	CurrentGame.CurrentPlayers++ // add the player to list of players
-	CurrentGame.Players = append(CurrentGame.Players, user.Username)
-	logger.Printf("%s added to game %s\n", user.Username, CurrentGame.Name)
-	logger.Printf("there are now %v people in game %s\n", CurrentGame.CurrentPlayers, CurrentGame.Name)
-	http.SetCookie(w, gameCookie)
-	http.SetCookie(w, holeCookie)
+// AddGameUser adds a user to the current game
+func (game *Game) AddGameUser(user *bgaws.User) error {
+	if game.MaxPlayers == game.CurrentPlayers {
+		return ErrGameFull
+	}
+	player := createPlayer(user)
+	game.CurrentPlayers++ // add the player to list of players
+	game.Players = append(game.Players, player)
+
+	logger.Printf("%s added to game %s\n", user.Username, game.Name)
+	logger.Printf("there are now %v people in game %s\n", game.CurrentPlayers, game.Name)
 	return nil
+}
+
+// UserInGame checks to see if a user is in a specific game
+func (game *Game) UserInGame(user *bgaws.User) bool {
+	for _, p := range game.Players {
+		if p.User.Username == user.Username {
+			return true
+		}
+	}
+	return false
+}
+
+// PlayerInGame checks to see if a certain player is in a game
+func (game *Game) PlayerInGame(player *Player) bool {
+	for _, p := range game.Players {
+		if p.User.Username == player.User.Username {
+			return true
+		}
+	}
+	return false
 }
 
 // checks the response compared to the question TODO: Instead of a bool change this to something easier

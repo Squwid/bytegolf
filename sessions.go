@@ -48,19 +48,6 @@ func CreateNewGame(w http.ResponseWriter, req *http.Request) error {
 	return nil
 }
 
-// userInGame returns a bool whether or not the player sending the request
-// is currently in a game
-func userInGame(w http.ResponseWriter, req *http.Request) bool {
-	cookie, err := req.Cookie("gameid")
-	if err != nil {
-		return false
-	}
-	if CurrentGame.ID != cookie.Value {
-		return false
-	}
-	return true
-}
-
 func getUser(w http.ResponseWriter, req *http.Request) *bgaws.User {
 	var cookie *http.Cookie
 	cookie, err := req.Cookie("session")

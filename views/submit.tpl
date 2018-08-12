@@ -1,35 +1,47 @@
+{{define "showcode"}}
+<!-- Show the code whether it is correct or not -->
+    {{if .OverallCode.Show}}
+        {{if .OverallCode.Correct}}
+            <div class="correct">{{.OverallCode.Output}}<br>
+            You have gotten this hole correct. Your best score is {{.OverallCode.Bytes}}
+            </div>
+        {{end}}
+    {{end}}
+    {{if .CurrentCode.Show}}
+        {{if .CurrentCode.Correct}}
+            <div class="correct">{{.CurrentCode.Output}}<br>
+                This output is correct. Score of {{.CurrentCode.Bytes}}
+            </div>
+        {{else}}
+            <div class="incorrect">{{.CurrentCode.Output}}<br>
+                This output is incorrect. 
+            </div>
+        {{end}}
+    {{end}}
+
+{{end}}
+
+
 {{define "leaderboards"}}
 
 <!-- Leaderboards -->
 <div class="content">
     <div class="contentspace"></div>
     <div class="lbcontainer">
-        <h2>Leaderboards</h2>
+        <h2>Leaderboards ({{.Game.CurrentPlayers}}/{{.Game.MaxPlayers}} players)</h2>
         <div class="playercontainer">
             <div class="gamespace"></div>
             <div class="player1">
-                player1
+                &nbsp;&nbsp;&nbsp;&nbsp; {{.Game.Leaderboard.Winning.User.Username}} - with {{.Game.Leaderboard.Winning.HolesCorrect}} holes <br>
+                &nbsp;&nbsp;&nbsp;&nbsp; {{.Game.Leaderboard.Winning.TotalScore}} bytes
             </div>
+            {{range .Game.Leaderboard.OtherPlayers}}
             <div class="gamespace"></div>
             <div class="player">
-                player2
+                &nbsp;&nbsp;&nbsp;&nbsp; {{.User.Username}} - with {{.HolesCorrect}} holes <br>
+                &nbsp;&nbsp;&nbsp;&nbsp; {{.TotalScore}} bytes
             </div>
-            <div class="gamespace"></div>
-            <div class="player">
-                player3
-            </div>
-            <div class="gamespace"></div>
-            <div class="player">
-                player4
-            </div>
-            <div class="gamespace"></div>
-            <div class="player">
-                player5
-            </div>
-            <div class="gamespace"></div>
-            <div class="player">
-                player6
-            </div>
+            {{end}}
             <div class="gamespace"></div>
         </div>
     </div>
@@ -70,7 +82,7 @@
         <div class="golfoptions">
             <form method="POST" enctype="multipart/form-data">
                 <que>Current Game &nbsp;</que>
-                <br> <h2>{{.GameName}}</h2>
+                <br> <h2>{{.Game.Name}}</h2>
                 <br>
                 <br>
                 <que>Language</que>
@@ -103,7 +115,7 @@
                 <br>
                 <br>
                 <input type="file" name="codefile">
-                <br><br><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;
+                <br><br>&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;
                 <input type="submit" value="Sumbit" style="height:25px; width:80px">
 
             </form>

@@ -31,16 +31,11 @@ func index(w http.ResponseWriter, req *http.Request) {
 			http.Redirect(w, req, "/currentgame", http.StatusSeeOther)
 			return
 		}
-		err := CreateNewGame(w, req)
+		game, err := CreateNewGame(w, req)
+		CurrentGame = *game
 		if err != nil {
 			logger.Printf("an error occured creating a new game: %v\n", err)
-			http.Error(w, "an error occured creating a new game", http.StatusInternalServerError)
-			return
-		}
-		err = CurrentGame.AddGameUser(user)
-		if err != nil {
-			logger.Printf("an error occurred adding a player to an existing game: %v\n", err)
-			http.Error(w, "an internal error occurred", http.StatusInternalServerError)
+			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
@@ -58,6 +53,7 @@ func index(w http.ResponseWriter, req *http.Request) {
 
 // current holds the code for the submission along with joining a current game
 func current(w http.ResponseWriter, req *http.Request) {
+
 	// if the player isnt logged in send them to the login screen
 	if !currentlyLoggedIn(w, req) {
 		http.Redirect(w, req, "/login", http.StatusSeeOther)
@@ -99,6 +95,8 @@ func current(w http.ResponseWriter, req *http.Request) {
 		hole = CurrentGame.Holes // if the user goes over the limit set the hole to the max
 	}
 
+	var currentCode code
+	currentCode.Show = false
 	// if the user is submitting a file
 	if req.Method == http.MethodPost {
 		// open submitted file
@@ -129,14 +127,35 @@ func current(w http.ResponseWriter, req *http.Request) {
 			http.Error(w, "an unexpected error has occured", http.StatusInternalServerError)
 			return
 		}
-		q, ok := CurrentGame.Questions[hole] //get the question from the current game
-		if !ok {
-			logger.Printf("unable to find hole %v for %s\n", hole, user.Username)
-			http.Error(w, "unable to find that hole", http.StatusInternalServerError)
+		correct, err := CurrentGame.Check(resp, hole)
+		if err != nil {
+			logger.Printf("error checking question %v for %s : %v\n", hole, user.Username, err)
+			http.Error(w, err.Error(), http.StatusBadRequest) // this has to be the users fault if the error is not nil
 			return
 		}
-		correct := checkResponse(resp, &q)
-		_ = correct //TODO: continue here
+		player, err := CurrentGame.GetPlayer(user)
+		if err != nil {
+			logger.Printf("an error occurred getting %s from game %s: %v\n", user.Username, CurrentGame.Name, err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		if !correct {
+			currentCode.Output = resp.Output
+			currentCode.Show = true
+			logger.Printf("%s got hole %v incorrect\n", user.Username, hole)
+		} else {
+			err = CurrentGame.Score(player, hole, sub, resp)
+			if err != nil {
+				logger.Printf("an error occurred scoring %s submission \n", player.User.Username)
+				http.Error(w, "an error occurred scoring your submission", http.StatusInternalServerError)
+				return
+			}
+			currentCode.Output = resp.Output
+			currentCode.Show = true
+			//TODO:
+			currentCode.Correct = true
+			logger.Printf("%s got hole %v correct!\n", user.Username, hole)
+		}
 	}
 
 	q, ok := CurrentGame.Questions[hole]
@@ -145,14 +164,32 @@ func current(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	tpl.ExecuteTemplate(w, "currentgame.html", golfResponse{
-		User:     user,
-		Name:     user.Username,
-		Game:     CurrentGame,
-		GameName: CurrentGame.Name,
-		Hole:     hole,
-		Question: q,
-		LoggedIn: currentlyLoggedIn(w, req),
+	player, err := CurrentGame.GetPlayer(user)
+	if err != nil {
+		logger.Printf("an error occurred getting %s from game %s: %v\n", user.Username, CurrentGame.Name, err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	oc := checkCorrect(hole, player) // get the overall code
+
+	tpl.ExecuteTemplate(w, "currentgame.html", struct {
+		User        *bgaws.User
+		Name        string
+		Game        Game
+		Hole        int
+		Question    bgaws.Question
+		LoggedIn    bool
+		OverallCode code
+		CurrentCode code
+	}{
+		User:        user,
+		Name:        user.Username,
+		Game:        CurrentGame,
+		Hole:        hole,
+		Question:    q,
+		LoggedIn:    currentlyLoggedIn(w, req),
+		OverallCode: oc,
+		CurrentCode: currentCode,
 	})
 }
 

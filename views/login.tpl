@@ -19,7 +19,7 @@
                 <br>
                 <input type="submit">
             </form>
-            <h3><a href="/signup">signup</a></h3>
+            <h3>No account? - <a href="/signup">Signup</a></h3>
         </div>
     </div>
     <div class="gamespace">
@@ -49,7 +49,7 @@
                 <br>
                 <input type="submit">
             </form>
-            <h3><a href="/login">Login</a></h3>
+            <h3>Have an account? - <a href="/login">Login</a></h3>
         </div>
     </div>
     <div class="gamespace">

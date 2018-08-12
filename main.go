@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"html/template"
 	"log"
 	"net/http"
@@ -18,20 +17,19 @@ var CurrentGame Game
 var tpl *template.Template
 var logger *log.Logger
 var currentSessions = map[string]session{}
-
-// Errors
-var (
-	ErrGameFull = errors.New("game already has maximum amount of players")
-)
+var games = map[string]*Game{}
 
 // var currentGame = map[string]Game{} // maps a players name to a game
 
 // Player struct that holds each players hole submissions
 type Player struct {
-	User          bgaws.User    // holds username, password, and role
-	Scores        map[int]int64 // Scores holds each hole and what the player scored on it
-	Correct       map[int]bool  // whether or not the player got the scores correct
-	CorrectAmount int
+	User         bgaws.User    // holds username, password, and role
+	Scores       map[int]int64 // Scores holds each hole and what the player scored on it
+	Correct      map[int]bool  // whether or not the player got the scores correct
+	Output       map[int]string
+	HolesCorrect int
+	TotalScore   int64
+	Average      float64
 }
 
 // Game struct
@@ -47,6 +45,11 @@ type Game struct {
 	Started        bool
 	Players        []*Player
 	Questions      map[int]bgaws.Question
+	Owner          *Player
+	Leaderboard    struct {
+		Winning      *Player
+		OtherPlayers []*Player
+	}
 }
 
 // GolfResponse TODO: this structure needs to be removed at some point because we need anon structs eventually
@@ -63,6 +66,13 @@ type golfResponse struct {
 type session struct {
 	Username     string
 	lastActivity time.Time
+}
+
+type code struct {
+	Show    bool
+	Correct bool
+	Bytes   int64
+	Output  string
 }
 
 func init() {
@@ -89,48 +99,16 @@ func main() {
 
 func createPlayer(user *bgaws.User) *Player {
 	return &Player{
-		User:          *user,
-		Scores:        make(map[int]int64),
-		Correct:       make(map[int]bool),
-		CorrectAmount: 0,
+		User:         *user,
+		Scores:       make(map[int]int64),
+		Correct:      make(map[int]bool),
+		Output:       make(map[int]string),
+		HolesCorrect: 0,
+		TotalScore:   0,
+		Average:      0.0,
 	}
 }
 
-// AddGameUser adds a user to the current game
-func (game *Game) AddGameUser(user *bgaws.User) error {
-	if game.MaxPlayers == game.CurrentPlayers {
-		return ErrGameFull
-	}
-	player := createPlayer(user)
-	game.CurrentPlayers++ // add the player to list of players
-	game.Players = append(game.Players, player)
-
-	logger.Printf("%s added to game %s\n", user.Username, game.Name)
-	logger.Printf("there are now %v people in game %s\n", game.CurrentPlayers, game.Name)
-	return nil
-}
-
-// UserInGame checks to see if a user is in a specific game
-func (game *Game) UserInGame(user *bgaws.User) bool {
-	for _, p := range game.Players {
-		if p.User.Username == user.Username {
-			return true
-		}
-	}
-	return false
-}
-
-// PlayerInGame checks to see if a certain player is in a game
-func (game *Game) PlayerInGame(player *Player) bool {
-	for _, p := range game.Players {
-		if p.User.Username == player.User.Username {
-			return true
-		}
-	}
-	return false
-}
-
-// checks the response compared to the question TODO: Instead of a bool change this to something easier
 func checkResponse(resp *runner.CodeResponse, q *bgaws.Question) bool {
 	if strings.TrimSpace(strings.ToLower(resp.Output)) == strings.TrimSpace(strings.ToLower(q.Answer)) {
 		return true
@@ -138,9 +116,23 @@ func checkResponse(resp *runner.CodeResponse, q *bgaws.Question) bool {
 	return false
 }
 
-func score(submission *runner.CodeSubmission, q *bgaws.Question) (p int64) {
+func checkCorrect(hole int, p *Player) code {
+	var c code
+	c.Show = true
+	if p.Correct[hole] {
+		c.Correct = true
+		c.Bytes = p.Scores[hole]
+		c.Output = p.Output[hole]
+	} else {
+		c.Correct = false
+		c.Output = p.Output[hole]
+	}
+	return c
+}
+
+func score(sub *runner.CodeSubmission, q *bgaws.Question) int64 {
 	// TODO: now is just the length of the code, however i would like a better score system in the future
-	return count(submission.Script)
+	return count(sub.Script)
 }
 
 func count(s string) int64 {

@@ -2,51 +2,11 @@ package main
 
 import (
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/Squwid/bytegolf/bgaws"
 	uuid "github.com/satori/go.uuid"
 )
-
-// CreateNewGame todo
-func CreateNewGame(w http.ResponseWriter, req *http.Request) error {
-	gameID, _ := uuid.NewV4()
-	holes, err := strconv.Atoi(req.FormValue("holes"))
-	if err != nil {
-		logger.Println(err)
-		return err
-	}
-	holes = 3 //todo: remove this. It is hardset to 3 right now because there are not enough
-	// questions in the bank
-	max, err := strconv.Atoi(req.FormValue("maxplayers"))
-	if err != nil {
-		logger.Println(err)
-		return err
-	}
-	diff := req.FormValue("difficulty")
-	logger.Printf("new game requested with %v holes at %s difficulty\n", holes, diff)
-	diff = "medium" // todo: this is the only difficulty that we currently have
-	qs, err := bgaws.GetQuestions(diff, 3)
-	if err != nil {
-		return err
-	}
-	CurrentGame = Game{
-		ID:             gameID.String(),
-		Name:           req.FormValue("gamename"),
-		Password:       req.FormValue("password"),
-		CurrentPlayers: 0,
-		MaxPlayers:     max,
-		Holes:          holes,
-		Difficulty:     diff,
-		StartedTime:    time.Now(),
-		Started:        true,
-		Questions:      qs,
-	}
-	user := getUser(w, req)
-	logger.Printf("%s created new game %s\n", user.Username, CurrentGame.Name)
-	return nil
-}
 
 func getUser(w http.ResponseWriter, req *http.Request) *bgaws.User {
 	var cookie *http.Cookie

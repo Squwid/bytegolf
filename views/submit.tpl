@@ -29,6 +29,7 @@
     <div class="contentspace"></div>
     <div class="lbcontainer">
         <h2>Leaderboards ({{.Game.CurrentPlayers}}/{{.Game.MaxPlayers}} players)</h2>
+        <a href="/master">More Options</a>
         <div class="playercontainer">
             <div class="gamespace"></div>
             <div class="player1">
@@ -117,8 +118,8 @@
                 <input type="file" name="codefile">
                 <br><br>&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;
                 <input type="submit" value="Sumbit" style="height:25px; width:80px">
-
             </form>
+            
         </div>
     </div>
 

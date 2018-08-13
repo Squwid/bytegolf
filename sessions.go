@@ -21,7 +21,13 @@ func getUser(w http.ResponseWriter, req *http.Request) *bgaws.User {
 	// http.SetCookie(w, cookie)
 
 	// if the user exists already, get user
+	for _, u := range users {
+		if u.Username == currentSessions[cookie.Value].Username {
+			return u
+		}
+	}
 	u, _ := bgaws.GetUser(currentSessions[cookie.Value].Username) //TODO: when does this error get called?
+	users = append(users, u)
 	return u
 }
 

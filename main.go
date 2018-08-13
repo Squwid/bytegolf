@@ -18,6 +18,7 @@ var tpl *template.Template
 var logger *log.Logger
 var currentSessions = map[string]session{}
 var games = map[string]*Game{}
+var users []*bgaws.User
 
 // var currentGame = map[string]Game{} // maps a players name to a game
 
@@ -50,6 +51,7 @@ type Game struct {
 		Winning      *Player
 		OtherPlayers []*Player
 	}
+	GameOver bool
 }
 
 // GolfResponse TODO: this structure needs to be removed at some point because we need anon structs eventually
@@ -89,7 +91,9 @@ func main() {
 	http.HandleFunc("/signup", signup)
 	http.HandleFunc("/login", login)
 	http.HandleFunc("/currentgame/", current)
+	http.HandleFunc("/master", master)
 	http.HandleFunc("/logout", logout)
+	http.HandleFunc("/profile", profile)
 
 	// listen and serve
 	http.Handle("/favicon.ico", http.NotFoundHandler())

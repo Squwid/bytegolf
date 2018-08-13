@@ -106,12 +106,12 @@ footer {
 	color: darkred;
 	text-align: center;
 	font-size: 24px;
+	font-size: 24px;
 	padding-right: 30%;
 	padding-left: 30%;
 	padding-top: 20px;
 	padding-bottom: 20px;
-	/* height: 100px; */
-	height: auto;
+	height: 100px;
 }
 
 
@@ -130,6 +130,27 @@ footer {
 .contentsoon {
 	height: 650px;
 }
+
+
+/* MASTER ACCOUNT */
+
+.pinfo {
+	height: 45px;
+	position: relative;
+	margin-top: 10px;
+	margin-bottom: 10px;
+	border-width: 1px;
+	border-color: black;
+	border-style: solid;
+	
+	text-align: center;
+	font-size: 15px;
+}
+
+.pinfo:hover {
+	background-color: lawngreen;
+}
+
 
 /* CODE GOLF FORM */
 
@@ -242,6 +263,7 @@ footer {
 .game:hover {
 	background-color: lawngreen;
 }
+
 
 /* LEADERBOARDS */
 

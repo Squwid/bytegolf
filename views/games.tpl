@@ -78,4 +78,64 @@
 </div>
 
 
+{{end}} {{define "gamemaster"}}
+<!-- Game Master Controls -->
+<!-- Content Information -->
+{{if .GameOver}}
+<div class="content">
+    <div class="contentspace"></div>
+    <div class="golfcontainer">
+        <h2>{{.Game.Name}} Results</h2>
+        <div class="golfoptions">
+            <h2>Winner: {{.Game.Leaderboard.Winning.User.Username}}</h2>
+            <h2>Score: {{.Game.Leaderboard.Winning.TotalScore}} bytes</h2>
+        </div>
+    </div>
+</div>
+{{end}}
+
+<div class="content">
+    <div class="contentspace"></div>
+    <div class="golfcontainer">
+        <h2>{{.Game.Name}} Options</h2>
+        <div class="golfoptions">
+            <!-- <h4>ID: {{.Game.ID}}</h4> -->
+            <h4>Name: {{.Game.Name}}</h4>
+            <h4>Password: {{.Game.Password}}</h4>
+            <h4>Current Players: {{.Game.CurrentPlayers}}</h4>
+            <h4>Max Players: {{.Game.MaxPlayers}}</h4>
+            <h4>Holes: {{.Game.Holes}}</h4>
+            <h4>Difficulty: {{.Game.Difficulty}}</h4>
+            <h4>Start Time: {{.Game.StartedTime}}</h4>
+            {{if .CanEnd}}
+            <form method="post">
+                <br>
+                <br>
+                <br>
+                <br>
+                <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                &nbsp;&nbsp;
+                <input type="submit" value="End Game" style="height:25px; width:80px">
+            </form>
+            {{end}}
+        </div>
+    </div>
+</div>
+<!-- Player Information -->
+<div class="content">
+    <div class="contentspace"></div>
+    <div class="golfcontainer">
+        <h2>{{.Game.Name}} Players</h2>
+        <div class="golfoptions">
+            {{range .Game.Players}}
+            <div class="pinfo">
+                <strong>{{.User.Username}}</strong>
+                <br> {{.HolesCorrect}} Holes - {{.TotalScore}} Bytes
+            </div>
+            {{end}}
+        </div>
+    </div>
+</div>
+
+
 {{end}}

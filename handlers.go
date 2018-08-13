@@ -152,7 +152,6 @@ func current(w http.ResponseWriter, req *http.Request) {
 			}
 			currentCode.Output = resp.Output
 			currentCode.Show = true
-			//TODO:
 			currentCode.Correct = true
 			logger.Printf("%s got hole %v correct!\n", user.Username, hole)
 		}
@@ -252,9 +251,63 @@ func signup(w http.ResponseWriter, req *http.Request) {
 	})
 }
 
+func master(w http.ResponseWriter, req *http.Request) {
+	// if the user is already logged in then send them to the home screen
+	canEnd := false
+	gameOver := false
+	if !currentlyLoggedIn(w, req) {
+		http.Redirect(w, req, "/login", http.StatusSeeOther)
+		return
+	}
+	user := getUser(w, req)
+
+	// if the user is not in a game check to see if there is a current game
+	if !CurrentGame.UserInGame(user) {
+		http.Error(w, "you must be in a game", http.StatusNoContent)
+		return
+	}
+	player, err := CurrentGame.GetPlayer(user)
+	if err != nil {
+		http.Error(w, "an internal server error occurred", http.StatusInternalServerError)
+		logger.Printf("an error occurred getting player %s: %v", user.Username, err)
+		return
+	}
+
+	if CurrentGame.Owner.User.Username == player.User.Username {
+		canEnd = true
+	}
+	// They are the owner of the CurrentGame if the code gets here
+	if req.Method == http.MethodPost {
+		// TODO: change winner logic
+		canEnd = false
+		gameOver = true
+		CurrentGame.GameOver = true
+		CurrentGame.update()
+	} else if CurrentGame.GameOver {
+		canEnd = false
+		CurrentGame.update()
+	}
+
+	tpl.ExecuteTemplate(w, "master.html", struct {
+		User     *bgaws.User
+		Name     string
+		Game     Game
+		LoggedIn bool
+		CanEnd   bool
+		GameOver bool
+	}{
+		User:     user,
+		Name:     user.Username,
+		Game:     CurrentGame,
+		LoggedIn: currentlyLoggedIn(w, req),
+		CanEnd:   canEnd,
+		GameOver: gameOver,
+	})
+}
+
 func login(w http.ResponseWriter, req *http.Request) {
 	if currentlyLoggedIn(w, req) {
-		http.Redirect(w, req, "/", http.StatusSeeOther)
+		http.Redirect(w, req, "/profile", http.StatusSeeOther)
 		return
 	}
 
@@ -319,4 +372,26 @@ func logout(w http.ResponseWriter, req *http.Request) {
 	}
 	logger.Printf("%s successfully logged out\n", user.Username)
 	http.Redirect(w, req, "/login", http.StatusSeeOther)
+}
+
+func profile(w http.ResponseWriter, req *http.Request) {
+	if !currentlyLoggedIn(w, req) {
+		http.Redirect(w, req, "/", http.StatusSeeOther)
+		return
+	}
+	user := getUser(w, req)
+	if req.Method == http.MethodPost {
+		http.Redirect(w, req, "/logout", http.StatusSeeOther)
+		return
+	}
+
+	tpl.ExecuteTemplate(w, "profile.html", struct {
+		User     *bgaws.User
+		Name     string
+		LoggedIn bool
+	}{
+		User:     user,
+		Name:     user.Username,
+		LoggedIn: currentlyLoggedIn(w, req),
+	})
 }

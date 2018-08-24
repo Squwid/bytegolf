@@ -44,7 +44,7 @@ func CreateNewGame(w http.ResponseWriter, req *http.Request) (*Game, error) {
 	// diff := req.FormValue("difficulty") // TODO: this is not currently an option
 	diff := "medium"
 	logger.Printf("new game requested with %v holes at %s difficulty\n", holes, diff)
-	qs, err := bgaws.GetQuestions(diff, 3)
+	qs, err := bgaws.GetQuestions(diff, holes)
 	if err != nil {
 		return nil, err
 	}

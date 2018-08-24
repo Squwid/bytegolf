@@ -163,6 +163,8 @@ func current(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	q.Question = strings.Replace(q.Question, "@", "\n", -1)
+
 	player, err := CurrentGame.GetPlayer(user)
 	if err != nil {
 		logger.Printf("an error occurred getting %s from game %s: %v\n", user.Username, CurrentGame.Name, err)

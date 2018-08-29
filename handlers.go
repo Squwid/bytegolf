@@ -397,3 +397,29 @@ func profile(w http.ResponseWriter, req *http.Request) {
 		LoggedIn: currentlyLoggedIn(w, req),
 	})
 }
+
+func rules(w http.ResponseWriter, req *http.Request) {
+	user := getUser(w, req)
+	tpl.ExecuteTemplate(w, "rules.html", struct {
+		User     *bgaws.User
+		Name     string
+		LoggedIn bool
+	}{
+		User:     user,
+		Name:     user.Username,
+		LoggedIn: currentlyLoggedIn(w, req),
+	})
+}
+
+func leaderboard(w http.ResponseWriter, req *http.Request) {
+	user := getUser(w, req)
+	tpl.ExecuteTemplate(w, "leaderboards.html", struct {
+		User     *bgaws.User
+		Name     string
+		LoggedIn bool
+	}{
+		User:     user,
+		Name:     user.Username,
+		LoggedIn: currentlyLoggedIn(w, req),
+	})
+}

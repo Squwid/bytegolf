@@ -1,6 +1,6 @@
 # Byte Golf
 
-Byte Golf is a code solving problem game that awards players with the shortest code that solves the task at hand, just like golf! I have had this idea for a while but I couldn't find a good time to start. So I thought today (6.30.18) is as good as time as any  This is going to be my first commit which is going to include a quick drawing I did for my own reference, pardon my drawing skills. I will try to update this project as often as I can but my 21st birthday and work occupy most of my time.
+Byte Golf is a code solving problem game that awards players with the shortest code that solves the task at hand, just like golf! I have had this idea for a while but I couldn't find a good time to start. So I thought today (6.30.18) is as good as time as any  This is going to be my first commit which is going to include a quick drawing I did for my own reference, pardon my drawing skills.
 
 ## Using Locally
 

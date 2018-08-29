@@ -94,6 +94,8 @@ func main() {
 	http.HandleFunc("/master", master)
 	http.HandleFunc("/logout", logout)
 	http.HandleFunc("/profile", profile)
+	http.HandleFunc("/rules", rules)
+	http.HandleFunc("/leaderboard", leaderboard)
 
 	// listen and serve
 	http.Handle("/favicon.ico", http.NotFoundHandler())

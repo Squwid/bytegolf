@@ -3,5 +3,5 @@ build:
 	go get github.com/satori/go.uuid
 	go get github.com/Squwid/bytegolf/bgaws
 	go get github.com/Squwid/bytegolf/runner
-	go build
 
+	env GOOS=linux go build -ldflags="-s -w" -o bin/bytegolf *.go

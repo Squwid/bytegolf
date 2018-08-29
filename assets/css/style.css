@@ -48,14 +48,16 @@ footer {
 .banner a:active {
 	background-color: lightgray;
 }
-
 .logospace {
 	vertical-align: middle;
 	width: 350px;
 	display: inline-block;
 	height: 100%;
 	height: 80px;
+	color: white;
 	/*background-color: black;*/
+	
+
 }
 
 .bannerlistspace {

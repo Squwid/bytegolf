@@ -2,7 +2,7 @@
 
 <!-- Banner in HTML -->
 <div class="banner">
-    <div class="logospace"> logo space</div>
+    <div class="logospace">Byte Golf</div>
 
     <div class="bannerlistspace"></div>
 
@@ -14,9 +14,12 @@
 
     <div class="bannerlistspace"></div>
 
-    <div class="bannerlist">
-        Rules
-    </div>
+    <a href="/rules">
+        <div class="bannerlist">
+            Rules
+        </div>
+    </a>
+
     <div class="bannerlistspace"></div>
 
     <div class="bannerlist">
@@ -38,21 +41,14 @@
     <div class="footerspace"></div>
     <div class="footercolumn">
         <!-- First Footer Column Area -->
-
-        Footer column 1
-
     </div>
     <div class="footerspace"></div>
     <div class="footercolumn">
         <!-- Second Footer Column Area -->
-        Footer column 2
-
     </div>
     <div class="footerspace"></div>
     <div class="footercolumn">
         <!-- Second Footer Column Area -->
-        Footer column 3
-
     </div>
     <div class="footerspace"></div>
 </div>

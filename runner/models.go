@@ -37,7 +37,7 @@ type CodeSubmission struct {
 type FileInfo struct {
 	FileName string `json:"fileName"`
 	User     string `json:"user"`
-	Game     string `json:"game"`
+	Game     string `json:"game"` // TODO: This was changed in the package to key instead of game
 }
 
 // CodeResponse is the response from the Code Runner API that gets a result

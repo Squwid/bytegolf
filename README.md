@@ -2,11 +2,25 @@
 
 Byte Golf is a code solving problem game that awards players with the shortest code that solves the task at hand, just like golf! I have had this idea for a while but I couldn't find a good time to start. So I thought today (6.30.18) is as good as time as any  This is going to be my first commit which is going to include a quick drawing I did for my own reference, pardon my drawing skills.
 
-## Using Locally
+## Rules
 
-To use this app locally, just clone it to a folder, compile it, and Go! It runs on port `:6017` because I thought it looked like "golf"
+The rules for Byte Golf are suprisingly simple, just write the least code using the standard library of a language of your choice.
 
-## Design Idea
+1. The player with the lowest total characters at the end wins, just like Golf!
+1. Total score consists of characters or "bytes" in a working code solution (whitespace not included). The scores are totaled at the end, and all holes must be completed to a working solution to be able to win. Hence the name "Byte Golf"
+1. Golfing in any order is allowed, as long as all hole solutions are completed by the conclusion of the game.
+1. All code must be written in one of the supported languages and must only use standard libraries.
+
+## Setup
+
+The setup for this app to run locally is pretty simple, just get api credits on JDoodle and get started.
+
+1. Navigate to [JDoodle](https://www.jdoodle.com/compiler-api) and subscribe to obtain tokens to compile the solutions.
+1. Set the environmental variables of both `RUNNER_ID` and `RUNNER_SECRET` to the Client ID and Client Secret on the JDoodle API
+1. Find the config.yml file and configure it to the settings you would like.
+1. The last and final step is to use the `make` command which will compile and start the application.
+
+## Design
 
 ### Origin
 

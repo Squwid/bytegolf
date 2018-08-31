@@ -80,6 +80,7 @@ type code struct {
 func init() {
 	tpl = template.Must(template.ParseGlob("views/*"))
 	logger = log.New(os.Stdout, "[bytegolf] ", log.Ldate|log.Ltime)
+	Config = SetupConfiguration(ParseConfiguration())
 }
 
 func main() {
@@ -99,8 +100,8 @@ func main() {
 
 	// listen and serve
 	http.Handle("/favicon.ico", http.NotFoundHandler())
-	logger.Println("listening on port :6017")
-	http.ListenAndServe(":6017", nil)
+	logger.Printf("listening on port :%s\n", Config.Port)
+	http.ListenAndServe(":"+Config.Port, nil)
 }
 
 func createPlayer(user *bgaws.User) *Player {

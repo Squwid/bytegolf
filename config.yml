@@ -1,4 +1,4 @@
-port: "8000"
+port: "6017"
 storage:
-  save-submissions: true
+  save-submissions: false
   save-logs: true

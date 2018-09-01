@@ -12,8 +12,6 @@ import (
 	uuid "github.com/satori/go.uuid"
 )
 
-//TODO: Games currently dont end
-
 // Errors
 var (
 	ErrGameFull       = errors.New("game already has maximum amount of players")
@@ -33,7 +31,6 @@ func CreateNewGame(w http.ResponseWriter, req *http.Request) (*Game, error) {
 		logger.Println(err)
 		return nil, err
 	}
-	holes = 3 //todo: remove this. It is hardset to 3 right now because there are not enough
 
 	// questions in the bank
 	max, err := strconv.Atoi(req.FormValue("maxplayers"))

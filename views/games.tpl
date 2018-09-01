@@ -23,6 +23,21 @@
     </div>
 </div>
 
+{{end}} {{define "holeselect"}}
+
+<!-- Hole Select -->
+<div class="content">
+    <div class="contentspace"></div>
+    <div class="golfcontainer">
+        <h2>Hole Select</h2>
+        <div class="golfoptions">
+            {{range $index, $hole := .Game.Questions}}
+            <a href="/currentgame/{{$index}}"><h4>{{$index}}. {{$hole.Name}}</h4></a>
+            {{end}}
+        </div>
+    </div>
+</div>
+
 {{end}} {{define "newgame"}}
 
 <!-- New Game in HTML -->
@@ -79,6 +94,7 @@
 
 
 {{end}} {{define "gamemaster"}}
+
 <!-- Game Master Controls -->
 <!-- Content Information -->
 {{if .GameOver}}

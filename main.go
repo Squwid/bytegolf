@@ -12,6 +12,16 @@ import (
 	"github.com/Squwid/bytegolf/runner"
 )
 
+/*
+	TODO:
+	DEV NOTES
+	Currently need to implement the following before alpha
+	* When game ends make another possible to start
+	* Questions need to be able to come from either an API call or external library
+	* Spacing on questions
+	* Remove comments from scoring
+*/
+
 // CurrentGame is the current game of code golf
 var CurrentGame Game
 var tpl *template.Template
@@ -51,18 +61,7 @@ type Game struct {
 		Winning      *Player
 		OtherPlayers []*Player
 	}
-	GameOver bool
-}
-
-// GolfResponse TODO: this structure needs to be removed at some point because we need anon structs eventually
-type golfResponse struct {
-	User     *bgaws.User
-	Name     string
-	LoggedIn bool
-	Game     Game
-	GameName string
-	Question bgaws.Question
-	Hole     int
+	Over bool
 }
 
 type session struct {

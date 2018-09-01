@@ -14,22 +14,24 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 )
 
-const uriAPI = "https://api.jdoodle.com/execute"
+// APIURI is the uri that execututes the api
+const APIURI = "https://api.jdoodle.com/execute"
 const subBucket = "bytegolf-submissions"
 
 // Send todo
 func (s *CodeSubmission) Send() (*CodeResponse, error) {
 	var r CodeResponse
 
-	go s.store() // store concurrently during the send
+	if s.Config.SaveSubmissions {
+		go s.store() // store concurrently during the send
+	}
 
 	reqBody, err := json.Marshal(*s)
 	if err != nil {
 		return &CodeResponse{}, err
 	}
-	// fmt.Println("Body:", string(reqBody))
 
-	req, err := http.NewRequest(http.MethodPost, uriAPI, bytes.NewBuffer(reqBody))
+	req, err := http.NewRequest(http.MethodPost, APIURI, bytes.NewBuffer(reqBody))
 	if err != nil {
 		return &CodeResponse{}, err
 	}
@@ -53,7 +55,10 @@ func (s *CodeSubmission) Send() (*CodeResponse, error) {
 	}
 
 	r.Info = s.Info
-	go r.store() // store response concurrently
+	r.UUID = s.UUID
+	if s.Config.SaveSubmissions {
+		go r.store() // store response concurrently
+	}
 
 	return &r, nil
 }
@@ -67,9 +72,8 @@ func (s *CodeSubmission) store() {
 	uploader := s3manager.NewUploader(sess)
 
 	//
-	key := fmt.Sprintf("%s/%s/sub_%s", s.Info.User, s.Info.Game, s.Info.FileName) // todo: add an id for each submission
+	key := fmt.Sprintf("%s_%s/%s/sub_%s_%s", s.Info.GameName, s.Info.Game, s.Info.User, s.Info.FileName, s.UUID)
 
-	// TODO: deal with this error in the future
 	_, err := uploader.Upload(&s3manager.UploadInput{
 		Bucket: aws.String(subBucket),
 		Key:    aws.String(key),
@@ -90,7 +94,7 @@ func (s *CodeResponse) store() {
 	uploader := s3manager.NewUploader(sess)
 
 	//
-	key := fmt.Sprintf("%s/%s/res_%s", s.Info.User, s.Info.Game, s.Info.FileName) // todo: add an id for each submission
+	key := fmt.Sprintf("%s_%s/%s/res_%s_%s", s.Info.GameName, s.Info.Game, s.Info.User, s.Info.FileName, s.UUID)
 
 	// TODO: deal with this error in the future
 	_, err := uploader.Upload(&s3manager.UploadInput{

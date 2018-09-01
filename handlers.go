@@ -13,9 +13,6 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-/* FIXME: Currently I am returning a structure to each part of the handler but
-instead I should be returning an anon struct back */
-
 func index(w http.ResponseWriter, req *http.Request) {
 	user := getUser(w, req)
 
@@ -26,7 +23,7 @@ func index(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 		// if there is already a current game
-		if CurrentGame.Started {
+		if CurrentGame.Started && !CurrentGame.Over {
 			logger.Printf("%s tried to start a new game but one already exists\n", user.Username)
 			http.Redirect(w, req, "/currentgame", http.StatusSeeOther)
 			return
@@ -39,11 +36,16 @@ func index(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-		http.Redirect(w, req, "/currentgame", http.StatusSeeOther)
+		http.Redirect(w, req, "/currentgame/1", http.StatusSeeOther)
 		return
 	}
 	// if they send the get method
-	tpl.ExecuteTemplate(w, "index.html", golfResponse{
+	tpl.ExecuteTemplate(w, "index.html", struct {
+		User     *bgaws.User
+		Name     string
+		Game     Game
+		LoggedIn bool
+	}{
 		User:     user,
 		Name:     user.Username,
 		Game:     CurrentGame,
@@ -77,6 +79,7 @@ func current(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 	}
+
 	// the player is in the game now
 	// hole logic
 	hole := 1
@@ -92,6 +95,7 @@ func current(w http.ResponseWriter, req *http.Request) {
 		hole = 1
 	}
 	if hole > CurrentGame.Holes {
+		//TODO: Something about this needs to change, could be issues with parsing the hole when submitted
 		hole = CurrentGame.Holes // if the user goes over the limit set the hole to the max
 	}
 
@@ -120,7 +124,8 @@ func current(w http.ResponseWriter, req *http.Request) {
 
 		// Run the code given from the submission
 		client := runner.NewClient()
-		sub := runner.NewCodeSubmission(user.Username, CurrentGame.ID, fileHead.Filename, lang, string(bs), client)
+		config := runner.NewConfiguration(Config.Storage.SaveLogs, Config.Storage.SaveSubmissions)
+		sub := runner.NewCodeSubmission(user.Username, CurrentGame.Name, CurrentGame.ID, fileHead.Filename, lang, string(bs), client, config)
 		resp, err := sub.Send()
 		if err != nil {
 			logger.Println(err.Error())
@@ -163,8 +168,6 @@ func current(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	q.Question = strings.Replace(q.Question, "@", "\n", -1)
-
 	player, err := CurrentGame.GetPlayer(user)
 	if err != nil {
 		logger.Printf("an error occurred getting %s from game %s: %v\n", user.Username, CurrentGame.Name, err)
@@ -172,7 +175,7 @@ func current(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	oc := checkCorrect(hole, player) // get the overall code
-
+	CurrentGame.update()
 	tpl.ExecuteTemplate(w, "currentgame.html", struct {
 		User        *bgaws.User
 		Name        string
@@ -182,6 +185,7 @@ func current(w http.ResponseWriter, req *http.Request) {
 		LoggedIn    bool
 		OverallCode code
 		CurrentCode code
+		GameOver    bool
 	}{
 		User:        user,
 		Name:        user.Username,
@@ -191,6 +195,7 @@ func current(w http.ResponseWriter, req *http.Request) {
 		LoggedIn:    currentlyLoggedIn(w, req),
 		OverallCode: oc,
 		CurrentCode: currentCode,
+		GameOver:    CurrentGame.Over,
 	})
 }
 
@@ -246,8 +251,10 @@ func signup(w http.ResponseWriter, req *http.Request) {
 		http.Redirect(w, req, "/", http.StatusSeeOther)
 		return
 	}
-
-	tpl.ExecuteTemplate(w, "signup.html", golfResponse{
+	tpl.ExecuteTemplate(w, "signup.html", struct {
+		Game     Game
+		LoggedIn bool
+	}{
 		Game:     CurrentGame,
 		LoggedIn: false,
 	})
@@ -283,9 +290,9 @@ func master(w http.ResponseWriter, req *http.Request) {
 		// TODO: change winner logic
 		canEnd = false
 		gameOver = true
-		CurrentGame.GameOver = true
+		CurrentGame.Over = true // Ends the game in the Game objects
 		CurrentGame.update()
-	} else if CurrentGame.GameOver {
+	} else if CurrentGame.Over {
 		canEnd = false
 		CurrentGame.update()
 	}
@@ -349,7 +356,10 @@ func login(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	tpl.ExecuteTemplate(w, "login.html", golfResponse{
+	tpl.ExecuteTemplate(w, "login.html", struct {
+		Game     Game
+		LoggedIn bool
+	}{
 		Game:     CurrentGame,
 		LoggedIn: false,
 	})

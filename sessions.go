@@ -26,7 +26,7 @@ func getUser(w http.ResponseWriter, req *http.Request) *bgaws.User {
 			return u
 		}
 	}
-	u, _ := bgaws.GetUser(currentSessions[cookie.Value].Username) //TODO: when does this error get called?
+	u, _ := bgaws.GetUser(currentSessions[cookie.Value].Username)
 	users = append(users, u)
 	return u
 }
@@ -42,7 +42,7 @@ func currentlyLoggedIn(w http.ResponseWriter, req *http.Request) bool {
 	if ok {
 		// if session currently exists
 		session.lastActivity = time.Now()
-		currentSessions[cookie.Value] = session // todo: does this do what i think it does?
+		currentSessions[cookie.Value] = session
 	}
 	// refresh session
 	// c.MaxAge = sessionLength

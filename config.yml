@@ -1,4 +1,4 @@
 port: "8000"
 storage:
-  logs: "true"
-  location: aws
+  save-submissions: true
+  save-logs: true

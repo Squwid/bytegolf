@@ -17,8 +17,8 @@ type Configuration struct {
 
 // Storage TODO:
 type Storage struct {
-	Logs     string `yaml:"logs"`
-	Location string `yaml:"location"`
+	SaveSubmissions bool `yaml:"save-submissions"`
+	SaveLogs        bool `yaml:"save-logs"`
 }
 
 // ParseConfiguration uses the config.yml file to make an object to use

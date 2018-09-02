@@ -53,4 +53,17 @@
     <div class="footerspace"></div>
 </div>
 
+{{end}} {{define "admin"}}
+<div class="content">
+    <div class="contentspace"></div>
+    <div class="golfcontainer">
+        <h2>Admin Settings</h2>
+        <div class="golfoptions">
+            <h4>Admin settings would go here</h4>
+        </div>
+    </div>
+    <div class="gamespace">
+    </div>
+</div>
+<div class="content"></div>
 {{end}}

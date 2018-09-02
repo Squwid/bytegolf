@@ -11,8 +11,16 @@ var Config *Configuration
 
 // Configuration holds the configuration the player sets up when he boots the game on his machine
 type Configuration struct {
-	Port    string `yaml:"port"`
-	Storage Storage
+	Port      string    `yaml:"port"`
+	Questions Questions `yaml:"questions"`
+	Storage   Storage   `yaml:"storage"`
+}
+
+// Questions todo:
+type Questions struct {
+	UseAWS bool   `yaml:"use-aws"`
+	Table  string `yaml:"table"`
+	Region string `yaml:"region"`
 }
 
 // Storage TODO:
@@ -38,6 +46,7 @@ func ParseConfiguration() (*Configuration, error) {
 
 // SetupConfiguration sets the global configuration using the ParseConfiguration method
 func SetupConfiguration(c *Configuration, err error) *Configuration {
+
 	if err != nil {
 		logger.Printf("error setting up configuration: %v\n", err)
 		panic(err)

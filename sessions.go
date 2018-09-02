@@ -4,11 +4,11 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/Squwid/bytegolf/bgaws"
+	"github.com/Squwid/bytegolf/aws"
 	uuid "github.com/satori/go.uuid"
 )
 
-func getUser(w http.ResponseWriter, req *http.Request) *bgaws.User {
+func getUser(w http.ResponseWriter, req *http.Request) *aws.User {
 	var cookie *http.Cookie
 	cookie, err := req.Cookie("session")
 	if err != nil {
@@ -26,7 +26,7 @@ func getUser(w http.ResponseWriter, req *http.Request) *bgaws.User {
 			return u
 		}
 	}
-	u, _ := bgaws.GetUser(currentSessions[cookie.Value].Username)
+	u, _ := aws.GetUser(currentSessions[cookie.Value].Username, Config.Questions.Region)
 	users = append(users, u)
 	return u
 }

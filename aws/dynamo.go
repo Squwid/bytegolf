@@ -1,4 +1,4 @@
-package bgaws
+package aws
 
 import (
 	"github.com/aws/aws-sdk-go/aws"
@@ -9,13 +9,12 @@ import (
 
 const (
 	usersTable = "bytegolf-users"
-	qsTable    = "bytegolf-questions"
 )
 
 // GetUser todo
-func GetUser(username string) (*User, error) {
+func GetUser(username, region string) (*User, error) {
 	sess := session.Must(session.NewSessionWithOptions(session.Options{
-		Config: aws.Config{Region: aws.String("us-east-1")},
+		Config: aws.Config{Region: aws.String(region)},
 	}))
 
 	svc := dynamodb.New(sess)
@@ -41,11 +40,10 @@ func GetUser(username string) (*User, error) {
 }
 
 // CreateUser todo:
-func CreateUser(user *User) error {
+func CreateUser(user *User, region string) error {
 	sess := session.Must(session.NewSessionWithOptions(session.Options{
-		Config: aws.Config{Region: aws.String("us-east-1")},
+		Config: aws.Config{Region: aws.String(region)},
 	}))
-
 	svc := dynamodb.New(sess)
 
 	av, err := dynamodbattribute.MarshalMap(*user)
@@ -67,8 +65,8 @@ func CreateUser(user *User) error {
 }
 
 // UserExist checks to see if a user exists
-func UserExist(username string) bool {
-	user, _ := GetUser(username)
+func UserExist(username, region string) bool {
+	user, _ := GetUser(username, region)
 	if len(user.Username) > 0 {
 		return true
 	}

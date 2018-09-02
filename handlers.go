@@ -1,13 +1,15 @@
 package main
 
 import (
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/Squwid/bytegolf/bgaws"
+	"github.com/Squwid/bytegolf/aws"
+	"github.com/Squwid/bytegolf/questions"
 	"github.com/Squwid/bytegolf/runner"
 	uuid "github.com/satori/go.uuid"
 	"golang.org/x/crypto/bcrypt"
@@ -41,7 +43,7 @@ func index(w http.ResponseWriter, req *http.Request) {
 	}
 	// if they send the get method
 	tpl.ExecuteTemplate(w, "index.html", struct {
-		User     *bgaws.User
+		User     *aws.User
 		Name     string
 		Game     Game
 		LoggedIn bool
@@ -95,8 +97,7 @@ func current(w http.ResponseWriter, req *http.Request) {
 		hole = 1
 	}
 	if hole > CurrentGame.Holes {
-		//TODO: Something about this needs to change, could be issues with parsing the hole when submitted
-		hole = CurrentGame.Holes // if the user goes over the limit set the hole to the max
+		http.Redirect(w, req, fmt.Sprintf("/currentgame/%v", CurrentGame.Holes), http.StatusSeeOther)
 	}
 
 	var currentCode code
@@ -177,11 +178,11 @@ func current(w http.ResponseWriter, req *http.Request) {
 	oc := checkCorrect(hole, player) // get the overall code
 	CurrentGame.update()
 	tpl.ExecuteTemplate(w, "currentgame.html", struct {
-		User        *bgaws.User
+		User        *aws.User
 		Name        string
 		Game        Game
 		Hole        int
-		Question    bgaws.Question
+		Question    questions.Question
 		LoggedIn    bool
 		OverallCode code
 		CurrentCode code
@@ -212,7 +213,7 @@ func signup(w http.ResponseWriter, req *http.Request) {
 		reqPassword := req.FormValue("password")
 
 		// Check if username is already taken
-		if bgaws.UserExist(reqName) {
+		if aws.UserExist(reqName, Config.Questions.Region) {
 			logger.Printf("user tried to register with %s but it was taken\n", reqName)
 			http.Error(w, "Username already taken", http.StatusForbidden)
 			return
@@ -225,11 +226,12 @@ func signup(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-		newUser := &bgaws.User{
+		newUser := &aws.User{
 			Username: reqName,
 			Password: string(bs),
+			Role:     "default",
 		}
-		err = bgaws.CreateUser(newUser)
+		err = aws.CreateUser(newUser, Config.Questions.Region)
 		if err != nil {
 			logger.Println(err.Error())
 			http.Error(w, "an unexpected error occured", http.StatusInternalServerError)
@@ -298,7 +300,7 @@ func master(w http.ResponseWriter, req *http.Request) {
 	}
 
 	tpl.ExecuteTemplate(w, "master.html", struct {
-		User     *bgaws.User
+		User     *aws.User
 		Name     string
 		Game     Game
 		LoggedIn bool
@@ -325,13 +327,13 @@ func login(w http.ResponseWriter, req *http.Request) {
 		reqName := req.FormValue("username")
 		reqPass := req.FormValue("password")
 
-		if !bgaws.UserExist(reqName) {
+		if !aws.UserExist(reqName, Config.Questions.Region) {
 			logger.Printf("user tried to login with %s but it does not exist\n", reqName)
 			http.Error(w, "That user does not exist", http.StatusForbidden)
 			return
 		}
 
-		user, _ := bgaws.GetUser(reqName)
+		user, _ := aws.GetUser(reqName, Config.Questions.Region)
 		err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(reqPass))
 		if err != nil {
 			logger.Printf("%s tried to login with incorrect password\n", user.Username)
@@ -398,7 +400,7 @@ func profile(w http.ResponseWriter, req *http.Request) {
 	}
 
 	tpl.ExecuteTemplate(w, "profile.html", struct {
-		User     *bgaws.User
+		User     *aws.User
 		Name     string
 		LoggedIn bool
 	}{
@@ -411,7 +413,7 @@ func profile(w http.ResponseWriter, req *http.Request) {
 func rules(w http.ResponseWriter, req *http.Request) {
 	user := getUser(w, req)
 	tpl.ExecuteTemplate(w, "rules.html", struct {
-		User     *bgaws.User
+		User     *aws.User
 		Name     string
 		LoggedIn bool
 	}{
@@ -424,7 +426,29 @@ func rules(w http.ResponseWriter, req *http.Request) {
 func leaderboard(w http.ResponseWriter, req *http.Request) {
 	user := getUser(w, req)
 	tpl.ExecuteTemplate(w, "leaderboards.html", struct {
-		User     *bgaws.User
+		User     *aws.User
+		Name     string
+		LoggedIn bool
+	}{
+		User:     user,
+		Name:     user.Username,
+		LoggedIn: currentlyLoggedIn(w, req),
+	})
+}
+
+func admin(w http.ResponseWriter, req *http.Request) {
+	if !currentlyLoggedIn(w, req) {
+		http.Redirect(w, req, "/", http.StatusSeeOther)
+		return
+	}
+	user := getUser(w, req)
+
+	if user.Role != "admin" {
+		logger.Printf("%s tried to see /admin but has permission %s", user.Username, user.Role)
+		http.Redirect(w, req, "/", http.StatusSeeOther)
+	}
+	tpl.ExecuteTemplate(w, "admin.html", struct {
+		User     *aws.User
 		Name     string
 		LoggedIn bool
 	}{

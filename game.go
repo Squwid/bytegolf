@@ -7,7 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Squwid/bytegolf/bgaws"
+	"github.com/Squwid/bytegolf/aws"
+	"github.com/Squwid/bytegolf/questions"
 	"github.com/Squwid/bytegolf/runner"
 	uuid "github.com/satori/go.uuid"
 )
@@ -41,9 +42,27 @@ func CreateNewGame(w http.ResponseWriter, req *http.Request) (*Game, error) {
 	// diff := req.FormValue("difficulty") // TODO: this is not currently an option
 	diff := "medium"
 	logger.Printf("new game requested with %v holes at %s difficulty\n", holes, diff)
-	qs, err := bgaws.GetQuestions(diff, holes)
-	if err != nil {
-		return nil, err
+
+	// Get the questions either from AWS or local
+	qs := make(map[int]questions.Question)
+	if Config.Questions.UseAWS {
+		logger.Printf("getting questions from aws\n")
+		m, err := questions.GetQuestionsDynamo(holes, diff, Config.Questions.Table, Config.Questions.Region)
+		if err != nil {
+			return nil, err
+		}
+		for k, v := range m {
+			qs[k] = v
+		}
+	} else {
+		logger.Printf("getting questions locally\n")
+		m, err := questions.GetQuestionsLocal(holes, diff)
+		if err != nil {
+			return nil, err
+		}
+		for k, v := range m {
+			qs[k] = v
+		}
 	}
 
 	user := getUser(w, req)
@@ -71,7 +90,7 @@ func CreateNewGame(w http.ResponseWriter, req *http.Request) (*Game, error) {
 }
 
 // AddGameUser adds a user to the specified game
-func (game *Game) AddGameUser(user *bgaws.User) error {
+func (game *Game) AddGameUser(user *aws.User) error {
 	if game.MaxPlayers == game.CurrentPlayers {
 		return ErrGameFull
 	}
@@ -102,7 +121,7 @@ func (game *Game) AddGamePlayer(player *Player) error {
 }
 
 // GetPlayer gets a player from the game
-func (game *Game) GetPlayer(user *bgaws.User) (*Player, error) {
+func (game *Game) GetPlayer(user *aws.User) (*Player, error) {
 	var player *Player
 	for _, g := range game.Players {
 		if g.User.Username == user.Username {
@@ -113,7 +132,7 @@ func (game *Game) GetPlayer(user *bgaws.User) (*Player, error) {
 }
 
 // UserInGame checks to see if a user is in a specific game
-func (game *Game) UserInGame(user *bgaws.User) bool {
+func (game *Game) UserInGame(user *aws.User) bool {
 	for _, p := range game.Players {
 		if p.User.Username == user.Username {
 			return true

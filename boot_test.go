@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"testing"
 
 	"gopkg.in/yaml.v2"
@@ -32,5 +33,6 @@ func TestGet(t *testing.T) {
 		t.Log(err.Error())
 		t.Fail()
 	}
-	t.Logf("\nPORT: %v\n", c.Port)
+	fmt.Println(*c)
+
 }

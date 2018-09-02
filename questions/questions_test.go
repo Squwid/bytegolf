@@ -1,4 +1,4 @@
-package bgaws
+package questions
 
 import (
 	"encoding/json"
@@ -6,26 +6,28 @@ import (
 	"testing"
 )
 
-func TestDynamoGet(t *testing.T) {
-	_, err := GetUser("phil")
-	if err != nil {
-		t.Log("Could not get user ben", err)
-		t.Fail()
+func TestCreateQuestions(t *testing.T) {
+	q1 := Question{
+		ID:         "1",
+		Name:       "Sample Question 1",
+		Question:   "What is the first question ever?",
+		Answer:     "That one",
+		Difficulty: "hard",
 	}
-}
-
-func TestDynamoPost(t *testing.T) {
-	ben := User{
-		Username: "username",
-		Password: "password",
-		Role:     "user",
+	q2 := Question{
+		ID:         "2",
+		Name:       "Sample Question 2",
+		Question:   "What was the answer to the second question?",
+		Answer:     "Whats the second question",
+		Difficulty: "easy",
 	}
-
-	err := CreateUser(&ben)
+	var qs = []Question{q1, q2}
+	bs, err := json.Marshal(qs)
 	if err != nil {
 		t.Log(err)
 		t.Fail()
 	}
+	t.Log(string(bs))
 }
 
 // so far we have 1-5 project euler problems inserted into the database

@@ -1,4 +1,8 @@
 port: "6017"
+questions:
+  use-aws: true
+  table: "bytegolf-questions"
+  region: "us-east-1"
 storage:
   save-submissions: false
   save-logs: true

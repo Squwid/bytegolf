@@ -8,7 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Squwid/bytegolf/bgaws"
+	"github.com/Squwid/bytegolf/aws"
+	"github.com/Squwid/bytegolf/questions"
 	"github.com/Squwid/bytegolf/runner"
 )
 
@@ -16,8 +17,6 @@ import (
 	TODO:
 	DEV NOTES
 	Currently need to implement the following before alpha
-	* When game ends make another possible to start
-	* Questions need to be able to come from either an API call or external library
 	* Spacing on questions
 	* Remove comments from scoring
 */
@@ -28,13 +27,13 @@ var tpl *template.Template
 var logger *log.Logger
 var currentSessions = map[string]session{}
 var games = map[string]*Game{}
-var users []*bgaws.User
+var users []*aws.User
 
 // var currentGame = map[string]Game{} // maps a players name to a game
 
 // Player struct that holds each players hole submissions
 type Player struct {
-	User         bgaws.User    // holds username, password, and role
+	User         aws.User      // holds username, password, and role
 	Scores       map[int]int64 // Scores holds each hole and what the player scored on it
 	Correct      map[int]bool  // whether or not the player got the scores correct
 	Output       map[int]string
@@ -55,7 +54,7 @@ type Game struct {
 	StartedTime    time.Time
 	Started        bool
 	Players        []*Player
-	Questions      map[int]bgaws.Question
+	Questions      map[int]questions.Question
 	Owner          *Player
 	Leaderboard    struct {
 		Winning      *Player
@@ -96,6 +95,7 @@ func main() {
 	http.HandleFunc("/profile", profile)
 	http.HandleFunc("/rules", rules)
 	http.HandleFunc("/leaderboard", leaderboard)
+	http.HandleFunc("/admin", admin)
 
 	// listen and serve
 	http.Handle("/favicon.ico", http.NotFoundHandler())
@@ -103,7 +103,7 @@ func main() {
 	http.ListenAndServe(":"+Config.Port, nil)
 }
 
-func createPlayer(user *bgaws.User) *Player {
+func createPlayer(user *aws.User) *Player {
 	return &Player{
 		User:         *user,
 		Scores:       make(map[int]int64),
@@ -115,7 +115,7 @@ func createPlayer(user *bgaws.User) *Player {
 	}
 }
 
-func checkResponse(resp *runner.CodeResponse, q *bgaws.Question) bool {
+func checkResponse(resp *runner.CodeResponse, q *questions.Question) bool {
 	if strings.TrimSpace(strings.ToLower(resp.Output)) == strings.TrimSpace(strings.ToLower(q.Answer)) {
 		return true
 	}
@@ -136,7 +136,7 @@ func checkCorrect(hole int, p *Player) code {
 	return c
 }
 
-func score(sub *runner.CodeSubmission, q *bgaws.Question) int64 {
+func score(sub *runner.CodeSubmission, q *questions.Question) int64 {
 	// TODO: now is just the length of the code, however i would like a better score system in the future
 	return count(sub.Script)
 }

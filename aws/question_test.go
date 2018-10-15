@@ -1,4 +1,4 @@
-package questions
+package aws
 
 import (
 	"encoding/json"
@@ -35,7 +35,6 @@ func TestCreateQuestion(t *testing.T) {
 	question := Question{
 		Name: "1000-digit Fibonacci number",
 		Question: `The Fibonacci sequence is defined by the recurrence relation:
-
 		Fn = Fn−1 + Fn−2, where F1 = 1 and F2 = 1.
 		Hence the first 12 terms will be:
 		
@@ -65,11 +64,22 @@ func TestCreateQuestion(t *testing.T) {
 	}
 }
 
+func TestGetQuestions(t *testing.T) {
+	qs, err := GetQuestionsDynamo(4, "medium")
+	if err != nil {
+		t.Logf("error getting questions from dynamo: %v\n", err)
+		t.Fail()
+	}
+	if len(qs) != 4 {
+		t.Logf("expecting 4 questions got %v\n", len(qs))
+		t.Fail()
+	}
+}
+
 func TestPrintQuestion(t *testing.T) {
 	q := Question{
 		Name: "Summation of primes",
 		Question: `The sum of the primes below 10 is 2 + 3 + 5 + 7 = 17.
-
 		Find the sum of all the primes below two million.`,
 		Answer:     "104743",
 		Difficulty: "medium",
@@ -77,15 +87,4 @@ func TestPrintQuestion(t *testing.T) {
 	}
 	bs, _ := json.Marshal(q)
 	fmt.Println(string(bs))
-}
-
-func TestGetQuestion(t *testing.T) {
-	qs, err := GetQuestions("medium", 3)
-	if err != nil {
-		t.Log(err)
-		t.Fail()
-	}
-
-	t.Logf("found %v from question medium\n", len(qs))
-	t.Logf("\t%v\n", qs)
 }

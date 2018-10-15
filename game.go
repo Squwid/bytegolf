@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/Squwid/bytegolf/aws"
-	"github.com/Squwid/bytegolf/questions"
 	"github.com/Squwid/bytegolf/runner"
 	uuid "github.com/satori/go.uuid"
 )
@@ -44,10 +43,10 @@ func CreateNewGame(w http.ResponseWriter, req *http.Request) (*Game, error) {
 	logger.Printf("new game requested with %v holes at %s difficulty\n", holes, diff)
 
 	// Get the questions either from AWS or local
-	qs := make(map[int]questions.Question)
+	qs := make(map[int]aws.Question)
 	if Config.Questions.UseAWS {
 		logger.Printf("getting questions from aws\n")
-		m, err := questions.GetQuestionsDynamo(holes, diff, Config.Questions.Table, Config.Questions.Region)
+		m, err := aws.GetQuestionsDynamo(holes, diff)
 		if err != nil {
 			return nil, err
 		}
@@ -56,7 +55,7 @@ func CreateNewGame(w http.ResponseWriter, req *http.Request) (*Game, error) {
 		}
 	} else {
 		logger.Printf("getting questions locally\n")
-		m, err := questions.GetQuestionsLocal(holes, diff)
+		m, err := aws.GetQuestionsLocal(holes, diff)
 		if err != nil {
 			return nil, err
 		}
@@ -85,7 +84,7 @@ func CreateNewGame(w http.ResponseWriter, req *http.Request) (*Game, error) {
 		logger.Println(err)
 		return &g, err
 	}
-	logger.Printf("%s created new game %s\n", user.Username, CurrentGame.Name)
+	logger.Printf("%s created new game %s\n", user.Email, CurrentGame.Name)
 	return &g, nil
 }
 
@@ -98,9 +97,9 @@ func (game *Game) AddGameUser(user *aws.User) error {
 	game.CurrentPlayers++ // add the player to list of players
 	game.Players = append(game.Players, player)
 
-	logger.Printf("%s added to game %s\n", user.Username, game.Name)
+	logger.Printf("%s added to game %s\n", user.Email, game.Name)
 	logger.Printf("there are now %v people in game %s\n", game.CurrentPlayers, game.Name)
-	games[player.User.Username] = game
+	games[player.User.Email] = game
 	game.update()
 	return nil
 }
@@ -113,9 +112,9 @@ func (game *Game) AddGamePlayer(player *Player) error {
 	game.CurrentPlayers++
 	game.Players = append(game.Players, player)
 
-	logger.Printf("%s added to game %s\n", player.User.Username, game.Name)
+	logger.Printf("%s added to game %s\n", player.User.Email, game.Name)
 	logger.Printf("there are now %v people in game %s\n", game.CurrentPlayers, game.Name)
-	games[player.User.Username] = game
+	games[player.User.Email] = game
 	game.update()
 	return nil
 }
@@ -124,7 +123,7 @@ func (game *Game) AddGamePlayer(player *Player) error {
 func (game *Game) GetPlayer(user *aws.User) (*Player, error) {
 	var player *Player
 	for _, g := range game.Players {
-		if g.User.Username == user.Username {
+		if g.User.Email == user.Email {
 			return g, nil
 		}
 	}
@@ -134,7 +133,7 @@ func (game *Game) GetPlayer(user *aws.User) (*Player, error) {
 // UserInGame checks to see if a user is in a specific game
 func (game *Game) UserInGame(user *aws.User) bool {
 	for _, p := range game.Players {
-		if p.User.Username == user.Username {
+		if p.User.Email == user.Email {
 			return true
 		}
 	}
@@ -144,7 +143,7 @@ func (game *Game) UserInGame(user *aws.User) bool {
 // PlayerInGame checks to see if a certain player is in a game
 func (game *Game) PlayerInGame(player *Player) bool {
 	for _, p := range game.Players {
-		if p.User.Username == player.User.Username {
+		if p.User.Email == player.User.Email {
 			return true
 		}
 	}
@@ -181,7 +180,7 @@ func (game *Game) Score(p *Player, hole int, sub *runner.CodeSubmission, resp *r
 	p.TotalScore = totalScore
 	p.HolesCorrect = totalHoles
 	p.Average = float64(p.TotalScore) / float64(p.HolesCorrect)
-	logger.Printf("%s now has %v total holes correct at %v points", p.User.Username, p.HolesCorrect, p.TotalScore)
+	logger.Printf("%s now has %v total holes correct at %v points", p.User.Email, p.HolesCorrect, p.TotalScore)
 	game.update()
 	return nil
 }
@@ -214,7 +213,7 @@ func (game *Game) update() {
 	}
 	var others []*Player
 	for _, p := range game.Players {
-		if p.User.Username != winning.User.Username {
+		if p.User.Email != winning.User.Email {
 			others = append(others, p)
 		}
 	}

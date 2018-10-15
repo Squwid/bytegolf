@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/Squwid/bytegolf/aws"
-	"github.com/Squwid/bytegolf/questions"
 	"github.com/Squwid/bytegolf/runner"
 )
 
@@ -59,7 +58,7 @@ type Game struct {
 	StartedTime    time.Time
 	Started        bool
 	Players        []*Player
-	Questions      map[int]questions.Question
+	Questions      map[int]aws.Question
 	Owner          *Player
 	Leaderboard    struct {
 		Winning      *Player
@@ -120,7 +119,7 @@ func createPlayer(user *aws.User) *Player {
 	}
 }
 
-func checkResponse(resp *runner.CodeResponse, q *questions.Question) bool {
+func checkResponse(resp *runner.CodeResponse, q *aws.Question) bool {
 	if strings.TrimSpace(strings.ToLower(resp.Output)) == strings.TrimSpace(strings.ToLower(q.Answer)) {
 		return true
 	}
@@ -141,7 +140,7 @@ func checkCorrect(hole int, p *Player) code {
 	return c
 }
 
-func score(sub *runner.CodeSubmission, q *questions.Question) int64 {
+func score(sub *runner.CodeSubmission, q *aws.Question) int64 {
 	// TODO: now is just the length of the code, however i would like a better score system in the future
 	return count(sub.Script)
 }

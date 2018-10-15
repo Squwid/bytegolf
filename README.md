@@ -2,6 +2,10 @@
 
 Byte Golf is a code solving problem game that awards players with the shortest code that solves the task at hand, just like golf! I have had this idea for a while but I couldn't find a good time to start. So I thought today (6.30.18) is as good as time as any  This is going to be my first commit which is going to include a quick drawing I did for my own reference, pardon my drawing skills.
 
+## CURRENT UPDATE (OCTOBER 2018)
+
+I currently have started a company with my roommate and am in my senior year at college, so this project will continue to be updated at a reduced speed. However I want to change the scope of the project to host externally instead of local on an ec2 instance. I already own the domain byte.golf so all I have to do is make a site for it and upgrade security. This project is open source so I want to find a good balance between security and open source to show what I can accomplish.
+
 ## Rules
 
 The rules for Byte Golf are suprisingly simple, just write the least code using the standard library of a language of your choice.

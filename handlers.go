@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/Squwid/bytegolf/aws"
-	"github.com/Squwid/bytegolf/questions"
 	"github.com/Squwid/bytegolf/runner"
 	uuid "github.com/satori/go.uuid"
 	"golang.org/x/crypto/bcrypt"
@@ -26,7 +25,7 @@ func index(w http.ResponseWriter, req *http.Request) {
 		}
 		// if there is already a current game
 		if CurrentGame.Started && !CurrentGame.Over {
-			logger.Printf("%s tried to start a new game but one already exists\n", user.Username)
+			logger.Printf("%s tried to start a new game but one already exists\n", user.Email)
 			http.Redirect(w, req, "/currentgame/1", http.StatusSeeOther)
 			return
 		}
@@ -49,7 +48,7 @@ func index(w http.ResponseWriter, req *http.Request) {
 		LoggedIn bool
 	}{
 		User:     user,
-		Name:     user.Username,
+		Name:     user.Email,
 		Game:     CurrentGame,
 		LoggedIn: currentlyLoggedIn(w, req),
 	})
@@ -57,7 +56,6 @@ func index(w http.ResponseWriter, req *http.Request) {
 
 // current holds the code for the submission along with joining a current game
 func current(w http.ResponseWriter, req *http.Request) {
-
 	// if the player isnt logged in send them to the login screen
 	if !currentlyLoggedIn(w, req) {
 		http.Redirect(w, req, "/login", http.StatusSeeOther)
@@ -69,7 +67,7 @@ func current(w http.ResponseWriter, req *http.Request) {
 	// if the user is not in a game check to see if there is a current game
 	if !CurrentGame.UserInGame(user) {
 		if !CurrentGame.Started {
-			logger.Printf("%s tried to join a game but there is not one\n", user.Username)
+			logger.Printf("%s tried to join a game but there is not one\n", user.Email)
 			http.Error(w, "there is not a current game", http.StatusNoContent)
 			return
 		}
@@ -113,7 +111,7 @@ func current(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 		defer file.Close()
-		logger.Printf("%s uploading file to server %s\n", user.Username, fileHead.Filename)
+		logger.Printf("%s uploading file to server %s\n", user.Email, fileHead.Filename)
 
 		// read the file submitted
 		bs, err := ioutil.ReadAll(file)
@@ -126,7 +124,7 @@ func current(w http.ResponseWriter, req *http.Request) {
 		// Run the code given from the submission
 		client := runner.NewClient()
 		config := runner.NewConfiguration(Config.Storage.SaveLogs, Config.Storage.SaveSubmissions)
-		sub := runner.NewCodeSubmission(user.Username, CurrentGame.Name, CurrentGame.ID, fileHead.Filename, lang, string(bs), client, config)
+		sub := runner.NewCodeSubmission(user.Email, CurrentGame.Name, CurrentGame.ID, fileHead.Filename, lang, string(bs), client, config)
 		resp, err := sub.Send()
 		if err != nil {
 			logger.Println(err.Error())
@@ -135,31 +133,31 @@ func current(w http.ResponseWriter, req *http.Request) {
 		}
 		correct, err := CurrentGame.Check(resp, hole)
 		if err != nil {
-			logger.Printf("error checking question %v for %s : %v\n", hole, user.Username, err)
+			logger.Printf("error checking question %v for %s : %v\n", hole, user.Email, err)
 			http.Error(w, err.Error(), http.StatusBadRequest) // this has to be the users fault if the error is not nil
 			return
 		}
 		player, err := CurrentGame.GetPlayer(user)
 		if err != nil {
-			logger.Printf("an error occurred getting %s from game %s: %v\n", user.Username, CurrentGame.Name, err)
+			logger.Printf("an error occurred getting %s from game %s: %v\n", user.Email, CurrentGame.Name, err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		if !correct {
 			currentCode.Output = resp.Output
 			currentCode.Show = true
-			logger.Printf("%s got hole %v incorrect\n", user.Username, hole)
+			logger.Printf("%s got hole %v incorrect\n", user.Email, hole)
 		} else {
 			err = CurrentGame.Score(player, hole, sub, resp)
 			if err != nil {
-				logger.Printf("an error occurred scoring %s submission \n", player.User.Username)
+				logger.Printf("an error occurred scoring %s submission \n", player.User.Email)
 				http.Error(w, "an error occurred scoring your submission", http.StatusInternalServerError)
 				return
 			}
 			currentCode.Output = resp.Output
 			currentCode.Show = true
 			currentCode.Correct = true
-			logger.Printf("%s got hole %v correct!\n", user.Username, hole)
+			logger.Printf("%s got hole %v correct!\n", user.Email, hole)
 		}
 	}
 
@@ -171,7 +169,7 @@ func current(w http.ResponseWriter, req *http.Request) {
 
 	player, err := CurrentGame.GetPlayer(user)
 	if err != nil {
-		logger.Printf("an error occurred getting %s from game %s: %v\n", user.Username, CurrentGame.Name, err)
+		logger.Printf("an error occurred getting %s from game %s: %v\n", user.Email, CurrentGame.Name, err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -182,14 +180,14 @@ func current(w http.ResponseWriter, req *http.Request) {
 		Name        string
 		Game        Game
 		Hole        int
-		Question    questions.Question
+		Question    aws.Question
 		LoggedIn    bool
 		OverallCode code
 		CurrentCode code
 		GameOver    bool
 	}{
 		User:        user,
-		Name:        user.Username,
+		Name:        user.Email,
 		Game:        CurrentGame,
 		Hole:        hole,
 		Question:    q,
@@ -213,7 +211,8 @@ func signup(w http.ResponseWriter, req *http.Request) {
 		reqPassword := req.FormValue("password")
 
 		// Check if username is already taken
-		if aws.UserExist(reqName, Config.Questions.Region) {
+		exist, _ := aws.UserExist(reqName)
+		if exist {
 			logger.Printf("user tried to register with %s but it was taken\n", reqName)
 			http.Error(w, "Username already taken", http.StatusForbidden)
 			return
@@ -227,11 +226,11 @@ func signup(w http.ResponseWriter, req *http.Request) {
 		}
 
 		newUser := &aws.User{
-			Username: reqName,
+			Email:    reqName,
 			Password: string(bs),
 			Role:     "default",
 		}
-		err = aws.CreateUser(newUser, Config.Questions.Region)
+		err = newUser.Store()
 		if err != nil {
 			logger.Println(err.Error())
 			http.Error(w, "an unexpected error occured", http.StatusInternalServerError)
@@ -246,10 +245,10 @@ func signup(w http.ResponseWriter, req *http.Request) {
 
 		http.SetCookie(w, c)
 		currentSessions[c.Value] = session{
-			Username:     newUser.Username,
+			Username:     newUser.Email,
 			lastActivity: time.Now(),
 		}
-		logger.Printf("%s successfully signed up\n", newUser.Username)
+		logger.Printf("%s successfully signed up\n", newUser.Email)
 		http.Redirect(w, req, "/", http.StatusSeeOther)
 		return
 	}
@@ -280,11 +279,11 @@ func master(w http.ResponseWriter, req *http.Request) {
 	player, err := CurrentGame.GetPlayer(user)
 	if err != nil {
 		http.Error(w, "an internal server error occurred", http.StatusInternalServerError)
-		logger.Printf("an error occurred getting player %s: %v", user.Username, err)
+		logger.Printf("an error occurred getting player %s: %v", user.Email, err)
 		return
 	}
 
-	if CurrentGame.Owner.User.Username == player.User.Username {
+	if CurrentGame.Owner.User.Email == player.User.Email {
 		canEnd = true
 	}
 	// They are the owner of the CurrentGame if the code gets here
@@ -308,7 +307,7 @@ func master(w http.ResponseWriter, req *http.Request) {
 		GameOver bool
 	}{
 		User:     user,
-		Name:     user.Username,
+		Name:     user.Email,
 		Game:     CurrentGame,
 		LoggedIn: currentlyLoggedIn(w, req),
 		CanEnd:   canEnd,
@@ -327,16 +326,15 @@ func login(w http.ResponseWriter, req *http.Request) {
 		reqName := req.FormValue("username")
 		reqPass := req.FormValue("password")
 
-		if !aws.UserExist(reqName, Config.Questions.Region) {
+		exist, user := aws.UserExist(reqName)
+		if !exist {
 			logger.Printf("user tried to login with %s but it does not exist\n", reqName)
 			http.Error(w, "That user does not exist", http.StatusForbidden)
 			return
 		}
-
-		user, _ := aws.GetUser(reqName, Config.Users.Region, Config.Users.Table)
 		err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(reqPass))
 		if err != nil {
-			logger.Printf("%s tried to login with incorrect password\n", user.Username)
+			logger.Printf("%s tried to login with incorrect password\n", user.Email)
 			http.Error(w, "Username and/or password do not match", http.StatusForbidden)
 			return
 		}
@@ -353,7 +351,7 @@ func login(w http.ResponseWriter, req *http.Request) {
 			Username:     reqName,
 			lastActivity: time.Now(),
 		}
-		logger.Printf("%s successfully logged in\n", user.Username)
+		logger.Printf("%s successfully logged in\n", user.Email)
 		http.Redirect(w, req, "/", http.StatusSeeOther)
 		return
 	}
@@ -384,7 +382,7 @@ func logout(w http.ResponseWriter, req *http.Request) {
 		Value:  "",
 		MaxAge: -1,
 	}
-	logger.Printf("%s successfully logged out\n", user.Username)
+	logger.Printf("%s successfully logged out\n", user.Email)
 	http.Redirect(w, req, "/login", http.StatusSeeOther)
 }
 
@@ -405,7 +403,7 @@ func profile(w http.ResponseWriter, req *http.Request) {
 		LoggedIn bool
 	}{
 		User:     user,
-		Name:     user.Username,
+		Name:     user.Email,
 		LoggedIn: currentlyLoggedIn(w, req),
 	})
 }
@@ -418,7 +416,7 @@ func rules(w http.ResponseWriter, req *http.Request) {
 		LoggedIn bool
 	}{
 		User:     user,
-		Name:     user.Username,
+		Name:     user.Email,
 		LoggedIn: currentlyLoggedIn(w, req),
 	})
 }
@@ -431,7 +429,7 @@ func leaderboard(w http.ResponseWriter, req *http.Request) {
 		LoggedIn bool
 	}{
 		User:     user,
-		Name:     user.Username,
+		Name:     user.Email,
 		LoggedIn: currentlyLoggedIn(w, req),
 	})
 }
@@ -444,7 +442,7 @@ func admin(w http.ResponseWriter, req *http.Request) {
 	user := getUser(w, req)
 
 	if user.Role != "admin" {
-		logger.Printf("%s tried to see /admin but has permission %s", user.Username, user.Role)
+		logger.Printf("%s tried to see /admin but has permission %s", user.Email, user.Role)
 		http.Redirect(w, req, "/", http.StatusSeeOther)
 	}
 	tpl.ExecuteTemplate(w, "admin.html", struct {
@@ -453,7 +451,7 @@ func admin(w http.ResponseWriter, req *http.Request) {
 		LoggedIn bool
 	}{
 		User:     user,
-		Name:     user.Username,
+		Name:     user.Email,
 		LoggedIn: currentlyLoggedIn(w, req),
 	})
 }

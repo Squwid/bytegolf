@@ -22,11 +22,14 @@ func getUser(w http.ResponseWriter, req *http.Request) *aws.User {
 
 	// if the user exists already, get user
 	for _, u := range users {
-		if u.Username == currentSessions[cookie.Value].Username {
+		if u.Email == currentSessions[cookie.Value].Username {
 			return u
 		}
 	}
-	u, _ := aws.GetUser(currentSessions[cookie.Value].Username, Config.Questions.Region, Config.Questions.Table)
+	u, err := aws.GetUser(currentSessions[cookie.Value].Username)
+	if err != nil {
+		panic(err)
+	}
 	users = append(users, u)
 	return u
 }

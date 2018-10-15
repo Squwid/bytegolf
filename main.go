@@ -17,17 +17,22 @@ import (
 	TODO:
 	DEV NOTES
 	Currently need to implement the following before alpha
-	* Spacing on questions
+	* Deployable users.json that allows for users to be saved locally (just do user names on each login)
 	* Remove comments from scoring
 */
 
 // CurrentGame is the current game of code golf
 var CurrentGame Game
 var tpl *template.Template
-var logger *log.Logger
 var currentSessions = map[string]session{}
 var games = map[string]*Game{}
 var users []*aws.User
+
+// Loggers
+var (
+	logger *log.Logger
+	config *log.Logger
+)
 
 // var currentGame = map[string]Game{} // maps a players name to a game
 

@@ -12,8 +12,16 @@ var Config *Configuration
 // Configuration holds the configuration the player sets up when he boots the game on his machine
 type Configuration struct {
 	Port      string    `yaml:"port"`
+	Users     Users     `yaml:"users"`
 	Questions Questions `yaml:"questions"`
 	Storage   Storage   `yaml:"storage"`
+}
+
+// Users todo:
+type Users struct {
+	UseAWS bool   `yaml:"use-aws"`
+	Table  string `yaml:"table"`
+	Region string `yaml:"region"`
 }
 
 // Questions todo:

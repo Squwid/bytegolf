@@ -27,7 +27,7 @@ func index(w http.ResponseWriter, req *http.Request) {
 		// if there is already a current game
 		if CurrentGame.Started && !CurrentGame.Over {
 			logger.Printf("%s tried to start a new game but one already exists\n", user.Username)
-			http.Redirect(w, req, "/currentgame", http.StatusSeeOther)
+			http.Redirect(w, req, "/currentgame/1", http.StatusSeeOther)
 			return
 		}
 		game, err := CreateNewGame(w, req)
@@ -333,7 +333,7 @@ func login(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-		user, _ := aws.GetUser(reqName, Config.Questions.Region)
+		user, _ := aws.GetUser(reqName, Config.Users.Region, Config.Users.Table)
 		err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(reqPass))
 		if err != nil {
 			logger.Printf("%s tried to login with incorrect password\n", user.Username)

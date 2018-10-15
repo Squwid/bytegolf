@@ -74,7 +74,7 @@ func createMQs(amount int) []string {
 func GetQuestionsLocal(amount int, difficulty string) (map[int]Question, error) {
 	tempQs := []Question{}
 	questions := []Question{}
-	file, err := ioutil.ReadFile("questions/questions.json")
+	file, err := ioutil.ReadFile("questions.json")
 	if err != nil {
 		fmt.Println("error at 1 :", err)
 		return map[int]Question{}, err
@@ -86,6 +86,7 @@ func GetQuestionsLocal(amount int, difficulty string) (map[int]Question, error) 
 	}
 	for _, q := range questions {
 		if q.Difficulty == difficulty {
+
 			tempQs = append(tempQs, q)
 		}
 	}

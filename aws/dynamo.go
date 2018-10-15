@@ -12,16 +12,15 @@ const (
 )
 
 // GetUser todo
-func GetUser(username, region string) (*User, error) {
+func GetUser(username, region, table string) (*User, error) {
 	sess := session.Must(session.NewSessionWithOptions(session.Options{
 		Config: aws.Config{Region: aws.String(region)},
 	}))
 
 	svc := dynamodb.New(sess)
 
-	// Store Game
 	result, err := svc.GetItem(&dynamodb.GetItemInput{
-		TableName: aws.String(usersTable),
+		TableName: aws.String(table),
 		Key: map[string]*dynamodb.AttributeValue{
 			"username": {
 				S: aws.String(username),
@@ -66,7 +65,7 @@ func CreateUser(user *User, region string) error {
 
 // UserExist checks to see if a user exists
 func UserExist(username, region string) bool {
-	user, _ := GetUser(username, region)
+	user, _ := GetUser(username, region, usersTable)
 	if len(user.Username) > 0 {
 		return true
 	}

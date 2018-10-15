@@ -26,7 +26,7 @@ func getUser(w http.ResponseWriter, req *http.Request) *aws.User {
 			return u
 		}
 	}
-	u, _ := aws.GetUser(currentSessions[cookie.Value].Username, Config.Questions.Region)
+	u, _ := aws.GetUser(currentSessions[cookie.Value].Username, Config.Questions.Region, Config.Questions.Table)
 	users = append(users, u)
 	return u
 }

@@ -22,11 +22,11 @@ func getUser(w http.ResponseWriter, req *http.Request) *aws.User {
 
 	// if the user exists already, get user
 	for _, u := range users {
-		if u.Email == currentSessions[cookie.Value].Username {
+		if u.Email == sessions[cookie.Value].Email {
 			return u
 		}
 	}
-	u, err := aws.GetUser(currentSessions[cookie.Value].Username)
+	u, err := aws.GetUser(sessions[cookie.Value].Email)
 	if err != nil {
 		panic(err)
 	}
@@ -34,21 +34,15 @@ func getUser(w http.ResponseWriter, req *http.Request) *aws.User {
 	return u
 }
 
-// currentlyLoggedIn checks to see if a user is currently logged in already by
-// checking their session ID
-func currentlyLoggedIn(w http.ResponseWriter, req *http.Request) bool {
+func loggedIn(w http.ResponseWriter, req *http.Request) bool {
 	cookie, err := req.Cookie("session")
 	if err != nil {
 		return false
 	}
-	session, ok := currentSessions[cookie.Value]
-	if ok {
-		// if session currently exists
+	var ok bool
+	if session, ok := sessions[cookie.Value]; ok {
 		session.lastActivity = time.Now()
-		currentSessions[cookie.Value] = session
+		sessions[cookie.Value] = session
 	}
-	// refresh session
-	// c.MaxAge = sessionLength
-	// http.SetCookie(w, cookie)
 	return ok
 }

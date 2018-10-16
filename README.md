@@ -6,6 +6,10 @@ Byte Golf is a code solving problem game that awards players with the shortest c
 
 I currently have started a company with my roommate and am in my senior year at college, so this project will continue to be updated at a reduced speed. However I want to change the scope of the project to host externally instead of local on an ec2 instance. I already own the domain byte.golf so all I have to do is make a site for it and upgrade security. This project is open source so I want to find a good balance between security and open source to show what I can accomplish.
 
+HERE IS THE NEW PEAK OF THE FRONT END GOING ON byte.golf PUBLIC SOON
+
+![BG](https://i.imgur.com/7cifQGq.png)
+
 ## Rules
 
 The rules for Byte Golf are suprisingly simple, just write the least code using the standard library of a language of your choice.

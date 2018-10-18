@@ -79,6 +79,17 @@ func (game *Game) End() error {
 	return nil
 }
 
+// CheckSubmission will check a submission of a specific hole against the correct output using
+// explicit string comparison
+func (game *Game) CheckSubmission(hole int, submission string) bool {
+	// TODO: this should be a REGEX instead of a string answer to allow for cool and complex answers
+	expected := game.Questions[hole].Answer
+	if expected == submission {
+		return true
+	}
+	return false
+}
+
 // Contains checks to see if a game contains a player
 func (game *Game) Contains(player *Player) bool {
 	for _, player := range game.Players {

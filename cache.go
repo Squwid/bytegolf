@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/Squwid/bytegolf/aws"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // usersCache holds the 'maxCache' most recently accessed users incase of wrong passwords and such
@@ -43,4 +44,19 @@ func getAwsUser(email string) (*aws.User, error) {
 		return usersCache[index], nil
 	}
 	return aws.GetUser(email)
+}
+
+// tryLogin tries an email and password and checks to see if its correct. It uses user caching
+// incase the user tries multiple logins. Returns errors if aws does not act as intended
+func tryLogin(email, password string) (bool, error) {
+	user, err := getAwsUser(email)
+	if err != nil {
+		return false, err
+	}
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
+	if err != nil {
+		logger.Printf("%s tried to login incorrectly\n", email)
+		return false, nil
+	}
+	return true, nil
 }

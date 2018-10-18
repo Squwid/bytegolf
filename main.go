@@ -59,13 +59,9 @@ func main() {
 	http.HandleFunc("/", index)
 	// http.HandleFunc("/signup", signup)
 	http.HandleFunc("/login", login)
-	// http.HandleFunc("/currentgame/", current)
-	// http.HandleFunc("/master", master)
-	// http.HandleFunc("/logout", logout)
-	// http.HandleFunc("/profile", profile)
-	// http.HandleFunc("/rules", rules)
-	// http.HandleFunc("/leaderboard", leaderboard)
-	// http.HandleFunc("/admin", admin)
+	http.HandleFunc("/play", play)
+	http.HandleFunc("/account", account)
+	http.HandleFunc("/leaderboards", leaderboards)
 
 	// listen and serve
 	http.Handle("/favicon.ico", http.NotFoundHandler())

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!-->
+
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Byte Golf Login</title>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="\assets\css\login.css" type="text/css">
+</head>
+
+<body>
+    <div id="mainLogin" role="login">
+        <section id="login">
+            <div class="corral">
+                <div class="content">
+                    <div id="cleanLogo">Byte Golf</div>
+                    <form method="POST" class="form-login" name="login">
+                        {{if .IncorrectPassword}}
+                        <div class="notification" id="notification">
+                            <p class="wrongInformation" role="alert" id=wrongInformation>
+                                Some of your info isn't correct. Please try again.
+                            </p>
+                        </div>
+                        {{end}}
+                        <div class="textInput">
+                            <input class="inputLogin" name="login_email" type="email" required="required" autocomplete="off" placeholder="Email">
+                        </div>
+                        <div class="textInput">
+                            <input class="inputLogin" name="login_password" type="password" required="required" autocomplete="off" placeholder="Password">
+                        </div>
+                        <div class="action">
+                            <button class="button" type="submit" id="btnLogin" name="btnLogin" value="Login">Log In</button>
+                        </div>
+                    </form>
+                    <div class="forgotLink">
+                        <a href="/passwordRecovery" class="forgotPassword">Forgot password?</a>
+                    </div>
+                    <div class="extraLinks">
+                        <a href="/returnHome" class="returnHome">Home</a>
+                        <span class="returnHome contactUs spanBar">|</span>
+                        <a href="/contactUs" class="contactUs">Contact Us</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+</body>
+</html>

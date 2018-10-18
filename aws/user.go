@@ -84,10 +84,7 @@ func (user *User) Store() error {
 		TableName: aws.String(usersTable),
 	}
 	_, err = svc.PutItem(input)
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }
 
 // UserExist checks to see if a user exists. It returns the user as well for use in caching purposes

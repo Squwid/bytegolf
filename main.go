@@ -20,12 +20,15 @@ import (
 	* Remove comments from scoring
 */
 
+// session id stored on players computer
+// sessions stored to email
+// (sessionID) -> (sessions) -> (email) -> (game) -> (players) -> player
+
 // CurrentGame holds the current game, maybe support for more than one game in the future
-var CurrentGame *Game
+var CurrentGame Game
 
 var tpl *template.Template
 var sessions = map[string]session{}
-var users []*aws.User
 
 // Loggers
 var (
@@ -62,6 +65,7 @@ func main() {
 	http.HandleFunc("/play", play)
 	http.HandleFunc("/account", account)
 	http.HandleFunc("/leaderboards", leaderboards)
+	http.HandleFunc("/create", create)
 
 	// listen and serve
 	http.Handle("/favicon.ico", http.NotFoundHandler())

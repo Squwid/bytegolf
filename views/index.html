@@ -42,6 +42,7 @@
     </div>
   </nav>
 
+
   <!-- SHOWCASE -->
   <div id="showcase" class="py-5">
     <div class="primary-overlay text-white">
@@ -52,12 +53,13 @@
               <strong>Byte Golf</strong>
             </h1>
             <p class="lead">{{.MOTD}}</p>
-            <a href="/play" class="btn btn-outline-secondary btn-lg text-white">Play</a>
+            <a href="/tutorial" class="btn btn-outline-secondary btn-lg text-white">Tutorial</a>
           </div>
         </div>
       </div>
     </div>
   </div>
+
 
   <!-- HOW TO PLAY -->
   <section id="about" class="py-5 text-center bg-light">
@@ -66,12 +68,12 @@
         <div class="col">
           <div class="info-header mb-5">
             <h1 class="pb-3 text-dark">
-              Rules
+              About
             </h1>
             <p class="lead pb-3">
-              Lorem ipsum dolor sit amet consectetur adipisicing elit. Quia distinctio modi qui veritatis perferendis
-              vero laudantium et libero debitis dolores consectetur fuga perspiciatis a, recusandae ut, delectus
-              praesentium reprehenderit voluptate.
+              Byte Golf is a code solving problem game that awards players with the shortest code that solves the task
+              at hand, just like golf!
+              Inspired by Stack Overflow's Code Golf game open to the public.
             </p>
           </div>
           <id class="accoridan">
@@ -85,9 +87,15 @@
               </div>
               <div id="collapse1" class="collapse show">
                 <div class="card-body">
-                  Lorem ipsum dolor sit amet consectetur, adipisicing elit. Ducimus nemo eum, non minima accusamus
-                  modi, incidunt sapiente quas dolorem temporibus in tempora aspernatur. Facilis laboriosam provident
-                  autem magnam omnis aperiam!
+                    <p>1. The player with the lowest total characters at the end wins, just like Golf!</p>
+                    <p>2. Total score consists of characters or "bytes" in a working code solution (whitespace not
+                      included). The scores are totaled at the end, and all holes must be completed to a working
+                      solution to be able to win. Hence the name "Byte Golf"</p>
+                    <p>3. Golfing in any order is allowed, as long as all hole solutions are completed by the conclusion
+                      of the game.</p>
+                    <p>4. All code must be written in one of the supported languages and must only use standard
+                      libraries. Also must be in a single file for submission.</p>
+                  </ol>
                 </div>
               </div>
             </div>
@@ -96,15 +104,17 @@
               <div class="card-header">
                 <h5 class="mb-0">
                   <div href="#collapse2" data-toggle="collapse" data-parent="#accordian">
-                    How to Win
+                    Open Source
                   </div>
                 </h5>
               </div>
               <div id="collapse2" class="collapse show">
                 <div class="card-body">
-                  Lorem ipsum dolor sit amet consectetur, adipisicing elit. Ducimus nemo eum, non minima accusamus
-                  modi, incidunt sapiente quas dolorem temporibus in tempora aspernatur. Facilis laboriosam provident
-                  autem magnam omnis aperiam!
+                  <p>This project is entirely open source, and I welcome all contributions that I can get. </p>
+                  <br>
+                  <h5><a href="https://github.com/Squwid/bytegolf" target="_blank">Github Repository</a></h5>
+
+                  <a
                 </div>
               </div>
             </div>
@@ -119,9 +129,9 @@
               </div>
               <div id="collapse3" class="collapse show">
                 <div class="card-body">
-                  Lorem ipsum dolor sit amet consectetur, adipisicing elit. Ducimus nemo eum, non minima accusamus
-                  modi, incidunt sapiente quas dolorem temporibus in tempora aspernatur. Facilis laboriosam provident
-                  autem magnam omnis aperiam!
+                  <p>There are currently 14 supported languages.</p>
+                  <p>Java, C, C++, C++14, PHP, Python 2, Python 3, Ruby, Go, Bash, Swift, R, NodeJS, F#</p>
+                  <p>Each submission must be in a single file and only contain the standard library.</p>
                 </div>
               </div>
             </div>
@@ -141,30 +151,33 @@
               Meet the Developer
             </h1>
             <p class="lead">
-              Lorem, ipsum dolor sit amet consectetur adipisicing elit. Odio id dicta nulla accusantium hic et, maxime
-              vitae adipisci in temporibus! Minima id saepe assumenda incidunt rem quo dicta eligendi amet?
+              I decided to start this project this summer (2018) as a way to show what I can accompish using a Go backend with a simple front end.
             </p>
           </div>
         </div>
       </div>
       <div class="row">
-          <div class="card w-25 center">
-            <div class="card-body">
-              <img src="\assets\media\ben.png" alt="Benjamin Whitelaw" class="img-fluid rounded-circle w-50 mb-3">
-              <!-- <a href="https://www.linkedin.com/in/benjamin-whitelaw-a2498810a/" target="_blank"><h3>Benjamin Whitelaw </h3></a> -->
-              <h3>Benjamin Whitelaw</h3>
-              <h5 class="text-muted">Developer</h5>
-              <p>Lorem ipsum dolor sit amet consectetur, adipisicing elit. Perferendis, iure deleniti quisquam sint ad
-                eligendi unde nemo, id autem voluptates dignissimos reprehenderit eaque nobis doloremque. Magni
-                perferendis totam ipsum illo?</p>
-              </div>
-            </div>
+        <div class="card w-25 center">
+          <div class="card-body">
+            <img src="\assets\media\ben.png" alt="Benjamin Whitelaw" class="img-fluid rounded-circle w-50 mb-3">
+            <!-- <a href="https://www.linkedin.com/in/benjamin-whitelaw-a2498810a/" target="_blank"><h3>Benjamin Whitelaw </h3></a> -->
+            <h3>Benjamin Whitelaw</h3>
+            <h5 class="text-muted">Developer</h5>
+            <p>I am a Computer Science major from Michigan State University. Byte Golf is built in Go with CSS and HTML. 
+              I also own a web development company, for any inquiries go to <a href="https://www.cleanandcrafted.com" target="_blank">Clean and Crafted</a>
+              (still under development)
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   </section>
 
   <div class="footer">
-
+      <script>
+          // Get the current year for the copyright
+          $('#year').text(new Date().getFullYear());
+        </script>
   </div>
 
   <script src="http://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
@@ -174,10 +187,7 @@
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js" integrity="sha384-smHYKdLADwkXOn1EmN1qk/HfnUcbVRZyYmZ4qpPea6sjB/pTJ0euyQp0Mk8ck+5T"
     crossorigin="anonymous"></script>
 
-  <script>
-    // Get the current year for the copyright
-    $('#year').text(new Date().getFullYear());
-  </script>
+ 
 </body>
 
 </html>

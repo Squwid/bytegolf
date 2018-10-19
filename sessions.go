@@ -1,12 +1,15 @@
 package main
 
 import (
+	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 	"time"
 
 	"github.com/Squwid/bytegolf/aws"
 	uuid "github.com/satori/go.uuid"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func setUserHole(hole int, w http.ResponseWriter) {
@@ -36,42 +39,77 @@ func getUserHole(req *http.Request) int {
 	return i
 }
 
-func getUser(req *http.Request) (*aws.User, error) {
-	var cookie *http.Cookie
-	cookie, err := req.Cookie("session")
+func logOn(w http.ResponseWriter, email string) (aws.User, error) {
+	// getting the user first to make sure that it doesnt error out after putting the user in the map
+	user, err := getAwsUser(email)
 	if err != nil {
-		session, _ := uuid.NewV4()
-		cookie = &http.Cookie{
-			Name:  "session",
-			Value: session.String(),
-		}
+		return user, err
 	}
-	// http.SetCookie(w, cookie)
+	id, err := uuid.NewV4()
+	if err != nil {
+		return user, err // this code is probably not accessable but just in case of bs
+	}
 
-	// if the user exists already, get user
-	for _, u := range users {
-		if u.Email == sessions[cookie.Value].Email {
-			return u, nil
-		}
+	idString := id.String()
+
+	fmt.Println(idString)
+	cookie := &http.Cookie{
+		Name:  "session",
+		Value: idString,
 	}
-	u, err := getAwsUser(sessions[cookie.Value].Email)
-	// u, err := aws.GetUser(sessions[cookie.Value].Email)
-	if err != nil {
-		return nil, err
+	http.SetCookie(w, cookie)
+	sessions[idString] = session{
+		Email:        email,
+		lastActivity: time.Now(),
 	}
-	users = append(users, u)
-	return u, nil
+	fmt.Println(idString)
+	return user, nil
 }
 
-func loggedIn(req *http.Request) bool {
+// tryLogin tries an email and password and checks to see if its correct. It uses user caching
+// incase the user tries multiple logins. Returns errors if aws does not act as intended
+func tryLogin(email, password string) (bool, error) {
+	user, err := getAwsUser(email)
+	if err != nil {
+		return false, err
+	}
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
+	if err != nil {
+		logger.Printf("%s tried to login incorrectly\n", email)
+		return false, nil
+	}
+	return true, nil
+}
+
+// FetchUser checks to see if the user is logged in, and redirects them to login if they are not logged in. It also checks
+// to make sure that the pointer to the user is not nil, and if it is an error is sent back
+func FetchUser(w http.ResponseWriter, req *http.Request) (aws.User, error) {
+	if !loggedIn(w, req) {
+		http.Redirect(w, req, "/login", http.StatusSeeOther)
+		return aws.User{}, errors.New("this user is not logged in and has been redirected")
+	}
+	cookie, err := req.Cookie("session")
+	if err != nil {
+		return aws.User{}, err
+	}
+	if sess, ok := sessions[cookie.Value]; ok {
+		user, err := getAwsUser(sess.Email)
+		return user, err
+	}
+	return aws.User{}, errors.New("should be unreachable code")
+}
+
+// loggedIn checks to see if a player is currently logged in
+func loggedIn(w http.ResponseWriter, req *http.Request) bool {
 	cookie, err := req.Cookie("session")
 	if err != nil {
 		return false
 	}
+	fmt.Printf("SESSIONS: %v\tMY COOKIEVAL: %s\n", sessions, cookie.Value)
 	var ok bool
 	if session, ok := sessions[cookie.Value]; ok {
 		session.lastActivity = time.Now()
-		sessions[cookie.Value] = session
+		return true
 	}
 	return ok
 }

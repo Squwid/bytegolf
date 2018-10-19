@@ -18,7 +18,7 @@
     <nav class="navbar navbar-expand-md navbar-light py-4">
         <div class="container">
             <a href="/" class="navbar-brand">
-                <img src="img/bytegolf-logo-small.png" width="50" height="50" alt="logo">
+                <img src="\assets\media\bytegolf-logo-small.png" width="50" height="50" alt="logo">
                 <h3 class="d-inline align-middle">Byte Golf</h3>
             </a>
             <button class="navbar-toggler" data-toggle="collapse" data-target="#navbarCollapse">
@@ -46,32 +46,27 @@
     <!-- This is copied from my old project, but using it anyways to get to the backend faster-->
 
     <!-- Leaderboards -->
-    <div class="content">
-        <div class="contentspace"></div>
+    <div class="contentWhite">
+        <div class="contentspaceWhite"></div>
         <div class="lbcontainer">
             <h2>Leaderboards ({{.Game.CurrentPlayers}}/{{.Game.MaxPlayers}} players)</h2>
             <a href="/master">More Options</a>
             <div class="playercontainer">
                 <div class="gamespace"></div>
                 <div class="player1">
-                    &nbsp;&nbsp;&nbsp;&nbsp; {{.Game.Leaderboard.Winning.User.Username}} - with
-                    {{.Game.Leaderboard.Winning.HolesCorrect}} holes <br>
-                    &nbsp;&nbsp;&nbsp;&nbsp; {{.Game.Leaderboard.Winning.TotalScore}} bytes
                 </div>
-                {{range .Game.Leaderboard.OtherPlayers}}
                 <div class="gamespace"></div>
                 <div class="player">
-                    &nbsp;&nbsp;&nbsp;&nbsp; {{.User.Username}} - with {{.HolesCorrect}} holes <br>
+                    &nbsp;&nbsp;&nbsp;&nbsp; {{.User.DisplayName}} - with {{.HolesCorrect}} holes <br>
                     &nbsp;&nbsp;&nbsp;&nbsp; {{.TotalScore}} bytes
                 </div>
-                {{end}}
                 <div class="gamespace"></div>
             </div>
         </div>
     </div>
 
     <!-- Question -->
-    <div class="content">
+    <div class="contentWhite">
         <div class="contentspace"></div>
         <div class="golfcontainer">
             <br>
@@ -89,7 +84,7 @@
     </div>
 
     <!-- Submission -->
-    <div class="content">
+    <div class="contentWhite">
         <div class="contentspace"></div>
         <div class="golfcontainer">
             <h2>Submission</h2>
@@ -139,7 +134,7 @@
         </div>
     </div>
     <div class="footer">
-        
+
     </div>
 
 

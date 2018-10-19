@@ -31,16 +31,16 @@ type Game struct {
 }
 
 // NewGame returns a pointer to a game and an error which would come either if server is out of mem or aws is down.
-func NewGame(name, password, difficulty string, holes, maxPlayers int) (*Game, error) {
+func NewGame(name, password, difficulty string, holes, maxPlayers int) (Game, error) {
 	uuid, err := uuid.NewV4()
 	if err != nil {
-		return nil, err
+		return Game{}, err
 	}
 	questions, err := aws.GetQuestionsDynamo(holes, difficulty)
 	if err != nil {
-		return nil, err
+		return Game{}, err
 	}
-	return &Game{
+	return Game{
 		ID:             uuid.String(),
 		Name:           name,
 		Password:       password,
@@ -58,7 +58,7 @@ func NewGame(name, password, difficulty string, holes, maxPlayers int) (*Game, e
 }
 
 // Start starts a game with no time amount
-func (game *Game) Start() error {
+func (game Game) Start() error {
 	if game.Started {
 		return fmt.Errorf("game %v was already started", game.ID)
 	}
@@ -69,7 +69,7 @@ func (game *Game) Start() error {
 }
 
 // End ends a game and returns an error if the game had not started yet
-func (game *Game) End() error {
+func (game Game) End() error {
 	if !game.Started {
 		return fmt.Errorf("game %v has not started yet", game.ID)
 	}
@@ -81,7 +81,7 @@ func (game *Game) End() error {
 
 // CheckSubmission will check a submission of a specific hole against the correct output using
 // explicit string comparison
-func (game *Game) CheckSubmission(hole int, submission string) bool {
+func (game Game) CheckSubmission(hole int, submission string) bool {
 	// TODO: this should be a REGEX instead of a string answer to allow for cool and complex answers
 	expected := game.Questions[hole].Answer
 	if expected == submission {
@@ -91,7 +91,7 @@ func (game *Game) CheckSubmission(hole int, submission string) bool {
 }
 
 // Contains checks to see if a game contains a player
-func (game *Game) Contains(player *Player) bool {
+func (game Game) Contains(player *Player) bool {
 	for _, player := range game.Players {
 		if player.User.Email == player.User.Email {
 			return true
@@ -101,7 +101,8 @@ func (game *Game) Contains(player *Player) bool {
 }
 
 // Add adds a player to a game, after checking if they are in the game
-func (game *Game) Add(player *Player) error {
+func (game Game) Add(user aws.User) error {
+	player := NewPlayerFromUser(user)
 	if game.Contains(player) {
 		return fmt.Errorf("player %s is already in this game", player.User.Email)
 	}
@@ -117,8 +118,19 @@ func (game *Game) Add(player *Player) error {
 	return nil
 }
 
+// GetPlayer gets a specific player from a specific game. It returns an error if the
+// player is not in the game
+func (game Game) GetPlayer(email string) (*Player, error) {
+	for _, player := range game.Players {
+		if player.User.Email == email {
+			return &player, nil
+		}
+	}
+	return nil, fmt.Errorf("could not find player %s", email)
+}
+
 // InProgress checks to see if a game is in progress by looking at the started and ended bools
-func (game *Game) InProgress() bool {
+func (game Game) InProgress() bool {
 	if game.Started && !game.Ended {
 		return true
 	}

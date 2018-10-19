@@ -95,14 +95,14 @@
 
 /* MAIN BODY */
 
-.content {
-	background-color: lightgray;
+.contentWhite {
+	background-color: white;
 	height: 650px;
 }
 
-.contentspace {
-	background-color: lightgray;
-	height: 50px;
+.contentspaceWhite {
+	background-color: white;
+	height: 150px;
 }
 
 .contentsoon {

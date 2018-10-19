@@ -4,7 +4,7 @@ import "github.com/Squwid/bytegolf/aws"
 
 // Player holds the information about each player and each of the holes that theyve golfed
 type Player struct {
-	User   *aws.User     `json:"user"`
+	User   aws.User      `json:"user"`
 	Scores map[int]int64 `json:"scores"` // holds scores for each hole
 }
 
@@ -15,7 +15,7 @@ type Score struct {
 }
 
 // NewPlayerFromUser returns a new player from the aws user
-func NewPlayerFromUser(user *aws.User) *Player {
+func NewPlayerFromUser(user aws.User) *Player {
 	return &Player{
 		User:   user,
 		Scores: make(map[int]int64),

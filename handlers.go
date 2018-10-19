@@ -4,9 +4,8 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/Squwid/bytegolf/runner"
-
 	"github.com/Squwid/bytegolf/aws"
+	"github.com/Squwid/bytegolf/runner"
 )
 
 // MessageOfTheDay returns a string that contains message of the day on the index.html page
@@ -25,7 +24,7 @@ func index(w http.ResponseWriter, req *http.Request) {
 }
 
 func account(w http.ResponseWriter, req *http.Request) {
-	if !loggedIn(req) {
+	if !loggedIn(w, req) {
 		http.Redirect(w, req, "/login", http.StatusSeeOther)
 		return
 	}
@@ -37,17 +36,18 @@ func leaderboards(w http.ResponseWriter, req *http.Request) {
 }
 
 func login(w http.ResponseWriter, req *http.Request) {
-	if loggedIn(req) {
+	if loggedIn(w, req) {
 		http.Redirect(w, req, "/account", http.StatusSeeOther)
 		return
 	}
 
 	// if the user is trying to login
 	if req.Method == "POST" {
-		reqEmail := req.FormValue("email")
-		reqPass := req.FormValue("password")
+		reqEmail := req.FormValue("login_email")
+		reqPass := req.FormValue("login_password")
 		correctLogin, err := tryLogin(reqEmail, reqPass)
 		if err != nil {
+			logger.Printf("error logging in: %v\n", err)
 			http.Error(w, "an internal server error occurred", http.StatusInternalServerError)
 			return
 		}
@@ -59,8 +59,23 @@ func login(w http.ResponseWriter, req *http.Request) {
 			})
 			return
 		}
-		//todo: they logged in now what
-		_ = correctLogin
+		// the password is correct
+		// their cookie does not exist correctly at this point
+		logger.Println("logged in successfully")
+		_, err = logOn(w, reqEmail)
+		if err != nil {
+			logger.Fatalf("error loggin user on %v\n", err)
+			return
+		}
+		// todo: remove after debugging
+		cookie, err := req.Cookie("session") // im not passing a request into the logon function
+		if err != nil {
+			logger.Printf("*** NO SESSION \n")
+			return
+		}
+		logger.Printf("sessions %v\tsession in browser %s\n", sessions, cookie.Value)
+		http.Redirect(w, req, "/", http.StatusSeeOther)
+		return
 	}
 	tpl.ExecuteTemplate(w, "login.html", struct {
 		IncorrectPassword bool
@@ -77,30 +92,28 @@ func play(w http.ResponseWriter, req *http.Request) {
 	userErr := func(w http.ResponseWriter) {
 		http.Error(w, "user misuse error", http.StatusBadRequest)
 	}
-	var user *aws.User
-	if !loggedIn(req) {
+	if !loggedIn(w, req) {
 		http.Redirect(w, req, "/login", http.StatusSeeOther)
 		return
 	}
-	user, err := getUser(req)
+	user, err := FetchUser(w, req)
 	if err != nil {
-		internalErr(w)
+		logger.Printf("error fetching user: %v\n", err)
 		return
 	}
-	if user == nil {
-		internalErr(w)
-		logger.Fatalf("this code should be unreachable. NEED TO CHECK ERROR ANYWAYS")
+	logger.Printf("user fetched: %v\n", user)
+
+	if !CurrentGame.InProgress() {
+		http.Redirect(w, req, "/create", http.StatusTemporaryRedirect)
 		return
 	}
 
-	if !CurrentGame.InProgress() {
-		// TODO: here i need to put the create a game option html page
-	}
+	hole := getUserHole(req)
+	question := CurrentGame.Questions[hole]
 
 	// if the player has submitted a bytegolf submission
 	if req.Method == "POST" {
 		lang := req.FormValue("language")
-		hole := getUserHole(req)
 		file, fileHead, err := req.FormFile("codefile")
 		if err != nil {
 			logger.Printf("an error occurred opening a form file: %v\n", err)
@@ -127,12 +140,41 @@ func play(w http.ResponseWriter, req *http.Request) {
 			internalErr(w)
 			return
 		}
+		// TODO: Check output file and scoring system
 		if !CurrentGame.CheckSubmission(hole, runnerResp.Output) {
 			// the users submission is wrong
 			//todo: handle this
 		}
 		_ = submission
 		_ = runnerResp
-
 	}
+
+	tpl.ExecuteTemplate(w, "play.html", struct {
+		Game     Game
+		User     aws.User
+		Hole     int
+		Question aws.Question
+
+		HolesCorrect int
+		TotalScore   int
+	}{
+		Game:         CurrentGame,
+		User:         user,
+		HolesCorrect: 3,
+		TotalScore:   250,
+		Hole:         hole,
+		Question:     question,
+	})
+}
+
+func create(w http.ResponseWriter, req *http.Request) {
+	if !loggedIn(w, req) {
+		http.Redirect(w, req, "/login", http.StatusTemporaryRedirect)
+		return
+	}
+	if CurrentGame.InProgress() {
+		http.Redirect(w, req, "/play", http.StatusTemporaryRedirect)
+		return
+	}
+	tpl.ExecuteTemplate(w, "currentgames.html", struct{}{})
 }

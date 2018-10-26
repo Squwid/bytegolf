@@ -55,6 +55,7 @@ func init() {
 }
 
 func main() {
+	go tutJanitor() // send off the janitor to always be running in a seperate thread
 	// host files
 	http.Handle("/assets/", http.StripPrefix("/assets", http.FileServer(http.Dir("./assets"))))
 
@@ -66,6 +67,8 @@ func main() {
 	http.HandleFunc("/account", account)
 	http.HandleFunc("/leaderboards", leaderboards)
 	http.HandleFunc("/create", create)
+	http.HandleFunc("/tutorial/create", tutCreator)
+	http.HandleFunc("/tutorial", tutorial)
 
 	// listen and serve
 	http.Handle("/favicon.ico", http.NotFoundHandler())

@@ -3,6 +3,7 @@ package main
 import (
 	"io/ioutil"
 	"net/http"
+	"strconv"
 
 	"github.com/Squwid/bytegolf/aws"
 	"github.com/Squwid/bytegolf/runner"
@@ -16,11 +17,12 @@ func MessageOfTheDay() string {
 }
 
 func index(w http.ResponseWriter, req *http.Request) {
-	tpl.ExecuteTemplate(w, "index.html", struct {
+	logger.Printf("here")
+	logger.Println(tpl.ExecuteTemplate(w, "index.html", struct {
 		MOTD string
 	}{
 		MOTD: MessageOfTheDay(),
-	})
+	}))
 }
 
 func account(w http.ResponseWriter, req *http.Request) {
@@ -67,13 +69,6 @@ func login(w http.ResponseWriter, req *http.Request) {
 			logger.Fatalf("error loggin user on %v\n", err)
 			return
 		}
-		// todo: remove after debugging
-		cookie, err := req.Cookie("session") // im not passing a request into the logon function
-		if err != nil {
-			logger.Printf("*** NO SESSION \n")
-			return
-		}
-		logger.Printf("sessions %v\tsession in browser %s\n", sessions, cookie.Value)
 		http.Redirect(w, req, "/", http.StatusSeeOther)
 		return
 	}
@@ -102,9 +97,8 @@ func play(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	logger.Printf("user fetched: %v\n", user)
-
 	if !CurrentGame.InProgress() {
-		http.Redirect(w, req, "/create", http.StatusTemporaryRedirect)
+		http.Redirect(w, req, "/create", http.StatusSeeOther)
 		return
 	}
 
@@ -168,13 +162,41 @@ func play(w http.ResponseWriter, req *http.Request) {
 }
 
 func create(w http.ResponseWriter, req *http.Request) {
+	br := func() {
+		http.Error(w, "bad request", http.StatusBadRequest)
+	}
 	if !loggedIn(w, req) {
-		http.Redirect(w, req, "/login", http.StatusTemporaryRedirect)
+		http.Redirect(w, req, "/login", http.StatusSeeOther)
 		return
 	}
 	if CurrentGame.InProgress() {
-		http.Redirect(w, req, "/play", http.StatusTemporaryRedirect)
+		http.Redirect(w, req, "/play", http.StatusSeeOther)
 		return
 	}
+	if req.Method == "POST" {
+		// if the user is trying to create a game
+		holes, err := strconv.Atoi(req.FormValue("holes"))
+		if err != nil {
+			br()
+			return
+		}
+		mp, err := strconv.Atoi(req.FormValue("maxplayers"))
+		if err != nil {
+			br()
+			return
+		}
+		g, err := NewGame(req.FormValue("gamename"), req.FormValue("password"), "medium", holes, mp)
+		if err != nil {
+			panic(err)
+		}
+		CurrentGame = g
+		if CurrentGame.Start() != nil {
+			panic(err)
+		}
+		logger.Printf("new game was successfully created\n")
+		http.Redirect(w, req, "/play", http.StatusSeeOther)
+		return
+	}
+
 	tpl.ExecuteTemplate(w, "currentgames.html", struct{}{})
 }

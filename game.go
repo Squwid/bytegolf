@@ -58,7 +58,7 @@ func NewGame(name, password, difficulty string, holes, maxPlayers int) (Game, er
 }
 
 // Start starts a game with no time amount
-func (game Game) Start() error {
+func (game *Game) Start() error {
 	if game.Started {
 		return fmt.Errorf("game %v was already started", game.ID)
 	}
@@ -91,7 +91,7 @@ func (game Game) CheckSubmission(hole int, submission string) bool {
 }
 
 // Contains checks to see if a game contains a player
-func (game Game) Contains(player *Player) bool {
+func (game *Game) Contains(player *Player) bool {
 	for _, player := range game.Players {
 		if player.User.Email == player.User.Email {
 			return true
@@ -101,7 +101,7 @@ func (game Game) Contains(player *Player) bool {
 }
 
 // Add adds a player to a game, after checking if they are in the game
-func (game Game) Add(user aws.User) error {
+func (game *Game) Add(user aws.User) error {
 	player := NewPlayerFromUser(user)
 	if game.Contains(player) {
 		return fmt.Errorf("player %s is already in this game", player.User.Email)
@@ -120,7 +120,7 @@ func (game Game) Add(user aws.User) error {
 
 // GetPlayer gets a specific player from a specific game. It returns an error if the
 // player is not in the game
-func (game Game) GetPlayer(email string) (*Player, error) {
+func (game *Game) GetPlayer(email string) (*Player, error) {
 	for _, player := range game.Players {
 		if player.User.Email == email {
 			return &player, nil
@@ -130,7 +130,7 @@ func (game Game) GetPlayer(email string) (*Player, error) {
 }
 
 // InProgress checks to see if a game is in progress by looking at the started and ended bools
-func (game Game) InProgress() bool {
+func (game *Game) InProgress() bool {
 	if game.Started && !game.Ended {
 		return true
 	}

@@ -42,6 +42,8 @@ func getAwsUser(email string) (aws.User, error) {
 	if exist {
 		return usersCache[index], nil
 	}
+	logger.Printf("\t*** Getting aws user\n")
 	user, err := aws.GetUser(email)
+	cacheUsers(user)
 	return *user, err
 }

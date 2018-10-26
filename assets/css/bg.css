@@ -317,3 +317,28 @@
 error {
 	vertical-align: middle;
 }
+
+.bg-gone {
+	background-color: transparent;
+}
+
+.bg-gray {
+	background-color: rgb(221, 246, 219);
+}
+
+.bg-right{
+	background-color: red;
+	color: dark-red;
+}
+
+.color-red{
+	color: lightcoral;
+}
+
+.color-green{
+	color: green;
+}
+
+.spacer {
+	height:50px;
+}

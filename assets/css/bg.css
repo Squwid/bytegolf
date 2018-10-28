@@ -24,6 +24,7 @@
 .banner a:active {
 	background-color: lightgray;
 }
+
 .logospace {
 	vertical-align: middle;
 	width: 350px;
@@ -32,7 +33,7 @@
 	height: 80px;
 	color: white;
 	/*background-color: black;*/
-	
+
 
 }
 
@@ -120,7 +121,7 @@
 	border-width: 1px;
 	border-color: black;
 	border-style: solid;
-	
+
 	text-align: center;
 	font-size: 15px;
 }
@@ -326,19 +327,28 @@ error {
 	background-color: rgb(221, 246, 219);
 }
 
-.bg-right{
+.bg-right {
 	background-color: red;
 	color: dark-red;
 }
 
-.color-red{
+.color-red {
 	color: lightcoral;
 }
 
-.color-green{
+.color-green {
 	color: green;
+	background-color: #DDF6DB;
 }
 
 .spacer {
-	height:50px;
+	height: 50px;
+}
+
+.breadcrumb {
+	background-color: #DDF6DB;
+}
+
+.hole-card {
+	margin-bottom: 5px;
 }

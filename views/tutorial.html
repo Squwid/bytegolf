@@ -43,23 +43,68 @@
         </div>
     </nav>
 
+
+    <!-- Bread Crumbs -->
+    <div class="container">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="#">Holes</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Hello, World!</li>
+        </ol>
+    </div>
+
+
+    <!-- Banner -->
     <div class="jumbotron jumbotron-fluid bg-gray">
-        <div class="container border-bottom border-success">
-            <h1 class="display-4 pb-2 text-center color-green">1. Hello, World!</h1>
+
+        <div class="container">
+            <h1 class="display-4 pb-2 text-center color-green">Hello, World!</h1>
             <p class="lead display-5 text-center pt-3">In the shortest amount of code, print "Hello, World!" to
                 console.</p>
             <p class="lead display-5 text-center text-muted"><strong>Difficulty: </strong>Easy</p>
         </div>
-        <div class="container border-bottom border-success">
-            <h1 class="display-4 pb-2 text-center pt-3 color-red">2. A Milli</h1>
-            <p class="lead display-5 text-center pt-3">Find the total of every odd number from 1 to 1 million. Then print it to console.</p>
-            <p class="lead display-5 text-center text-muted"><strong>Difficulty: </strong>Easy</p>
-        </div>
-        <div class="container">
-            <h1 class="display-4 pb-2 text-center pt-3 color-red">3. New York, New York! </h1>
-            <p class="lead display-5 text-center pt-3">By listing the first six prime numbers: 2, 3, 5, 7, 11, and 13, we can see that the 6th prime is 13. Write code to find and print the 10001st prime number.</p>
-            <p class="lead display-5 text-center text-muted"><strong>Difficulty: </strong>Medium</p>
-        </div>
+    </div>
+
+
+    <!-- Leaderboards for this hole -->
+    <div class="container">
+        <h1 class="display-4 text-center"></h1>
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th scope="col">Place</th>
+                    <th scope="col">User</th>
+                    <th scope="col">Language</th>
+                    <th scope="col">Score</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr class="color-green">
+                    <th scope="row">30</th>
+                    <td>Squwid</td>
+                    <td>Go</td>
+                    <td>256 bytes</td>
+                    </th>
+                </tr>
+                <tr>
+                    <th scope="row">1</th>
+                    <td>colmqc</td>
+                    <td>C++11</td>
+                    <td>85 bytes</td>
+                </tr>
+                <tr>
+                    <th scope="row">2</th>
+                    <td>jjohnson14</td>
+                    <td>Java</td>
+                    <td>112 bytes</td>
+                </tr>
+                <tr>
+                    <th scope="row">3</th>
+                    <td>Larry the Bird</td>
+                    <td>Bash</td>
+                    <td>125 bytes</td>
+                </tr>
+            </tbody>
+        </table>
     </div>
 
     <!-- SUBMIT SECTION -->
@@ -104,7 +149,7 @@
 
             <div class="form-group">
                 <button type="submit" class="btn btn-secondary btn-lg btn-block mt-5"> Submit</button>
-            </div>      
+            </div>
         </form>
     </div>
     <div class="spacer"></div>

@@ -72,7 +72,7 @@ func (s *CodeSubmission) store() {
 	uploader := s3manager.NewUploader(sess)
 
 	//
-	key := fmt.Sprintf("%s_%s/%s/sub_%s_%s", s.Info.GameName, s.Info.Game, s.Info.User, s.Info.FileName, s.UUID)
+	key := fmt.Sprintf("%s/%s/sub_%s_%s", s.Info.Hole, s.Info.User, s.Info.Name, s.UUID)
 
 	_, err := uploader.Upload(&s3manager.UploadInput{
 		Bucket: aws.String(subBucket),
@@ -94,7 +94,7 @@ func (s *CodeResponse) store() {
 	uploader := s3manager.NewUploader(sess)
 
 	//
-	key := fmt.Sprintf("%s_%s/%s/res_%s_%s", s.Info.GameName, s.Info.Game, s.Info.User, s.Info.FileName, s.UUID)
+	key := fmt.Sprintf("%s/%s/resp_%s_%s", s.Info.Hole, s.Info.User, s.Info.Name, s.UUID)
 
 	// TODO: deal with this error in the future
 	_, err := uploader.Upload(&s3manager.UploadInput{

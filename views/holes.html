@@ -30,7 +30,7 @@
                         <a href="/" class="nav-link">Home</a>
                     </li>
                     <li class="nav-item">
-                        <a href="/play" class="nav-link active">Play</a>
+                        <a href="/holes" class="nav-link active">Play</a>
                     </li>
                     <li class="nav-item">
                         <a href="/leaderboards" class="nav-link">Leaderboards</a>
@@ -51,38 +51,19 @@
         </ol>
     </div>
 
-
-    <!-- Holes
-    <div class="container d-flex align-content-start flex-wrap w-75">
-            <div class="card hole-card">
-            <div class="card-body">
-                <h5 class="card-title">Card title</h5>
-                <h6 class="card-subtitle mb-2 text-muted">Card subtitle</h6>
-                <p class="card-text">Some quick example text to build on the card title and make up the bulk of the
-                    card's content.</p>
-                <a href="#" class="card-link">Card link</a>
-                <a href="#" class="card-link">Another link</a>
-            </div>
-        </div>
-    </div> -->
+    <!-- Holes -->
 
     <div class="container w-75">
+        {{range $holenum, $question := .Questions}}
         <div class="card hole-card">
             <div class="card-body">
-                <h5 class="card-title">Hello, World!</h5>
-                <p class="card-text">In the shortest amount of code, print "Hello, World!" to console.</p>
-                <p class="card-text text-muted"><strong>Difficulty: </strong>Easy</p>
-                <a href="#" class="btn btn-secondary">Tee Off!</a>
+                <h5 class="card-title">{{$question.Name}}</h5>
+                <p class="card-text">{{$question.Question}}</p>
+                <p class="card-text text-muted"><strong>Difficulty: </strong>{{$question.Difficulty}}</p>
+                <a href="/play/{{$question.Link}}" class="btn btn-secondary">Tee Off!</a>
             </div>
         </div>
-        <div class="card hole-card">
-            <div class="card-body">
-                <h5 class="card-title">Hello, World!</h5>
-                <p class="card-text">In the shortest amount of code, print "Hello, World!" to console.</p>
-                <p class="card-text text-muted"><strong>Difficulty: </strong>Easy</p>
-                <a href="#" class="btn btn-secondary">Tee Off!</a>
-            </div>
-        </div>
+        {{end}}
     </div>
 
 </body>

@@ -30,7 +30,7 @@
                         <a href="/" class="nav-link">Home</a>
                     </li>
                     <li class="nav-item">
-                        <a href="/play" class="nav-link active">Play</a>
+                        <a href="/holes" class="nav-link active">Play</a>
                     </li>
                     <li class="nav-item">
                         <a href="/leaderboards" class="nav-link">Leaderboards</a>
@@ -43,101 +43,108 @@
         </div>
     </nav>
 
-    <!-- This is copied from my old project, but using it anyways to get to the backend faster-->
 
-    <!-- Leaderboards -->
-    <div class="contentWhite">
-        <div class="contentspaceWhite"></div>
-        <div class="lbcontainer">
-            <h2>Leaderboards ({{.Game.CurrentPlayers}}/{{.Game.MaxPlayers}} players)</h2>
-            <a href="/master">More Options</a>
-            <div class="playercontainer">
-                <div class="gamespace"></div>
-                <div class="player1">
+    <!-- Bread Crumbs -->
+    <div class="container">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/holes">Holes</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{.Question.Name}}</li>
+        </ol>
+    </div>
+
+
+    <!-- Banner -->
+    <div class="jumbotron jumbotron-fluid bg-gray">
+
+        <div class="container">
+            <h1 class="display-4 pb-2 text-center color-green">{{.Question.Name}}</h1>
+            <p class="lead display-5 text-center pt-3">{{.Question.Question}}</p>
+            <p class="lead display-5 text-center text-muted"><strong>Difficulty: </strong>{{.Question.Difficulty}}</p>
+        </div>
+    </div>
+
+
+    <!-- Leaderboards for this hole -->
+    <div class="container">
+        <h1 class="display-4 text-center"></h1>
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th scope="col">Place</th>
+                    <th scope="col">User</th>
+                    <th scope="col">Language</th>
+                    <th scope="col">Score</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr class="color-green">
+                    <th scope="row">30</th>
+                    <td>Squwid</td>
+                    <td>Go</td>
+                    <td>256 bytes</td>
+                    </th>
+                </tr>
+                <tr>
+                    <th scope="row">1</th>
+                    <td>colmqc</td>
+                    <td>C++11</td>
+                    <td>85 bytes</td>
+                </tr>
+                <tr>
+                    <th scope="row">2</th>
+                    <td>jjohnson14</td>
+                    <td>Java</td>
+                    <td>112 bytes</td>
+                </tr>
+                <tr>
+                    <th scope="row">3</th>
+                    <td>Larry the Bird</td>
+                    <td>Bash</td>
+                    <td>125 bytes</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- SUBMIT SECTION -->
+    <div class="container w-25">
+        <h1 class="display-4 text-center">Submission</h1>
+        <form method="POST" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="exampleFormControlSelect1">Language</label>
+                <select class="form-control" id="exampleFormControlSelect1" name="language">
+                    <option value="java">Java</option>
+                    <option value="c">C</option>
+                    <option value="cpp">C++</option>
+                    <option value="cpp14">C++14</option>
+                    <option value="php">PHP</option>
+                    <option value="python2">Python 2</option>
+                    <option value="python3">Python 3</option>
+                    <option value="ruby">Ruby</option>
+                    <option value="go">Go</option>
+                    <option value="bash">Bash</option>
+                    <option value="swift">Swift</option>
+                    <option value="r">R</option>
+                    <option value="nodejs">NodeJS</option>
+                    <option value="fsharp">F#</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="exampleFormControlSelect3">File</label>
+                <div class="custom-file">
+                    <input type="file" class="custom-file-input" id="validatedCustomFile" required name="codefile">
+                    <label class="custom-file-label" for="validatedCustomFile">Upload Code...</label>
+                    <div class="invalid-feedback">Example invalid custom file feedback</div>
                 </div>
-                <div class="gamespace"></div>
-                <div class="player">
-                    &nbsp;&nbsp;&nbsp;&nbsp; {{.User.DisplayName}} - with {{.HolesCorrect}} holes <br>
-                    &nbsp;&nbsp;&nbsp;&nbsp; {{.TotalScore}} bytes
-                </div>
-                <div class="gamespace"></div>
             </div>
-        </div>
-    </div>
 
-    <!-- Question -->
-    <div class="contentWhite">
-        <div class="contentspace"></div>
-        <div class="golfcontainer">
-            <br>
-            <div class="qoptions">
-                <h1> {{.Hole}}. </h1>
-                <br>
-                <h2> {{.Question.Name}} </h2>
-                <br>
-                <h4>{{ .Question.Question}}</h4>
+            <div class="form-group">
+                <button type="submit" class="btn btn-secondary btn-lg btn-block mt-5"> Submit</button>
             </div>
-        </div>
-        <div class="gamespace">
-
-        </div>
+        </form>
     </div>
-
-    <!-- Submission -->
-    <div class="contentWhite">
-        <div class="contentspace"></div>
-        <div class="golfcontainer">
-            <h2>Submission</h2>
-            <div class="golfoptions">
-                <form method="POST" enctype="multipart/form-data">
-                    <que>Current Game &nbsp;</que>
-                    <br>
-                    <h2>{{.Game.Name}}</h2>
-                    <br>
-                    <br>
-                    <que>Language</que>
-                    <select name="language">
-                        <option value="java">Java</option>
-                        <option value="c">C</option>
-                        <option value="cpp">C++</option>
-                        <option value="cpp14">C++14</option>
-                        <option value="php">PHP</option>
-                        <option value="python2">Python 2</option>
-                        <option value="python3">Python 3</option>
-                        <option value="ruby">Ruby</option>
-                        <option value="go">Go</option>
-                        <option value="bash">Bash</option>
-                        <option value="swift">Swift</option>
-                        <option value="r">R</option>
-                        <option value="nodejs">NodeJS</option>
-                        <option value="fsharp">F#</option>
-                    </select>
-                    <div class="gamespace"></div>
-                    <div class="gamespace"></div>
-                    <div class="gamespace"></div>
-                    <div class="gamespace"></div>
-                    <div class="gamespace"></div>
-                    <div class="gamespace"></div>
-                    <div class="gamespace"></div>
-                    <br>
-                    <br>
-                    <que>Select Code File</que>
-                    <br>
-                    <br>
-                    <input type="file" name="codefile">
-                    <br><br>&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;
-                    <input type="submit" value="Sumbit" style="height:25px; width:80px">
-                </form>
-
-            </div>
-        </div>
-    </div>
-    <div class="footer">
-
-    </div>
-
-
+    <div class="spacer"></div>
+    <div class="footer"></div>
 </body>
 
 </html>

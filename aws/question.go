@@ -28,6 +28,7 @@ type Question struct {
 	Answer     string `json:"answer"`
 	Difficulty string `json:"difficulty"`
 	Source     string `json:"source"`
+	Link       string `json:"link"`
 }
 
 // FIXME: Hard coded questions need to be generated from either an API or library or local (local should be an option)
@@ -158,6 +159,41 @@ func GetQuestionsDynamo(amount int, difficulty string) (map[int]Question, error)
 	}
 
 	return randomize(qs, amount), nil
+}
+
+// GetQuestionsTemp is a temporary function that gets 3 questions from local rather than dynamo to test
+// the capabilities of the front end
+func GetQuestionsTemp(amount int) map[int]Question {
+	q1 := Question{
+		ID:         "1",
+		Name:       "Hello, World!",
+		Question:   `Find the shortest way to print "Hello, World!" to console.`,
+		Answer:     "Hello, World!",
+		Difficulty: "easy",
+		Link:       "helloworld",
+	}
+	q2 := Question{
+		ID:         "2",
+		Name:       "New York, New York!",
+		Question:   "By listing the first six prime numbers: 2, 3, 5, 7, 11, and 13, we can see that the 6th prime is 13. What is the 10001st prime number?",
+		Answer:     "104743",
+		Difficulty: "medium",
+		Link:       "newyorknewyork",
+	}
+	q3 := Question{
+		ID:         "3",
+		Name:       "Heating Up",
+		Question:   "Produce the number 2018 without any numbers in your source code",
+		Answer:     "2018",
+		Difficulty: "hard",
+		Link:       "heatingup",
+	}
+	var q = map[int]Question{
+		1: q1,
+		2: q2,
+		3: q3,
+	}
+	return q
 }
 
 func randomize(questions []Question, amount int) map[int]Question {

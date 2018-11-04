@@ -3,26 +3,26 @@ package main
 import (
 	"io/ioutil"
 	"net/http"
-	"strconv"
+	"strings"
 
 	"github.com/Squwid/bytegolf/aws"
 	"github.com/Squwid/bytegolf/runner"
 )
 
-// MessageOfTheDay returns a string that contains message of the day on the index.html page
-func MessageOfTheDay() string {
+// motd returns a string which is the message of the day
+// todo: come back here and add more messages
+func motd() string {
 	var messages = []string{"Bugs not birds..."}
 	// random := rand.Intn(len(messages) - 1)
 	return messages[0]
 }
 
 func index(w http.ResponseWriter, req *http.Request) {
-	logger.Printf("here")
-	logger.Println(tpl.ExecuteTemplate(w, "index.html", struct {
+	tpl.ExecuteTemplate(w, "index.html", struct {
 		MOTD string
 	}{
-		MOTD: MessageOfTheDay(),
-	}))
+		MOTD: motd(),
+	})
 }
 
 func account(w http.ResponseWriter, req *http.Request) {
@@ -80,123 +80,74 @@ func login(w http.ResponseWriter, req *http.Request) {
 
 }
 
+func holes(w http.ResponseWriter, req *http.Request) {
+	tpl.ExecuteTemplate(w, "holes.html", struct {
+		Questions map[int]aws.Question
+	}{
+		Questions: questions,
+	})
+}
+
 func play(w http.ResponseWriter, req *http.Request) {
-	internalErr := func(w http.ResponseWriter) {
+	intErr := func() {
 		http.Error(w, "an internal server error occurred", http.StatusInternalServerError)
 	}
-	userErr := func(w http.ResponseWriter) {
-		http.Error(w, "user misuse error", http.StatusBadRequest)
-	}
-	if !loggedIn(w, req) {
-		http.Redirect(w, req, "/login", http.StatusSeeOther)
-		return
-	}
-	user, err := FetchUser(w, req)
+	hole := strings.TrimLeft(req.URL.Path, "/play/")
+	question, err := getHoleByLink(hole)
 	if err != nil {
-		logger.Printf("error fetching user: %v\n", err)
+		http.Redirect(w, req, "/holes", http.StatusSeeOther)
 		return
 	}
-	logger.Printf("user fetched: %v\n", user)
-	if !CurrentGame.InProgress() {
-		http.Redirect(w, req, "/create", http.StatusSeeOther)
-		return
-	}
+	if req.Method == http.MethodPost {
+		if !loggedIn(w, req) {
+			http.Redirect(w, req, "/login", http.StatusSeeOther)
+			return
+		}
+		user, err := FetchUser(w, req)
+		if err != nil {
+			logger.Printf("error fetching user: %v\n", err)
+			intErr()
+			return
+		}
 
-	hole := getUserHole(req)
-	question := CurrentGame.Questions[hole]
-
-	// if the player has submitted a bytegolf submission
-	if req.Method == "POST" {
 		lang := req.FormValue("language")
 		file, fileHead, err := req.FormFile("codefile")
 		if err != nil {
 			logger.Printf("an error occurred opening a form file: %v\n", err)
-			userErr(w)
+			intErr()
 			return
 		}
 		defer file.Close()
-		logger.Printf("%s uploading file to server %s\n", user.Email, fileHead.Filename)
-		// read the input file
-		bs, err := ioutil.ReadAll(file) // todo: swap to buffer
+
+		logger.Printf("submission %s %s %s\n", user, hole, lang)
+
+		bs, err := ioutil.ReadAll(file) // todo: swap this to a buffer maybe
 		if err != nil {
-			logger.Println("an error occured reading file", err.Error())
-			internalErr(w)
+			logger.Printf("error reading all file : %v\n", err.Error())
+			intErr()
 			return
 		}
-
-		// run the code from the input through the submission system
+		// 		// run the code from the input through the submission system
 		runnerClient := runner.NewClient()
 		runnerConfig := runner.NewConfiguration(true, true)
-		submission := runner.NewCodeSubmission(user.Email, CurrentGame.Name, CurrentGame.ID, fileHead.Filename, lang, string(bs), runnerClient, runnerConfig)
+		submission := runner.NewCodeSubmission(user.Email, hole, fileHead.Filename, lang, string(bs), runnerClient, runnerConfig)
 		runnerResp, err := submission.Send()
 		if err != nil {
 			logger.Println(err.Error())
-			internalErr(w)
+			intErr()
 			return
 		}
 		// TODO: Check output file and scoring system
-		if !CurrentGame.CheckSubmission(hole, runnerResp.Output) {
-			// the users submission is wrong
-			//todo: handle this
-		}
+		// the users submission is wrong
+		//todo: handle this
 		_ = submission
 		_ = runnerResp
 	}
 
+	// the question exists and was grabbed
 	tpl.ExecuteTemplate(w, "play.html", struct {
-		Game     Game
-		User     aws.User
-		Hole     int
 		Question aws.Question
-
-		HolesCorrect int
-		TotalScore   int
 	}{
-		Game:         CurrentGame,
-		User:         user,
-		HolesCorrect: 3,
-		TotalScore:   250,
-		Hole:         hole,
-		Question:     question,
+		Question: *question,
 	})
-}
-
-func create(w http.ResponseWriter, req *http.Request) {
-	br := func() {
-		http.Error(w, "bad request", http.StatusBadRequest)
-	}
-	if !loggedIn(w, req) {
-		http.Redirect(w, req, "/login", http.StatusSeeOther)
-		return
-	}
-	if CurrentGame.InProgress() {
-		http.Redirect(w, req, "/play", http.StatusSeeOther)
-		return
-	}
-	if req.Method == "POST" {
-		// if the user is trying to create a game
-		holes, err := strconv.Atoi(req.FormValue("holes"))
-		if err != nil {
-			br()
-			return
-		}
-		mp, err := strconv.Atoi(req.FormValue("maxplayers"))
-		if err != nil {
-			br()
-			return
-		}
-		g, err := NewGame(req.FormValue("gamename"), req.FormValue("password"), "medium", holes, mp)
-		if err != nil {
-			panic(err)
-		}
-		CurrentGame = g
-		if CurrentGame.Start() != nil {
-			panic(err)
-		}
-		logger.Printf("new game was successfully created\n")
-		http.Redirect(w, req, "/play", http.StatusSeeOther)
-		return
-	}
-
-	tpl.ExecuteTemplate(w, "currentgames.html", struct{}{})
 }

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"html/template"
 	"log"
 	"net/http"
@@ -24,11 +25,9 @@ import (
 // sessions stored to email
 // (sessionID) -> (sessions) -> (email) -> (game) -> (players) -> player
 
-// CurrentGame holds the current game, maybe support for more than one game in the future
-var CurrentGame Game
-
 var tpl *template.Template
 var sessions = map[string]session{}
+var questions = map[int]aws.Question{}
 
 // Loggers
 var (
@@ -50,23 +49,24 @@ type code struct {
 
 func init() {
 	tpl = template.Must(template.ParseGlob("views/*"))
+	questions = aws.GetQuestionsTemp(3)
 	logger = log.New(os.Stdout, "[bytegolf] ", log.Ldate|log.Ltime)
 	Config = SetupConfiguration(ParseConfiguration())
 }
 
 func main() {
-	go tutJanitor() // send off the janitor to always be running in a seperate thread
+	// go tutJanitor() // send off the janitor to always be running in a seperate thread
 	// host files
 	http.Handle("/assets/", http.StripPrefix("/assets", http.FileServer(http.Dir("./assets"))))
 
 	// handlers
 	http.HandleFunc("/", index)
 	// http.HandleFunc("/signup", signup)
+	http.HandleFunc("/play/", play)
+	http.HandleFunc("/holes/", holes)
 	http.HandleFunc("/login", login)
-	http.HandleFunc("/play", play)
 	http.HandleFunc("/account", account)
 	http.HandleFunc("/leaderboards", leaderboards)
-	http.HandleFunc("/create", create)
 	http.HandleFunc("/tutorial/create", tutCreator)
 	http.HandleFunc("/tutorial", tutorial)
 
@@ -97,4 +97,15 @@ func count(s string) int64 {
 		c++
 	}
 	return c
+}
+
+// getHoleByLink retrieves an aws question from the questions and an error if one is not found
+// with a matching link
+func getHoleByLink(link string) (*aws.Question, error) {
+	for _, hole := range questions {
+		if hole.Link == link {
+			return &hole, nil
+		}
+	}
+	return nil, fmt.Errorf("could not find hole %s", link)
 }

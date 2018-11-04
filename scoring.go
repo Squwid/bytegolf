@@ -20,8 +20,3 @@ func NewLeaderboard() Leaderboard {
 		Leaderboards: make(map[int]Player),
 	}
 }
-
-// Score scores a game based on holes
-func (game Game) Score() {
-
-}

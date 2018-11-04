@@ -46,10 +46,9 @@ type Configuration struct {
 
 // FileInfo todo
 type FileInfo struct {
-	FileName string `json:"fileName"`
-	User     string `json:"user"`
-	Game     string `json:"game"` // TODO: This was changed in the package to key instead of game
-	GameName string `json:"gameName"`
+	Name string `json:"name"`
+	User string `json:"user"`
+	Hole string `json:"hole"`
 }
 
 // CodeResponse is the response from the Code Runner API that gets a result
@@ -75,7 +74,6 @@ func NewConfiguration(saveLogs, saveSubmissions bool) *Configuration {
 		SaveLogs:        saveLogs,
 		SaveSubmissions: saveSubmissions,
 	}
-
 }
 
 // NewClient returns a new client using the environmental variables
@@ -97,7 +95,7 @@ func NewClientWithCreds(id, secret string) *Client {
 }
 
 // NewCodeSubmission todo:
-func NewCodeSubmission(username, gameName, gameID, filename, language, code string, client *Client, config *Configuration) *CodeSubmission {
+func NewCodeSubmission(username, hole, filename, language, code string, client *Client, config *Configuration) *CodeSubmission {
 	id, _ := uuid.NewV4()
 	return &CodeSubmission{
 		UUID:         id.String(),
@@ -108,10 +106,9 @@ func NewCodeSubmission(username, gameName, gameID, filename, language, code stri
 		Secret:       client.Secret,
 		Config:       config,
 		Info: &FileInfo{
-			FileName: filename,
-			User:     username,
-			Game:     gameID,
-			GameName: gameName,
+			Name: filename,
+			User: username,
+			Hole: hole,
 		},
 	}
 }

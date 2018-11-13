@@ -94,6 +94,21 @@ func play(w http.ResponseWriter, req *http.Request) {
 	}
 	hole := strings.TrimLeft(req.URL.Path, "/play/")
 	question, err := getHoleByLink(hole)
+	exeTpl := func(show, incorrect bool, message, bestScore string) {
+		tpl.ExecuteTemplate(w, "play.html", struct {
+			Show      bool
+			Incorrect bool
+			Message   string
+			BestScore string
+			Question  *aws.Question
+		}{
+			Show:      show,
+			Incorrect: incorrect,
+			Message:   message,
+			BestScore: bestScore,
+			Question:  question,
+		})
+	}
 	if err != nil {
 		http.Redirect(w, req, "/holes", http.StatusSeeOther)
 		return
@@ -140,14 +155,16 @@ func play(w http.ResponseWriter, req *http.Request) {
 		// TODO: Check output file and scoring system
 		// the users submission is wrong
 		//todo: handle this
-		_ = submission
-		_ = runnerResp
+		if !checkResponse(runnerResp, question) {
+			// answer is incorrect
+			exeTpl(true, true, runnerResp.Output+"\n is not the correct output", "BEST SCORE HOLDER")
+			return
+		}
+		// todo: score would go here and then into the best score holder
+		exeTpl(true, false, runnerResp.Output+"\n was the correct output.", "BEST SCORE HOLDER")
+		return
 	}
-
 	// the question exists and was grabbed
-	tpl.ExecuteTemplate(w, "play.html", struct {
-		Question aws.Question
-	}{
-		Question: *question,
-	})
+	exeTpl(false, false, "", "")
+	return
 }

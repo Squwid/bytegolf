@@ -333,7 +333,8 @@ error {
 }
 
 .color-red {
-	color: lightcoral;
+	color: red;
+	background-color: lightcoral;
 }
 
 .color-green {

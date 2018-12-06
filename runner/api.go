@@ -22,9 +22,10 @@ const subBucket = "bytegolf-submissions"
 func (s *CodeSubmission) Send() (*CodeResponse, error) {
 	var r CodeResponse
 
-	if s.Config.SaveSubmissions {
-		go s.store() // store concurrently during the send
-	}
+	// TODO: What do i want to do about configurations and storing data
+	// if s.Config.SaveSubmissions {
+	// 	go s.store() // store concurrently during the send
+	// }
 
 	reqBody, err := json.Marshal(*s)
 	if err != nil {
@@ -56,9 +57,11 @@ func (s *CodeSubmission) Send() (*CodeResponse, error) {
 
 	r.Info = s.Info
 	r.UUID = s.UUID
-	if s.Config.SaveSubmissions {
-		go r.store() // store response concurrently
-	}
+
+	// TODO: same here as what i did earlier
+	// if s.Config.SaveSubmissions {
+	// 	go r.store() // store response concurrently
+	// }
 
 	return &r, nil
 }

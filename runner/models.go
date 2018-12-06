@@ -33,15 +33,7 @@ type CodeSubmission struct {
 	ID           string `json:"clientId"`
 	Secret       string `json:"clientSecret"`
 
-	Info   *FileInfo      `json:"info"`
-	Config *Configuration `json:"config"`
-}
-
-// Configuration holds information on where to save the submissions and responses to
-// and whether or not it should store logs
-type Configuration struct {
-	SaveLogs        bool `json:"saveLogs"`
-	SaveSubmissions bool `json:"saveSubmissions"`
+	Info *FileInfo `json:"info"`
 }
 
 // FileInfo todo
@@ -68,14 +60,6 @@ type Client struct {
 	Secret string `json:"clientSecret"`
 }
 
-// NewConfiguration returns a pointer to a configuration
-func NewConfiguration(saveLogs, saveSubmissions bool) *Configuration {
-	return &Configuration{
-		SaveLogs:        saveLogs,
-		SaveSubmissions: saveSubmissions,
-	}
-}
-
 // NewClient returns a new client using the environmental variables
 // of RUNNER_ID for the ID and RUNNER_SECRET for the secret
 func NewClient() *Client {
@@ -95,7 +79,7 @@ func NewClientWithCreds(id, secret string) *Client {
 }
 
 // NewCodeSubmission todo:
-func NewCodeSubmission(username, hole, filename, language, code string, client *Client, config *Configuration) *CodeSubmission {
+func NewCodeSubmission(username, hole, filename, language, code string, client *Client) *CodeSubmission {
 	id, _ := uuid.NewV4()
 	return &CodeSubmission{
 		UUID:         id.String(),
@@ -104,7 +88,6 @@ func NewCodeSubmission(username, hole, filename, language, code string, client *
 		VersionIndex: "0",
 		ID:           client.ID,
 		Secret:       client.Secret,
-		Config:       config,
 		Info: &FileInfo{
 			Name: filename,
 			User: username,

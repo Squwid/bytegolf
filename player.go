@@ -8,8 +8,8 @@ type Player struct {
 	Scores map[int]int64 `json:"scores"` // holds scores for each hole
 }
 
-// Score is the structure that gets returned from the score method and holds data about the players score
-type Score struct {
+// ScoreStruct is the structure that gets returned from the score method and holds data about the players score
+type ScoreStruct struct {
 	TotalScore   int64
 	HolesCorrect int
 }
@@ -31,15 +31,15 @@ func NewPlayerFromEmail(email string) (*Player, error) {
 	return NewPlayerFromUser(user), nil
 }
 
-// Score counts the total score amount of a player
-func (p *Player) Score() *Score {
+// TotalScore counts the total score amount of a player
+func (p *Player) TotalScore() *ScoreStruct {
 	var totalScore int64
 	var holesCorrect int
 	for _, score := range p.Scores {
 		totalScore += score
 		holesCorrect++
 	}
-	return &Score{totalScore, holesCorrect}
+	return &ScoreStruct{totalScore, holesCorrect}
 }
 
 // HoleCorrect checks to see if a player got a specific hole correct or not

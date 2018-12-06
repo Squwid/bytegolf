@@ -144,8 +144,8 @@ func play(w http.ResponseWriter, req *http.Request) {
 		}
 		// 		// run the code from the input through the submission system
 		runnerClient := runner.NewClient()
-		runnerConfig := runner.NewConfiguration(true, true)
-		submission := runner.NewCodeSubmission(user.Email, hole, fileHead.Filename, lang, string(bs), runnerClient, runnerConfig)
+		// runnerConfig := runner.NewConfiguration(true, true)
+		submission := runner.NewCodeSubmission(user.Email, hole, fileHead.Filename, lang, string(bs), runnerClient)
 		runnerResp, err := submission.Send()
 		if err != nil {
 			logger.Println(err.Error())

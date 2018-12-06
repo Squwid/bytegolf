@@ -18,8 +18,6 @@ import (
 	TODO:
 	DEV NOTES
 	Currently need to implement the following before alpha
-	* Deployable users.json that allows for users to be saved locally (just do user names on each login)
-	* Remove comments from scoring
 */
 
 // session id stored on players computer
@@ -33,7 +31,6 @@ var questions = map[int]aws.Question{}
 // Loggers
 var (
 	logger *log.Logger
-	config *log.Logger
 )
 
 type session struct {
@@ -52,7 +49,6 @@ func init() {
 	tpl = template.Must(template.ParseGlob("views/*"))
 	questions = aws.GetQuestionsTemp(3)
 	logger = log.New(os.Stdout, "[bytegolf] ", log.Ldate|log.Ltime)
-	Config = SetupConfiguration(ParseConfiguration())
 }
 
 func main() {
@@ -68,20 +64,14 @@ func main() {
 	http.HandleFunc("/leaderboards", leaderboards)
 	http.HandleFunc("/tutorial/create", tutCreator)
 	http.HandleFunc("/tutorial", tutorial)
-	http.HandleFunc("/.well-known/pki-validation", verify)
 
 	// listen and serve
 	http.Handle("/favicon.ico", http.NotFoundHandler())
 	logger.Printf("listening on port :%s\n", "80")
-	http.ListenAndServe(":"+"80", nil)
+	http.ListenAndServe(":80", nil)
 	// go http.ListenAndServe(":80", http.HandlerFunc(redirect))
 	// srv := createServer()
 	// srv.ListenAndServeTLS("", "") // TODO: need both certs
-}
-
-func verify(w http.ResponseWriter, req *http.Request) {
-	t, _ := template.ParseFiles("./4D4D9FD22C3F52BD286EAFD7DA81E122.txt")
-	t.Execute(w, nil)
 }
 
 func redirect(w http.ResponseWriter, req *http.Request) {
@@ -129,20 +119,9 @@ func checkResponse(resp *runner.CodeResponse, q *aws.Question) bool {
 	return false
 }
 
-func score(sub *runner.CodeSubmission, q *aws.Question) int64 {
-	// TODO: now is just the length of the code, however i would like a better score system in the future
-	return count(sub.Script)
-}
-
-func count(s string) int64 {
-	var c int64
-	for _, l := range s {
-		if len(strings.TrimSpace(string(l))) == 0 {
-			continue
-		}
-		c++
-	}
-	return c
+type strPair struct {
+	begin string
+	end   string
 }
 
 // getHoleByLink retrieves an aws question from the questions and an error if one is not found

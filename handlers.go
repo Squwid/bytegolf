@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -89,39 +90,54 @@ func holes(w http.ResponseWriter, req *http.Request) {
 }
 
 func play(w http.ResponseWriter, req *http.Request) {
+	type playTpl struct {
+		Question          *aws.Question
+		ShowNeverAnswered bool
+		ShowIncorrect     bool
+		IncorrectMessage  string
+		ShowCorrect       bool
+		CorrectMessage    string
+		CurrentScore      int
+
+		// Leaderboards
+		FirstPlace  LBSingleScore
+		SecondPlace LBSingleScore
+		ThirdPlace  LBSingleScore
+	}
+	var playPage playTpl
+
 	intErr := func() {
 		http.Error(w, "an internal server error occurred", http.StatusInternalServerError)
 	}
 	hole := strings.TrimLeft(req.URL.Path, "/play/")
 	question, err := getHoleByLink(hole)
-	exeTpl := func(show, incorrect bool, message, bestScore string) {
-		tpl.ExecuteTemplate(w, "play.html", struct {
-			Show      bool
-			Incorrect bool
-			Message   string
-			BestScore string
-			Question  *aws.Question
-		}{
-			Show:      show,
-			Incorrect: incorrect,
-			Message:   message,
-			BestScore: bestScore,
-			Question:  question,
-		})
+	exeTpl := func() {
+		first, second, third := getTopThree(hole)
+		if first.Score != 0 {
+			playPage.FirstPlace = *first
+		}
+		if second.Score != 0 {
+			playPage.SecondPlace = *second
+		}
+		if third.Score != 0 {
+			playPage.ThirdPlace = *third
+		}
+		tpl.ExecuteTemplate(w, "play.html", playPage)
 	}
 	if err != nil {
 		http.Redirect(w, req, "/holes", http.StatusSeeOther)
 		return
 	}
+	playPage.Question = question
 	if req.Method == http.MethodPost {
-		if !loggedIn(w, req) {
-			http.Redirect(w, req, "/login", http.StatusSeeOther)
-			return
-		}
 		user, err := FetchUser(w, req)
 		if err != nil {
 			logger.Printf("error fetching user: %v\n", err)
 			intErr()
+			return
+		}
+		if !loggedIn(w, req) {
+			http.Redirect(w, req, "/login", http.StatusSeeOther)
 			return
 		}
 
@@ -136,13 +152,13 @@ func play(w http.ResponseWriter, req *http.Request) {
 
 		logger.Printf("submission %s %s %s\n", user, hole, lang)
 
-		bs, err := ioutil.ReadAll(file) // todo: swap this to a buffer maybe
+		bs, err := ioutil.ReadAll(file) // buffer in the future?
 		if err != nil {
 			logger.Printf("error reading all file : %v\n", err.Error())
 			intErr()
 			return
 		}
-		// 		// run the code from the input through the submission system
+		// run the code from the input through the submission system
 		runnerClient := runner.NewClient()
 		// runnerConfig := runner.NewConfiguration(true, true)
 		submission := runner.NewCodeSubmission(user.Email, hole, fileHead.Filename, lang, string(bs), runnerClient)
@@ -152,19 +168,58 @@ func play(w http.ResponseWriter, req *http.Request) {
 			intErr()
 			return
 		}
-		// TODO: Check output file and scoring system
-		// the users submission is wrong
-		//todo: handle this
+
 		if !checkResponse(runnerResp, question) {
 			// answer is incorrect
-			exeTpl(true, true, runnerResp.Output+"\n is not the correct output", "BEST SCORE HOLDER")
+			playPage.ShowIncorrect = true
+			playPage.IncorrectMessage = fmt.Sprintf("%s\nis not the correct output.", runnerResp.Output)
+			_, idx, exist := userHasSubmission(hole, user.Email)
+			if exist {
+				playPage.CorrectMessage = fmt.Sprintf("You have already answered this hole correctly in %v bytes!", holeScores[hole][idx].Score)
+				playPage.ShowCorrect = true
+			}
+			exeTpl()
 			return
 		}
-		// todo: score would go here and then into the best score holder
-		exeTpl(true, false, runnerResp.Output+"\n was the correct output.", "BEST SCORE HOLDER")
+
+		score := Score(submission, question)
+
+		// todo: make a translator function to take of this for me
+		lbScore := LBSingleScore{
+			Username: user.Email,
+			Language: submission.Language,
+			Score:    int(score),
+		}
+		addScore(hole, lbScore)
+
+		playPage.ShowCorrect = true
+		playPage.CorrectMessage = fmt.Sprintf("%s\nis the correct output.", runnerResp.Output)
+		playPage.CurrentScore = int(score)
+		// exeTpl(true, false, runnerResp.Output+"\n was the correct output.", "BEST SCORE HOLDER")
+		exeTpl()
 		return
 	}
 	// the question exists and was grabbed
-	exeTpl(false, false, "", "")
+	// exeTpl(false, false, "", "")
+	if !loggedIn(w, req) {
+		playPage.ShowNeverAnswered = true
+	} else {
+		user, err := FetchUser(w, req)
+		if err != nil {
+			logger.Printf("error fetching user: %v\n", err)
+			intErr()
+			return
+		}
+		_, idx, exist := userHasSubmission(hole, user.Email)
+		if exist {
+			playPage.CorrectMessage = fmt.Sprintf("You have already answered this hole correctly in %v bytes!", holeScores[hole][idx].Score)
+			playPage.ShowCorrect = true
+			playPage.CurrentScore = holeScores[hole][idx].Score
+		} else {
+			playPage.ShowNeverAnswered = true
+		}
+	}
+
+	exeTpl()
 	return
 }

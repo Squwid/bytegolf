@@ -90,6 +90,12 @@ func holes(w http.ResponseWriter, req *http.Request) {
 }
 
 func play(w http.ResponseWriter, req *http.Request) {
+	hole := strings.TrimLeft(req.URL.Path, "/play/")
+	// error functions that are only needed in this scope
+	intErr := func() {
+		http.Error(w, "an internal server error occurred", http.StatusInternalServerError)
+	}
+	// playTpl holds the data for the play page, only needed in this scope
 	type playTpl struct {
 		Question          *aws.Question
 		ShowNeverAnswered bool
@@ -105,12 +111,6 @@ func play(w http.ResponseWriter, req *http.Request) {
 		ThirdPlace  LBSingleScore
 	}
 	var playPage playTpl
-
-	intErr := func() {
-		http.Error(w, "an internal server error occurred", http.StatusInternalServerError)
-	}
-	hole := strings.TrimLeft(req.URL.Path, "/play/")
-	question, err := getHoleByLink(hole)
 	exeTpl := func() {
 		first, second, third := getTopThree(hole)
 		if first.Score != 0 {
@@ -124,11 +124,14 @@ func play(w http.ResponseWriter, req *http.Request) {
 		}
 		tpl.ExecuteTemplate(w, "play.html", playPage)
 	}
+
+	question, err := getHoleByLink(hole)
 	if err != nil {
 		http.Redirect(w, req, "/holes", http.StatusSeeOther)
 		return
 	}
 	playPage.Question = question
+
 	if req.Method == http.MethodPost {
 		user, err := FetchUser(w, req)
 		if err != nil {

@@ -182,11 +182,11 @@ func GetQuestionsTemp(amount int) map[int]Question {
 	}
 	q3 := Question{
 		ID:         "3",
-		Name:       "Heating Up",
+		Name:       "Easy Counter ",
 		Question:   "Produce the number 2018 without any numbers in your source code",
-		Answer:     "2018",
-		Difficulty: "hard",
-		Link:       "heatingup",
+		Answer:     "500000500000",
+		Difficulty: "easy",
+		Link:       "easycounter",
 	}
 	var q = map[int]Question{
 		1: q1,

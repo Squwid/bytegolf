@@ -60,6 +60,9 @@ func main() {
 	http.HandleFunc("/login", login)
 	http.HandleFunc("/account", account)
 	http.HandleFunc("/leaderboards", leaderboards)
+	http.HandleFunc("/admin/delete/", deletehole)
+	http.HandleFunc("/admin/adduser", createuser)
+	http.HandleFunc("/admin/", admin)
 
 	// listen and serve
 	http.Handle("/favicon.ico", http.NotFoundHandler())

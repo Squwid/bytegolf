@@ -32,13 +32,13 @@ func TestScoring(t *testing.T) {
 		Memory:     "some mem value",
 		CPUTime:    "NONE",
 	}
-	correct := checkResponse(&resp, &testQ)
+	correct := testQ.Check(&resp)
 	if !correct {
 		fmt.Println("QUESTION WAS INCORRECT")
 		t.Fail()
 	}
 
-	score := Score(sub, &testQ)
+	score := testQ.Score(sub)
 	t.Log("GOT", score, "FROM QUESTION", testQ.Name)
 
 	{

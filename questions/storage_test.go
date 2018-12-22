@@ -22,3 +22,23 @@ func TestGetLocalQuestions(t *testing.T) {
 	}
 	fmt.Println("QS:", qs)
 }
+
+func TestDeleteQuestion(t *testing.T) {
+	testQ := "testq"
+	qs := GetLocalQuestions()
+	found := false
+	for _, q := range qs {
+		if q.Link == testQ {
+			found = true
+			err := q.Remove()
+			if err != nil {
+				t.Logf("error removing %s\n", testQ)
+				t.Fail()
+			}
+		}
+	}
+	if !found {
+		t.Logf("unable to find %s\n", testQ)
+		t.Fail()
+	}
+}

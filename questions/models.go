@@ -25,6 +25,7 @@ type Question struct {
 	Difficulty string `json:"difficulty"`
 	Source     string `json:"source"`
 	Link       string `json:"link"`
+	Created    string `json:"created"`
 }
 
 // NewQuestion creates a new question with a UUID
@@ -44,7 +45,7 @@ func NewQuestion(name, question, answer, difficulty, source, link string) *Quest
 // GetLocalQuestions returns a list of questions that are retrieved from the local file system
 func GetLocalQuestions() []Question {
 	var qs = []Question{}
-	filelist, err := ioutil.ReadDir("./questions/questions")
+	filelist, err := ioutil.ReadDir("./questions/questions/")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -72,7 +73,7 @@ func GetLocalQuestions() []Question {
 func ToMap(qs []Question) map[int]Question {
 	m := make(map[int]Question)
 	for i, q := range qs {
-		m[i] = q
+		m[i+1] = q
 	}
 	return m
 }

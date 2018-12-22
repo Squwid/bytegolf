@@ -1,4 +1,4 @@
-package main
+package questions
 
 import (
 	"fmt"
@@ -6,18 +6,10 @@ import (
 	"testing"
 
 	"github.com/Squwid/bytegolf/runner"
-
-	"github.com/Squwid/bytegolf/aws"
 )
 
 func TestScoring(t *testing.T) {
-	testQ := aws.Question{
-		ID:         "2",
-		Name:       "test question",
-		Question:   "print `hello world!`",
-		Answer:     "hello world!",
-		Difficulty: "easy",
-	}
+	testQ := NewQuestion("test question", "print `hello world!`", "hello world!", "easy", "source", "hw")
 
 	codeBodyGo := `
 	package main
@@ -32,7 +24,7 @@ func TestScoring(t *testing.T) {
 	}
 	`
 	c := runner.NewClient()
-	sub := runner.NewCodeSubmission("bwhitelaw24", "1", "main.go", runner.LangGo, codeBodyGo, c, nil)
+	sub := runner.NewCodeSubmission("bwhitelaw24", "1", "main.go", runner.LangGo, codeBodyGo, c)
 	resp := runner.CodeResponse{
 		UUID:       "1",
 		Output:     "hello world!",

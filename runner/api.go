@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -18,14 +19,13 @@ import (
 const APIURI = "https://api.jdoodle.com/execute"
 const subBucket = "bytegolf-submissions"
 
-// Send todo
-func (s *CodeSubmission) Send() (*CodeResponse, error) {
+// Send sends a CodeSubmission to the server compiler to check against the output
+func (s *CodeSubmission) Send(storeLocal bool) (*CodeResponse, error) {
 	var r CodeResponse
 
-	// TODO: What do i want to do about configurations and storing data
-	// if s.Config.SaveSubmissions {
-	// 	go s.store() // store concurrently during the send
-	// }
+	if storeLocal {
+		go s.storeLocal()
+	}
 
 	reqBody, err := json.Marshal(*s)
 	if err != nil {
@@ -58,12 +58,60 @@ func (s *CodeSubmission) Send() (*CodeResponse, error) {
 	r.Info = s.Info
 	r.UUID = s.UUID
 
-	// TODO: same here as what i did earlier
-	// if s.Config.SaveSubmissions {
-	// 	go r.store() // store response concurrently
-	// }
+	// todo: storing concurrently does not check for an error
+	if storeLocal {
+		go r.storeLocal()
+	}
 
 	return &r, nil
+}
+
+func (s *CodeSubmission) storeLocal() error {
+	var path = fmt.Sprintf("./subs/%s/", s.Info.User)
+
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		os.MkdirAll(path, os.ModePerm)
+	}
+
+	f, err := os.Create(path + s.UUID)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	_, err = f.Write([]byte(s.Script))
+	if err != nil {
+		return err
+	}
+	err = f.Sync()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *CodeResponse) storeLocal() error {
+	var path = fmt.Sprintf("./resp/%s/", s.Info.User)
+
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		os.MkdirAll(path, os.ModePerm)
+	}
+
+	f, err := os.Create(path + s.UUID)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	store, err := json.Marshal(s)
+	if err != nil {
+		return err
+	}
+	_, err = f.Write(store)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // Store stores a submission to an S3 Bucket
@@ -99,14 +147,13 @@ func (s *CodeResponse) store() {
 	//
 	key := fmt.Sprintf("%s/%s/resp_%s_%s", s.Info.Hole, s.Info.User, s.Info.Name, s.UUID)
 
-	// TODO: deal with this error in the future
 	_, err := uploader.Upload(&s3manager.UploadInput{
 		Bucket: aws.String(subBucket),
 		Key:    aws.String(key),
 		Body:   strings.NewReader(fmt.Sprintf("Status: %v\nMemory: %s\nCPU Time: %s\nOutput:\n%s\n", s.StatusCode, s.Memory, s.CPUTime, s.Output)),
 	})
 	if err != nil {
-		log.Fatal(err.Error())
+		log.Fatalf("an error occurred storing a code response: %s\n", err.Error())
 		return
 	}
 }

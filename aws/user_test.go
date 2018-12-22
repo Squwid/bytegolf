@@ -6,10 +6,10 @@ import (
 )
 
 func TestCreateUser(t *testing.T) {
-	var newUserEmail = "clln"
-	var newUserName = "clln"
-	var newUserFirst = "bytegolf"
-	u := NewUser(newUserEmail, newUserName, newUserFirst)
+	var newUserEmail = "ben"
+	var newUserName = "ben"
+	var newUserPass = "ben"
+	u := NewUser(newUserEmail, newUserName, newUserPass)
 	if err := u.Store(); err != nil {
 		t.Logf("error occurred storing user: %v\n", err)
 		t.Fail()

@@ -7,11 +7,9 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"strings"
 	"time"
 
-	"github.com/Squwid/bytegolf/aws"
-	"github.com/Squwid/bytegolf/runner"
+	"github.com/Squwid/bytegolf/questions"
 )
 
 /*
@@ -26,7 +24,7 @@ import (
 var siteAddr = "https://bytegolf.io"
 var tpl *template.Template
 var sessions = map[string]session{}
-var questions = map[int]aws.Question{}
+var qs = map[int]questions.Question{}
 
 // Loggers
 var (
@@ -47,7 +45,7 @@ type code struct {
 
 func init() {
 	tpl = template.Must(template.ParseGlob("views/*"))
-	questions = aws.GetQuestionsTemp(3)
+	qs = questions.ToMap(questions.GetLocalQuestions())
 	logger = log.New(os.Stdout, "[bytegolf] ", log.Ldate|log.Ltime)
 }
 
@@ -62,8 +60,6 @@ func main() {
 	http.HandleFunc("/login", login)
 	http.HandleFunc("/account", account)
 	http.HandleFunc("/leaderboards", leaderboards)
-	http.HandleFunc("/tutorial/create", tutCreator)
-	http.HandleFunc("/tutorial", tutorial)
 
 	// listen and serve
 	http.Handle("/favicon.ico", http.NotFoundHandler())
@@ -112,22 +108,10 @@ func createServer() *http.Server {
 	}
 }
 
-func checkResponse(resp *runner.CodeResponse, q *aws.Question) bool {
-	if strings.TrimSpace(strings.ToLower(resp.Output)) == strings.TrimSpace(strings.ToLower(q.Answer)) {
-		return true
-	}
-	return false
-}
-
-type strPair struct {
-	begin string
-	end   string
-}
-
 // getHoleByLink retrieves an aws question from the questions and an error if one is not found
 // with a matching link
-func getHoleByLink(link string) (*aws.Question, error) {
-	for _, hole := range questions {
+func getHoleByLink(link string) (*questions.Question, error) {
+	for _, hole := range qs {
 		if hole.Link == link {
 			return &hole, nil
 		}

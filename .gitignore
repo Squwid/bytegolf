@@ -3,3 +3,5 @@
 bytegolf
 *.exe
 *.exe~
+subs/
+resp/

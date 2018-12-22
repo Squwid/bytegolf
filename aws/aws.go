@@ -12,3 +12,10 @@ const (
 const (
 	questionsTable = "bytegolf-questions"
 )
+
+// Role Constants
+const (
+	RoleDev   = "dev-role"
+	RoleAdmin = "admin-role"
+	RoleUser  = "user-role"
+)

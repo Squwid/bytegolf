@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/Squwid/bytegolf/aws"
+	"github.com/Squwid/bytegolf/questions"
 	"github.com/Squwid/bytegolf/runner"
 )
 
@@ -39,6 +39,14 @@ func leaderboards(w http.ResponseWriter, req *http.Request) {
 }
 
 func login(w http.ResponseWriter, req *http.Request) {
+	exeTpl := func(incorrectPass bool) {
+		tpl.ExecuteTemplate(w, "login.html", struct {
+			IncorrectPassword bool
+		}{
+			IncorrectPassword: incorrectPass,
+		})
+	}
+
 	if loggedIn(w, req) {
 		http.Redirect(w, req, "/account", http.StatusSeeOther)
 		return
@@ -48,6 +56,7 @@ func login(w http.ResponseWriter, req *http.Request) {
 	if req.Method == "POST" {
 		reqEmail := req.FormValue("login_email")
 		reqPass := req.FormValue("login_password")
+
 		correctLogin, err := tryLogin(reqEmail, reqPass)
 		if err != nil {
 			logger.Printf("error logging in: %v\n", err)
@@ -55,11 +64,8 @@ func login(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 		if !correctLogin {
-			tpl.ExecuteTemplate(w, "login.html", struct {
-				IncorrectPassword bool
-			}{
-				IncorrectPassword: true,
-			})
+			// incorrect password == true
+			exeTpl(true)
 			return
 		}
 		// the password is correct
@@ -73,31 +79,26 @@ func login(w http.ResponseWriter, req *http.Request) {
 		http.Redirect(w, req, "/", http.StatusSeeOther)
 		return
 	}
-	tpl.ExecuteTemplate(w, "login.html", struct {
-		IncorrectPassword bool
-	}{
-		IncorrectPassword: false,
-	})
-
+	// incorrect password == false
+	exeTpl(false)
 }
 
 func holes(w http.ResponseWriter, req *http.Request) {
 	tpl.ExecuteTemplate(w, "holes.html", struct {
-		Questions map[int]aws.Question
+		Questions map[int]questions.Question
 	}{
-		Questions: questions,
+		Questions: qs,
 	})
 }
 
 func play(w http.ResponseWriter, req *http.Request) {
 	hole := strings.TrimLeft(req.URL.Path, "/play/")
+
 	// error functions that are only needed in this scope
-	intErr := func() {
-		http.Error(w, "an internal server error occurred", http.StatusInternalServerError)
-	}
+	intErr := func() { http.Error(w, "an internal server error occurred", http.StatusInternalServerError) }
 	// playTpl holds the data for the play page, only needed in this scope
 	type playTpl struct {
-		Question          *aws.Question
+		Question          *questions.Question
 		ShowNeverAnswered bool
 		ShowIncorrect     bool
 		IncorrectMessage  string
@@ -110,6 +111,7 @@ func play(w http.ResponseWriter, req *http.Request) {
 		SecondPlace LBSingleScore
 		ThirdPlace  LBSingleScore
 	}
+
 	var playPage playTpl
 	exeTpl := func() {
 		first, second, third := getTopThree(hole)
@@ -130,6 +132,7 @@ func play(w http.ResponseWriter, req *http.Request) {
 		http.Redirect(w, req, "/holes", http.StatusSeeOther)
 		return
 	}
+
 	playPage.Question = question
 
 	if req.Method == http.MethodPost {
@@ -163,16 +166,15 @@ func play(w http.ResponseWriter, req *http.Request) {
 		}
 		// run the code from the input through the submission system
 		runnerClient := runner.NewClient()
-		// runnerConfig := runner.NewConfiguration(true, true)
 		submission := runner.NewCodeSubmission(user.Email, hole, fileHead.Filename, lang, string(bs), runnerClient)
-		runnerResp, err := submission.Send()
+		runnerResp, err := submission.Send(true) // true stands for save local
 		if err != nil {
 			logger.Println(err.Error())
 			intErr()
 			return
 		}
 
-		if !checkResponse(runnerResp, question) {
+		if !question.Check(runnerResp) {
 			// answer is incorrect
 			playPage.ShowIncorrect = true
 			playPage.IncorrectMessage = fmt.Sprintf("%s\nis not the correct output.", runnerResp.Output)
@@ -185,7 +187,7 @@ func play(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-		score := Score(submission, question)
+		score := question.Score(submission)
 
 		// todo: make a translator function to take of this for me
 		lbScore := LBSingleScore{

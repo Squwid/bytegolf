@@ -1,9 +1,8 @@
-package main
+package questions
 
 import (
 	"strings"
 
-	"github.com/Squwid/bytegolf/aws"
 	"github.com/Squwid/bytegolf/runner"
 )
 
@@ -12,6 +11,11 @@ import (
 	Each character that is not white space or newline is 1 point
 	Max score per problem is 300 (Maybe this needs to change)
 */
+
+type strPair struct {
+	begin string
+	end   string
+}
 
 func gatherCustomCommentTags(code string, tags []strPair, sizeTags uint, tagFinder strPair) ([]strPair, uint) {
 	var strFind = -3
@@ -164,7 +168,7 @@ func genericScore(code string, comments []strPair, commentsSize uint, strings []
 // Score checks the score of a submission, however does not check if the submission is correct so that needs to
 // be done ahead of time.
 // Your score is determined by any characters except for spaces
-func Score(sub *runner.CodeSubmission, q *aws.Question) uint {
+func (q *Question) Score(sub *runner.CodeSubmission) uint {
 	if sub.Language == runner.LangJava || sub.Language == runner.LangCPP || sub.Language == runner.LangCPP14 || sub.Language == runner.LangC {
 		return genericScore(sub.Script, []strPair{{"//", "\n"}, {"/*", "*/"}}, 2, []strPair{{"\"", "\""}, {"'", "'"}}, 2)
 	}

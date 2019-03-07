@@ -1,5 +1,0 @@
-Logger that prints in verbose mode if it is enabled
-Check the code for the answer
-Scoring 
-Leaderboards
-Remove "zombie" code

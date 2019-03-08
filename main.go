@@ -7,13 +7,15 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/Squwid/bytegolf/questions"
+	"github.com/aws/aws-sdk-go/aws"
+	awss "github.com/aws/aws-sdk-go/aws/session"
 )
 
 /*
-	TODO:
 	DEV NOTES
 	Currently need to implement the following before alpha
 */
@@ -25,6 +27,7 @@ var siteAddr = "https://bytegolf.io"
 var tpl *template.Template
 var sessions = map[string]session{}
 var qs = map[int]questions.Question{}
+var awsSess *awss.Session
 
 // Loggers
 var (
@@ -47,6 +50,7 @@ func init() {
 	tpl = template.Must(template.ParseGlob("views/*"))
 	qs = questions.ToMap(questions.GetLocalQuestions())
 	logger = log.New(os.Stdout, "[bytegolf] ", log.Ldate|log.Ltime)
+	awsSess = awss.Must(awss.NewSessionWithOptions(awss.Options{Config: aws.Config{Region: aws.String("us-east-1")}}))
 }
 
 func main() {
@@ -56,6 +60,7 @@ func main() {
 	http.HandleFunc("/", index)
 	// http.HandleFunc("/signup", signup)
 	http.HandleFunc("/play/", play)
+	http.HandleFunc("/submit/", submission)
 	http.HandleFunc("/holes/", holes)
 	http.HandleFunc("/login", login)
 	http.HandleFunc("/account", account)
@@ -113,7 +118,8 @@ func createServer() *http.Server {
 
 // getHoleByLink retrieves an aws question from the questions and an error if one is not found
 // with a matching link
-func getHoleByLink(link string) (*questions.Question, error) {
+func getHoleByLink(l int) (*questions.Question, error) {
+	link := strconv.Itoa(l)
 	for _, hole := range qs {
 		if hole.Link == link {
 			return &hole, nil

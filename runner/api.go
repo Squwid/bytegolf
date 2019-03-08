@@ -8,78 +8,80 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 )
 
 // APIURI is the uri that execututes the api
-const APIURI = "https://api.jdoodle.com/execute"
+const APIURI = "https://api.jdoodle.com/v1/execute"
 const subBucket = "bytegolf-submissions"
 
 // Send sends a CodeSubmission to the server compiler to check against the output
 func (s *CodeSubmission) Send(storeLocal bool) (*CodeResponse, error) {
 	var r CodeResponse
-
 	if storeLocal {
 		go s.storeLocal()
 	}
 
 	reqBody, err := json.Marshal(*s)
 	if err != nil {
-		return &CodeResponse{}, err
+		return nil, err
 	}
 
 	req, err := http.NewRequest(http.MethodPost, APIURI, bytes.NewBuffer(reqBody))
 	if err != nil {
-		return &CodeResponse{}, err
+		return nil, err
 	}
 	req.Header.Set("Content-Type", "application/json")
 
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	// Send the request using the default client
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return &CodeResponse{}, err
+		return nil, err
 	}
 
 	err = json.Unmarshal(body, &r)
 	if err != nil {
-		return &CodeResponse{}, err
+		return nil, err
 	}
 
 	r.Info = s.Info
 	r.UUID = s.UUID
-
-	// todo: storing concurrently does not check for an error
+	r.awsSess = s.awsSess // pass the aws session through
 	if storeLocal {
 		go r.storeLocal()
 	}
-
 	return &r, nil
 }
 
+/* FUNCTIONS RELATING TO STORING THE SUBMISSIONS AND RESPONSES LOCALLY */
 func (s *CodeSubmission) storeLocal() error {
-	var path = fmt.Sprintf("./subs/%s/", s.Info.User)
+	var p = path.Join("./subs", s.Info.User)
 
-	if _, err := os.Stat(path); os.IsNotExist(err) {
-		os.MkdirAll(path, os.ModePerm)
+	if _, err := os.Stat(p); os.IsNotExist(err) {
+		os.MkdirAll(p, os.ModePerm)
 	}
 
-	f, err := os.Create(path + s.UUID)
+	f, err := os.Create(path.Join(p, s.UUID))
 	if err != nil {
 		return err
 	}
 	defer f.Close()
 
-	_, err = f.Write([]byte(s.Script))
+	bs, err := json.Marshal(*s)
+	if err != nil {
+		return err
+	}
+	_, err = f.Write(bs)
 	if err != nil {
 		return err
 	}
@@ -90,20 +92,21 @@ func (s *CodeSubmission) storeLocal() error {
 	return nil
 }
 
+// Store local stores a code response to the local file system rather than an s3 bucket
 func (s *CodeResponse) storeLocal() error {
-	var path = fmt.Sprintf("./resp/%s/", s.Info.User)
+	var p = path.Join("./resp", s.Info.User)
 
-	if _, err := os.Stat(path); os.IsNotExist(err) {
-		os.MkdirAll(path, os.ModePerm)
+	if _, err := os.Stat(p); os.IsNotExist(err) {
+		os.MkdirAll(p, os.ModePerm)
 	}
 
-	f, err := os.Create(path + s.UUID)
+	f, err := os.Create(path.Join(p, s.UUID))
 	if err != nil {
 		return err
 	}
 	defer f.Close()
 
-	store, err := json.Marshal(s)
+	store, err := json.Marshal(*s)
 	if err != nil {
 		return err
 	}
@@ -116,36 +119,25 @@ func (s *CodeResponse) storeLocal() error {
 
 // Store stores a submission to an S3 Bucket
 func (s *CodeSubmission) store() {
-	sess := session.Must(session.NewSessionWithOptions(session.Options{
-		Config: aws.Config{Region: aws.String("us-east-1")},
-	}))
-
-	uploader := s3manager.NewUploader(sess)
-
-	//
-	key := fmt.Sprintf("%s/%s/sub_%s_%s", s.Info.Hole, s.Info.User, s.Info.Name, s.UUID)
-
+	key := path.Join(s.Info.Hole, s.Info.User, fmt.Sprintf("sub_%s_%s", s.Info.Name, s.UUID))
+	// key := fmt.Sprintf("%s/%s/sub_%s_%s", s.Info.Hole, s.Info.User, s.Info.Name, s.UUID)
+	uploader := s3manager.NewUploader(s.awsSess)
 	_, err := uploader.Upload(&s3manager.UploadInput{
 		Bucket: aws.String(subBucket),
 		Key:    aws.String(key),
 		Body:   strings.NewReader(s.Script),
 	})
 	if err != nil {
-		log.Fatal(err.Error())
+		log.Printf("error storing %s submission : %v\n", s.UUID, err)
 		return
 	}
 }
 
 // Store a code submission to an S3 bucket
 func (s *CodeResponse) store() {
-	sess := session.Must(session.NewSessionWithOptions(session.Options{
-		Config: aws.Config{Region: aws.String("us-east-1")},
-	}))
-
-	uploader := s3manager.NewUploader(sess)
-
-	//
-	key := fmt.Sprintf("%s/%s/resp_%s_%s", s.Info.Hole, s.Info.User, s.Info.Name, s.UUID)
+	key := path.Join(s.Info.Hole, s.Info.User, fmt.Sprintf("resp_%s_%s", s.Info.Name, s.UUID))
+	uploader := s3manager.NewUploader(s.awsSess)
+	// key := fmt.Sprintf("%s/%s/resp_%s_%s", s.Info.Hole, s.Info.User, s.Info.Name, s.UUID)
 
 	_, err := uploader.Upload(&s3manager.UploadInput{
 		Bucket: aws.String(subBucket),
@@ -153,7 +145,7 @@ func (s *CodeResponse) store() {
 		Body:   strings.NewReader(fmt.Sprintf("Status: %v\nMemory: %s\nCPU Time: %s\nOutput:\n%s\n", s.StatusCode, s.Memory, s.CPUTime, s.Output)),
 	})
 	if err != nil {
-		log.Fatalf("an error occurred storing a code response: %s\n", err.Error())
+		log.Printf("error storing %s response : %v\n", s.UUID, err)
 		return
 	}
 }

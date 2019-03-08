@@ -1,6 +1,9 @@
 package runner
 
 import (
+	"encoding/json"
+	"net/http"
+	"os"
 	"testing"
 )
 
@@ -15,41 +18,63 @@ func main() {
 func TestSubmit(t *testing.T) {
 	c := NewClient()
 	if len(c.ID) == 0 {
-		t.Log("c.ID:", c.ID)
-		t.Log("error creating new client")
-		t.Fail()
+		t.Fatalf("error creating new client w/id: %s\n", c.ID)
 	}
-	sub := NewCodeSubmission("bwhitelaw24", "343", "main.go", LangGo, codeBody, c)
-	resp, err := sub.Send()
+	sub := NewCodeSubmission("bwhitelaw24", "343", "main.go", LangGo, codeBody, c, nil)
+	resp, err := sub.Send(false)
 	if err != nil {
-		t.Log(err)
-		t.Fail()
+		t.Error(err)
 	}
-	t.Log(resp)
+	if resp.StatusCode != http.StatusOK {
+		t.Errorf("got bad status : %v", resp.StatusCode)
+	} else {
+		t.Logf(resp.Output)
+		bs, _ := json.Marshal(*resp)
+		t.Log(string(bs))
+	}
 }
 
 func TestStoreSubmissionLocal(t *testing.T) {
-	c := NewClient()
-	sub := NewCodeSubmission("bwhitela4", "343", "main.go", LangGo, codeBody, c)
+	sub := &CodeSubmission{
+		UUID:         "1",
+		Script:       codeBody,
+		Language:     LangGo,
+		VersionIndex: "0",
+		ID:           "abc",
+		Secret:       "def",
+		Info: &FileInfo{
+			Name: "Ben",
+			User: "bwhitelaw",
+			Hole: "3",
+		},
+	}
+
 	err := sub.storeLocal()
 	if err != nil {
-		t.Logf("Error storing local: %v\n", err)
-		t.Fail()
+		t.Errorf("Error storing local: %v\n", err)
+	}
+	if _, err := os.Stat("./subs/bwhitelaw/1"); os.IsNotExist(err) {
+		t.Errorf("file was not created")
 	}
 }
 
 func TestStoreResponseLocal(t *testing.T) {
-	c := NewClient()
-	sub := NewCodeSubmission("bwhitela4", "343", "main.go", LangGo, codeBody, c)
-	resp, err := sub.Send()
-	if err != nil {
-		t.Logf("error sending submission: %v\n", err)
-		t.Fail()
+	resp := &CodeResponse{
+		UUID:       "1",
+		Output:     "hello world",
+		StatusCode: 200,
+		Info: &FileInfo{
+			Name: "Ben",
+			User: "bwhitelaw",
+			Hole: "3",
+		},
 	}
 
-	err = resp.storeLocal()
+	err := resp.storeLocal()
 	if err != nil {
-		t.Logf("error storing response locally: %v\n", err)
-		t.Fail()
+		t.Errorf("error storing response locally: %v\n", err)
+	}
+	if _, err := os.Stat("./resp/bwhitelaw/1"); os.IsNotExist(err) {
+		t.Errorf("file was not created")
 	}
 }

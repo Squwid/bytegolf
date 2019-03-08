@@ -1,5 +1,7 @@
 package main
 
+import "strconv"
+
 /*
 	Leaderboards are going to be stored in memory for now to make sure that they
 	work and in the future they will be stored on AWS
@@ -34,9 +36,10 @@ func addScore(hole string, score LBSingleScore) {
 	return
 }
 
-func getTopThree(hole string) (*LBSingleScore, *LBSingleScore, *LBSingleScore) {
+func getTopThree(hole int) (*LBSingleScore, *LBSingleScore, *LBSingleScore) {
+	hstr := strconv.Itoa(hole)
 	var first, second, third LBSingleScore
-	for _, score := range holeScores[hole] {
+	for _, score := range holeScores[hstr] {
 		// fmt.Printf("PREV SCORE: %v CURRENT HIGH SCORE: %v\n", score.Score, first.Score)
 		if score.Score < first.Score || first.Score == 0 {
 			third = second

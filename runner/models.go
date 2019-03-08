@@ -3,6 +3,7 @@ package runner
 import (
 	"os"
 
+	"github.com/aws/aws-sdk-go/aws/session"
 	uuid "github.com/satori/go.uuid"
 )
 
@@ -30,10 +31,13 @@ type CodeSubmission struct {
 	Script       string `json:"script"`
 	Language     string `json:"language"`
 	VersionIndex string `json:"versionIndex"`
-	ID           string `json:"clientId"`
-	Secret       string `json:"clientSecret"`
 
-	Info *FileInfo `json:"info"`
+	ID     string    `json:"clientId"`
+	Secret string    `json:"clientSecret"`
+	Info   *FileInfo `json:"info"`
+
+	// handles aws s3 storage
+	awsSess *session.Session
 }
 
 // FileInfo todo
@@ -52,6 +56,8 @@ type CodeResponse struct {
 	CPUTime    string `json:"cpuTime"`
 
 	Info *FileInfo
+
+	awsSess *session.Session
 }
 
 // Client is the client that allows the user to talk to the API
@@ -79,7 +85,7 @@ func NewClientWithCreds(id, secret string) *Client {
 }
 
 // NewCodeSubmission todo:
-func NewCodeSubmission(username, hole, filename, language, code string, client *Client) *CodeSubmission {
+func NewCodeSubmission(username, hole, filename, language, code string, client *Client, sess *session.Session) *CodeSubmission {
 	id, _ := uuid.NewV4()
 	return &CodeSubmission{
 		UUID:         id.String(),
@@ -93,5 +99,6 @@ func NewCodeSubmission(username, hole, filename, language, code string, client *
 			User: username,
 			Hole: hole,
 		},
+		awsSess: sess,
 	}
 }

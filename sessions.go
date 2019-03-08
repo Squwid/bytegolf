@@ -2,42 +2,13 @@ package main
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/Squwid/bytegolf/aws"
 	uuid "github.com/satori/go.uuid"
 	"golang.org/x/crypto/bcrypt"
 )
-
-func setUserHole(hole int, w http.ResponseWriter) {
-	http.SetCookie(w, &http.Cookie{
-		Name:  "hole",
-		Value: strconv.Itoa(hole),
-	})
-}
-
-func getUserHole(req *http.Request) int {
-	var cookie *http.Cookie
-	cookie, err := req.Cookie("hole")
-	if err != nil {
-		// user either deleted cookie or they havent joined a game yet
-		return 1
-	}
-	i, err := strconv.Atoi(cookie.Value)
-	if err != nil {
-		return 1
-	}
-	if i > 9 {
-		return 9
-	}
-	if i < 1 {
-		return 1
-	}
-	return i
-}
 
 func logOn(w http.ResponseWriter, email string) (aws.User, error) {
 	// getting the user first to make sure that it doesnt error out after putting the user in the map
@@ -51,10 +22,8 @@ func logOn(w http.ResponseWriter, email string) (aws.User, error) {
 	}
 
 	idString := id.String()
-
-	fmt.Println(idString)
 	cookie := &http.Cookie{
-		Name:  "session",
+		Name:  "bgsession",
 		Value: idString,
 	}
 	http.SetCookie(w, cookie)
@@ -62,7 +31,6 @@ func logOn(w http.ResponseWriter, email string) (aws.User, error) {
 		Email:        email,
 		lastActivity: time.Now(),
 	}
-	fmt.Println(idString)
 	return user, nil
 }
 
@@ -88,7 +56,7 @@ func FetchUser(w http.ResponseWriter, req *http.Request) (aws.User, error) {
 		http.Redirect(w, req, "/login", http.StatusSeeOther)
 		return aws.User{}, errors.New("this user is not logged in and has been redirected")
 	}
-	cookie, err := req.Cookie("session")
+	cookie, err := req.Cookie("bgsession")
 	if err != nil {
 		return aws.User{}, err
 	}
@@ -101,11 +69,11 @@ func FetchUser(w http.ResponseWriter, req *http.Request) (aws.User, error) {
 
 // loggedIn checks to see if a player is currently logged in
 func loggedIn(w http.ResponseWriter, req *http.Request) bool {
-	cookie, err := req.Cookie("session")
+	cookie, err := req.Cookie("bgsession")
 	if err != nil {
 		return false
 	}
-	fmt.Printf("SESSIONS: %v\tMY COOKIEVAL: %s\n", sessions, cookie.Value)
+	// fmt.Printf("SESSIONS: %v\tMY COOKIEVAL: %s\n", sessions, cookie.Value)
 	var ok bool
 	if session, ok := sessions[cookie.Value]; ok {
 		session.lastActivity = time.Now()

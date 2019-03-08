@@ -23,7 +23,7 @@
             <div class="collapse navbar-collapse" id="navbarCollapse">
                 <ul class="navbar-nav">
                     <li class="nav-item px-2">
-                        <a href="/admin" class="nav-link active">Dashboard</a>
+                        <a href="/admin/holes" class="nav-link active">Dashboard</a>
                     </li>
                     <!-- <li class="nav-item px-2">
                         <a href="posts.html" class="nav-link">Posts</a>
@@ -38,17 +38,17 @@
 
                 <ul class="navbar-nav ml-auto">
                     <li class="nav-item dropdown mr-3">
-                        <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">
-                            <i class="fas fa-user"></i> User
+                        <a href="/account" class="nav-link dropdown-toggle" data-toggle="dropdown">
+                            <i class="fas fa-user"></i> Account
                         </a>
-                        <div class="dropdown-menu">
+                        <!-- <div class="dropdown-menu">
                             <a href="/account" class="dropdown-item">
                                 <i class="fas fa-user-circle"></i> Profile
                             </a>
                             <a href="#" class="dropdown-item">
                                 <i class="fas fa-cog"></i> Settings
                             </a>
-                        </div>
+                        </div> -->
                     </li>
                     <li class="nav-item">
                         <a href="/logout" class="nav-link">
@@ -82,13 +82,13 @@
                     </a>
                 </div>
                 <div class="col-md-3">
-                    <a href="#" class="btn btn-success btn-block" data-toggle="modal" data-target="#addCategoryModal">
-                        <i class="fas fa-plus"></i> Add Category
+                    <a href="#" class="btn btn-warning btn-block" data-toggle="modal" data-target="#addUserModal">
+                        <i class="fas fa-plus"></i> Add User
                     </a>
                 </div>
                 <div class="col-md-3">
-                    <a href="#" class="btn btn-warning btn-block" data-toggle="modal" data-target="#addUserModal">
-                        <i class="fas fa-plus"></i> Add User
+                    <a href="/admin/refresh" class="btn btn-light">
+                        <i class="fas fa-sync-alt"></i>
                     </a>
                 </div>
             </div>
@@ -102,15 +102,15 @@
                 <div class="col-md-9">
                     <div class="card">
                         <div class="card-header">
-                            <h4>Latest Posts</h4>
+                            <h4>Questions</h4>
                         </div>
                         <table class="table">
                             <thead class="thead-light">
                                 <tr>
                                     <th>#</th>
                                     <th>Name</th>
-                                    <th>Difficulty</th>
-                                    <th>Link</th>
+                                    <th>Live</th>
+                                    <th>Name</th>
                                     <th></th>
                                 </tr>
                             </thead>
@@ -119,12 +119,21 @@
                                 <tr>
                                     <td>{{$holenum}}</td>
                                     <td>{{$question.Name}}</td>
-                                    <td>{{$question.Difficulty}}</td>
-                                    <td>{{$question.Link}}</td>
+                                    <td>{{$question.Live}}</td>
+                                    <td>{{$question.Name}}</td>
                                     <td>
-                                        <a href="/admin/delete/{{$question.Link}}" class="btn btn-danger">
+                                        <a href="/admin/delete/{{$question.ID}}" class="btn btn-danger">
                                             <i class="fas fa-angle-double-right"></i> Delete
                                         </a>
+                                        {{if $question.Live}}
+                                        <a href="/admin/archive/{{$question.ID}}" class="btn btn-warning">
+                                            <i class="fas fa-angle-left"></i> Archive
+                                        </a>
+                                        {{else}}
+                                        <a href="/admin/deploy/{{$question.ID}}" class="btn btn-primary">
+                                            <i class="fas fa-angle-right"></i> Deploy
+                                        </a>
+                                        {{end}}
                                     </td>
                                 </tr>
                                 {{end}}
@@ -137,13 +146,13 @@
                         <div class="card-body">
                             <h3>Questions</h3>
                             <h4 class="display-4">
-                                <i class="fas fa-pencil-alt"></i> {{.QuestionsAmount}}
+                                <i class="fas fa-question"></i> {{.QuestionsAmount}}
                             </h4>
                             <a href="/admin" class="btn btn-outline-light btn-sm">View</a>
                         </div>
                     </div>
 
-                    <div class="card text-center bg-success text-white mb-3">
+                    <!-- <div class="card text-center bg-success text-white mb-3">
                         <div class="card-body">
                             <h3>Categories</h3>
                             <h4 class="display-4">
@@ -162,7 +171,7 @@
                             <a href="/admin/users" class="btn btn-outline-light btn-sm">View</a>
                         </div>
                     </div>
-                </div>
+                </div> -->
             </div>
         </div>
     </section>
@@ -181,7 +190,7 @@
                     </button>
                 </div>
                 <div class="modal-body">
-                    <form method="POST" id="question_form" name="new_question">
+                    <form method="POST" id="question_form" name="new_question" action="/admin/addhole">
                         <div class="form-group">
                             <label for="name">Name</label>
                             <input type="text" class="form-control" name="name" required="required">
@@ -203,12 +212,15 @@
                             </select>
                         </div>
                         <div class="form-group">
-                            <label for="source">Source</label>
-                            <input type="text" class="form-control" name="source" required="required">
+                            <label for="live">Live</label>
+                            <select class="form-control" name="live" id="live" required="required">
+                                <option value="true">True</option>
+                                <option value="false">False</option>
+                            </select>
                         </div>
                         <div class="form-group">
-                            <label for="link">Link</label>
-                            <input type="text" class="form-control" name="link" required="required">
+                            <label for="source">Source</label>
+                            <input type="text" class="form-control" name="source" required="required">
                         </div>
                         <div class="form-group">
                             <button type="submit" class="btn btn-primary btn-lg btn-block mt-5"> Create Question</button>
@@ -216,31 +228,6 @@
                     </form>
                 </div>
 
-            </div>
-        </div>
-    </div>
-
-    <!-- ADD CATEGORY MODAL -->
-    <div class="modal fade" id="addCategoryModal">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header bg-success text-white">
-                    <h5 class="modal-title">Add Category</h5>
-                    <button class="close" data-dismiss="modal">
-                        <span>&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <form>
-                        <div class="form-group">
-                            <label for="title">Title</label>
-                            <input type="text" class="form-control">
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button class="btn btn-success" data-dismiss="modal">Save Changes</button>
-                </div>
             </div>
         </div>
     </div>
@@ -272,9 +259,9 @@
                         <div class="form-group">
                             <label for="role">role</label>
                             <select class="form-control" name="role" required="required">
-                                <option value="user">User</option>
-                                <option value="dev">Developer</option>
-                                <option value="admin">Administrator</option>
+                                <option value="user-role">User</option>
+                                <option value="dev-role">Developer</option>
+                                <option value="admin-role">Administrator</option>
                             </select>
                         </div>
                         <div class="form-group">

@@ -9,7 +9,7 @@ func TestCreateUser(t *testing.T) {
 	var newUserEmail = "ben"
 	var newUserName = "ben"
 	var newUserPass = "ben"
-	u := NewUser(newUserEmail, newUserName, newUserPass)
+	u := NewUser(newUserEmail, newUserName, RoleAdmin, newUserPass)
 	if err := u.Store(); err != nil {
 		t.Logf("error occurred storing user: %v\n", err)
 		t.Fail()

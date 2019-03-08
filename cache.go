@@ -1,12 +1,17 @@
 package main
 
 import (
+	"sync"
+
 	"github.com/Squwid/bytegolf/aws"
 )
 
 // usersCache holds the 'maxCache' most recently accessed users incase of wrong passwords and such
 // to deal with how many read/writes
-var usersCache []aws.User
+var (
+	usersCache []aws.User
+	usersMutex = &sync.Mutex{}
+)
 
 const maxCache = 10
 
@@ -38,6 +43,10 @@ func userInCache(email string) (int, bool) {
 
 // getAwsUser does the same thing that aws.GetUser does but it checks the cache first to save as many readwrites from aws as possible
 func getAwsUser(email string) (aws.User, error) {
+	// make the cache threadsafe
+	usersMutex.Lock()
+	defer usersMutex.Unlock()
+
 	index, exist := userInCache(email)
 	if exist {
 		return usersCache[index], nil

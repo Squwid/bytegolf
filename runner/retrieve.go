@@ -8,7 +8,7 @@ import (
 
 // GetPlayerSubmissions gets a list of all of the code submissions that they have previously submitted by username
 func GetPlayerSubmissions(name string) ([]CodeSubmission, error) {
-	var subPath = path.Join("subs", name)
+	var subPath = path.Join("localfiles", "subs", name)
 	filelist, err := ioutil.ReadDir(subPath)
 	if err != nil {
 		return nil, err
@@ -35,7 +35,7 @@ func GetPlayerSubmissions(name string) ([]CodeSubmission, error) {
 
 // GetPlayerResponses gets a list of all of the code responses that they have previously submitted by username
 func GetPlayerResponses(name string) ([]CodeResponse, error) {
-	var respPath = path.Join("resp", name)
+	var respPath = path.Join("localfiles", "resp", name)
 	filelist, err := ioutil.ReadDir(respPath)
 	if err != nil {
 		return nil, err

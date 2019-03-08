@@ -75,7 +75,7 @@ func login(w http.ResponseWriter, req *http.Request) {
 		http.Redirect(w, req, "/", http.StatusSeeOther)
 		return
 	}
-	// incorrect password == false
+	// incorrect password is false
 	exeTpl(false)
 }
 
@@ -83,6 +83,6 @@ func holes(w http.ResponseWriter, req *http.Request) {
 	tpl.ExecuteTemplate(w, "holes.html", struct {
 		Questions map[int]questions.Question
 	}{
-		Questions: qs,
+		Questions: questions.GetAllQuestions(),
 	})
 }

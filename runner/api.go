@@ -65,7 +65,7 @@ func (s *CodeSubmission) Send(storeLocal bool) (*CodeResponse, error) {
 
 /* FUNCTIONS RELATING TO STORING THE SUBMISSIONS AND RESPONSES LOCALLY */
 func (s *CodeSubmission) storeLocal() error {
-	var p = path.Join("./subs", s.Info.User)
+	var p = path.Join("localfiles", "subs", s.Info.User)
 
 	if _, err := os.Stat(p); os.IsNotExist(err) {
 		os.MkdirAll(p, os.ModePerm)
@@ -94,7 +94,7 @@ func (s *CodeSubmission) storeLocal() error {
 
 // Store local stores a code response to the local file system rather than an s3 bucket
 func (s *CodeResponse) storeLocal() error {
-	var p = path.Join("./resp", s.Info.User)
+	var p = path.Join("localfiles", "resp", s.Info.User)
 
 	if _, err := os.Stat(p); os.IsNotExist(err) {
 		os.MkdirAll(p, os.ModePerm)

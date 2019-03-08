@@ -2,15 +2,13 @@ package main
 
 import (
 	"crypto/tls"
-	"fmt"
 	"html/template"
 	"log"
 	"net/http"
 	"os"
-	"strconv"
 	"time"
 
-	"github.com/Squwid/bytegolf/questions"
+	_ "github.com/Squwid/bytegolf/questions"
 	"github.com/aws/aws-sdk-go/aws"
 	awss "github.com/aws/aws-sdk-go/aws/session"
 )
@@ -23,10 +21,12 @@ import (
 // session id stored on players computer
 // sessions stored to email
 
+// Maximum amount of holes possible at a single time
+const maxHoles = 9
+
 var siteAddr = "https://bytegolf.io"
 var tpl *template.Template
 var sessions = map[string]session{}
-var qs = map[int]questions.Question{}
 var awsSess *awss.Session
 
 // Loggers
@@ -48,7 +48,7 @@ type code struct {
 
 func init() {
 	tpl = template.Must(template.ParseGlob("views/*"))
-	qs = questions.ToMap(questions.GetLocalQuestions())
+	// qs = questions.ToMap(questions.GetLocalQuestions())
 	logger = log.New(os.Stdout, "[bytegolf] ", log.Ldate|log.Ltime)
 	awsSess = awss.Must(awss.NewSessionWithOptions(awss.Options{Config: aws.Config{Region: aws.String("us-east-1")}}))
 }
@@ -65,9 +65,17 @@ func main() {
 	http.HandleFunc("/login", login)
 	http.HandleFunc("/account", account)
 	http.HandleFunc("/leaderboards", leaderboards)
-	http.HandleFunc("/admin/delete/", deletehole)
-	http.HandleFunc("/admin/adduser", createuser)
+
+	/* ADMIN FUNCTIONS */
 	http.HandleFunc("/admin/", admin)
+	http.HandleFunc("/admin/archive/", archiveQuestion)
+	http.HandleFunc("/admin/deploy/", deployQuestion)
+	http.HandleFunc("/admin/refresh", refreshQuestions)
+
+	// http.HandleFunc("/admin/delete/", deletehole)
+	http.HandleFunc("/admin/addhole", createQuestion)
+	http.HandleFunc("/admin/adduser", createUser)
+	http.HandleFunc("/admin/holes", adminholes)
 
 	// listen and serve
 	http.Handle("/favicon.ico", http.NotFoundHandler())
@@ -114,16 +122,4 @@ func createServer() *http.Server {
 		TLSConfig:    cfg,
 		TLSNextProto: make(map[string]func(*http.Server, *tls.Conn, http.Handler), 0),
 	}
-}
-
-// getHoleByLink retrieves an aws question from the questions and an error if one is not found
-// with a matching link
-func getHoleByLink(l int) (*questions.Question, error) {
-	link := strconv.Itoa(l)
-	for _, hole := range qs {
-		if hole.Link == link {
-			return &hole, nil
-		}
-	}
-	return nil, fmt.Errorf("could not find hole %s", link)
 }

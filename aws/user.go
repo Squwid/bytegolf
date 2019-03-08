@@ -22,7 +22,7 @@ type User struct {
 }
 
 // NewUser creates a new user using an email as the primary key. The password is encrypted and panics on error
-func NewUser(email, displayName, password string) *User {
+func NewUser(email, displayName, role, password string) *User {
 	encrypted, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		panic(err) // panics the error because this will only happen if mem is full
@@ -31,7 +31,7 @@ func NewUser(email, displayName, password string) *User {
 		Email:       email,
 		DisplayName: displayName,
 		Password:    string(encrypted),
-		Role:        RoleUser,
+		Role:        role,
 		Created:     time.Now().String(),
 		LastLogin:   time.Now().String(),
 	}

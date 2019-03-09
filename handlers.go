@@ -61,6 +61,7 @@ func login(w http.ResponseWriter, req *http.Request) {
 		}
 		if !correctLogin {
 			// incorrect password == true
+			logger.Printf("bad login from %v\n", req.RemoteAddr)
 			exeTpl(true)
 			return
 		}

@@ -11,6 +11,7 @@ import (
 	_ "github.com/Squwid/bytegolf/questions"
 	"github.com/aws/aws-sdk-go/aws"
 	awss "github.com/aws/aws-sdk-go/aws/session"
+	"golang.org/x/crypto/acme/autocert"
 )
 
 /*
@@ -54,33 +55,52 @@ func init() {
 }
 
 func main() {
-	http.Handle("/assets/", http.StripPrefix("/assets", http.FileServer(http.Dir("./assets"))))
+	mux := http.NewServeMux()
+	certManager := autocert.Manager{
+		Prompt: autocert.AcceptTOS,
+		Cache:  autocert.DirCache("certs"),
+	}
+
+	mux.Handle("/assets/", http.StripPrefix("/assets", http.FileServer(http.Dir("./assets"))))
 
 	// handlers
-	http.HandleFunc("/", index)
+	mux.HandleFunc("/", index)
 	// http.HandleFunc("/signup", signup)
-	http.HandleFunc("/play/", play)
-	http.HandleFunc("/submit/", submission)
-	http.HandleFunc("/holes/", holes)
-	http.HandleFunc("/login", login)
-	http.HandleFunc("/account", account)
-	http.HandleFunc("/leaderboards", leaderboards)
+	mux.HandleFunc("/play/", play)
+	mux.HandleFunc("/submit/", submission)
+	mux.HandleFunc("/holes/", holes)
+	mux.HandleFunc("/login", login)
+	mux.HandleFunc("/account", account)
+	mux.HandleFunc("/leaderboards", leaderboards)
 
 	/* ADMIN FUNCTIONS */
-	http.HandleFunc("/admin/", admin)
-	http.HandleFunc("/admin/archive/", archiveQuestion)
-	http.HandleFunc("/admin/deploy/", deployQuestion)
-	http.HandleFunc("/admin/refresh", refreshQuestions)
+	mux.HandleFunc("/admin/", admin)
+	mux.HandleFunc("/admin/archive/", archiveQuestion)
+	mux.HandleFunc("/admin/deploy/", deployQuestion)
+	mux.HandleFunc("/admin/refresh", refreshQuestions)
 
-	// http.HandleFunc("/admin/delete/", deletehole)
-	http.HandleFunc("/admin/addhole", createQuestion)
-	http.HandleFunc("/admin/adduser", createUser)
-	http.HandleFunc("/admin/holes", adminholes)
+	// mux.HandleFunc("/admin/delete/", deletehole)
+	mux.HandleFunc("/admin/addhole", createQuestion)
+	mux.HandleFunc("/admin/adduser", createUser)
+	mux.HandleFunc("/admin/holes", adminholes)
 
 	// listen and serve
-	http.Handle("/favicon.ico", http.NotFoundHandler())
-	logger.Printf("listening on port :%s\n", "80")
-	http.ListenAndServe(":80", nil)
+	mux.Handle("/favicon.ico", http.NotFoundHandler())
+	server := &http.Server{
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 5 * time.Second,
+		IdleTimeout:  120 * time.Second,
+		Addr:         ":443",
+		Handler:      mux,
+		TLSConfig: &tls.Config{
+			GetCertificate: certManager.GetCertificate,
+		},
+	}
+	go http.ListenAndServe(":80", certManager.HTTPHandler(nil))
+	server.ListenAndServeTLS("", "")
+
+	// logger.Printf("listening on port :%s\n", "80")
+	// http.ListenAndServe(":80", nil)
 	// go http.ListenAndServe(":80", http.HandlerFunc(redirect))
 	// srv := createServer()
 	// srv.ListenAndServeTLS("", "") // TODO: need both certs

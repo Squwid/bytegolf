@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"path"
@@ -84,12 +85,14 @@ func play(w http.ResponseWriter, req *http.Request) {
 	}
 	// internal server error gets called often
 	intErr := func() { http.Error(w, "an internal server error occurred", http.StatusInternalServerError) }
-	// playTpl holds the data for the play page, only needed in this scope
-	type LBSingleScore struct {
+
+	type player struct {
+		Place    string
 		Username string
 		Language string
-		Score    string
+		Score    int
 	}
+
 	type playTpl struct {
 		Question          *questions.Question
 		ShowNeverAnswered bool
@@ -98,11 +101,10 @@ func play(w http.ResponseWriter, req *http.Request) {
 		ShowCorrect       bool
 		CorrectMessage    string
 		CurrentScore      int
+		Player            player
 
 		// Leaderboards
-		FirstPlace  LBSingleScore
-		SecondPlace LBSingleScore
-		ThirdPlace  LBSingleScore
+		Leaderboard map[int]runner.LbOverview
 	}
 
 	// assign the hole from the path
@@ -110,7 +112,7 @@ func play(w http.ResponseWriter, req *http.Request) {
 
 	var playPage playTpl
 	exeTpl := func() {
-		// TODO: Leaderboards
+		playPage.Leaderboard = runner.GetHoleLB(holeID)
 		tpl.ExecuteTemplate(w, "play.html", playPage)
 	}
 
@@ -131,8 +133,21 @@ func play(w http.ResponseWriter, req *http.Request) {
 			intErr()
 			return
 		}
-		playPage.ShowNeverAnswered = true
-		_ = user
+		prev := runner.PreviouslyAnswered(holeID, user.DisplayName)
+		if prev.Correct {
+			// TODO: add a date to the correct screen
+			playPage.ShowCorrect = true
+			playPage.CorrectMessage = fmt.Sprintf("You have gotten this answer correct using %s in %v bytes!", prev.Language, prev.Score)
+			playPage.CurrentScore = prev.Score
+
+			// for the custom leaderboard spot
+			playPage.Player.Language = prev.Language
+			playPage.Player.Username = user.DisplayName
+			playPage.Player.Score = prev.Score
+			playPage.Player.Place = "--" // TODO: make a current place
+		} else {
+			playPage.ShowNeverAnswered = true
+		}
 	} else {
 		// not logged in so show nothing
 		playPage.ShowNeverAnswered = false

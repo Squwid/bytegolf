@@ -72,10 +72,24 @@ type CodeResponse struct {
 	awsSess *session.Session
 }
 
+// LbOverview holds the data for one spot on the leaderboard for each hole (just the overview version)
+type LbOverview struct {
+	Username string `json:"username"`
+	Language string `json:"language"`
+	Score    int    `json:"score"`
+}
+
 // Client is the client that allows the user to talk to the API
 type Client struct {
 	ID     string `json:"clientId"`
 	Secret string `json:"clientSecret"`
+}
+
+// PrevAnswered holds the information about a users previously answered question
+type PrevAnswered struct {
+	Correct  bool   `json:"correct"`
+	Language string `json:"lanugage"`
+	Score    int    `json:"score"`
 }
 
 // NewClient returns a new client using the environmental variables

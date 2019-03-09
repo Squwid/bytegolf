@@ -72,7 +72,7 @@ func login(w http.ResponseWriter, req *http.Request) {
 			logger.Fatalf("error loggin user on %v\n", err)
 			return
 		}
-		http.Redirect(w, req, "/", http.StatusSeeOther)
+		http.Redirect(w, req, "/holes/", http.StatusSeeOther)
 		return
 	}
 	// incorrect password is false

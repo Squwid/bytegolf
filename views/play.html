@@ -66,7 +66,7 @@
 
         {{if .ShowCorrect}}
         <div class="alert color-green text-center" role="alert">
-            <h4 class="alert-heading">Correct!</h4>
+            <h4 class="alert-heading">Correct</h4>
             <p>{{.CorrectMessage}}</p>
             <hr>
             <p>Current Score: {{.CurrentScore}} bytes</p>
@@ -107,31 +107,23 @@
                 </tr>
             </thead>
             <tbody>
+                {{if .ShowCorrect}}
                 <tr class="color-green">
-                    <th scope="row">30</th>
-                    <td>username placeholder</td>
-                    <td>language placeholder</td>
-                    <td>score placeholder</td>
+                    <th scope="row">{{.Player.Place}}</th>
+                    <td>{{.Player.Username}}</td>
+                    <td>{{.Player.Language}}</td>
+                    <td>{{.Player.Score}}</td>
                     </th>
                 </tr>
+                {{end}}
+                {{range $place, $lbobj := .Leaderboard}}
                 <tr>
-                    <th scope="row">1</th>
-                    <td>{{.FirstPlace.Username}}</td>
-                    <td>{{.FirstPlace.Language}}</td>
-                    <td>{{.FirstPlace.Score}}</td>
+                    <th scope="row">{{$place}}</th>
+                    <td>{{$lbobj.Username}}</td>
+                    <td>{{$lbobj.Language}}</td>
+                    <td>{{$lbobj.Score}}</td>
                 </tr>
-                <tr>
-                    <th scope="row">2</th>
-                    <td>{{.SecondPlace.Username}}</td>
-                    <td>{{.SecondPlace.Language}}</td>
-                    <td>{{.SecondPlace.Score}}</td>
-                </tr>
-                <tr>
-                    <th scope="row">3</th>
-                    <td>{{.ThirdPlace.Username}}</td>
-                    <td>{{.ThirdPlace.Language}}</td>
-                    <td>{{.ThirdPlace.Score}}</td>
-                </tr>
+                {{end}}
             </tbody>
         </table>
     </div>

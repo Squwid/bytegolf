@@ -25,6 +25,15 @@ const (
 	LangFS    = "fsharp"
 )
 
+// CodeFile holds both the response and the submission along with information about the question
+type CodeFile struct {
+	Submission CodeSubmission `json:"submission"`
+	Response   CodeResponse   `json:"response"`
+
+	Correct bool `json:"correct"`
+	Length  int  `json:"length"`
+}
+
 // CodeSubmission is what gets submitted to the
 type CodeSubmission struct {
 	UUID         string `json:"uuid"`
@@ -42,20 +51,23 @@ type CodeSubmission struct {
 
 // FileInfo todo
 type FileInfo struct {
-	Name string `json:"name"`
-	User string `json:"user"`
-	Hole string `json:"hole"`
+	QuestionID string `json:"questionID"`
+	Name       string `json:"name"`
+	User       string `json:"user"`
 }
 
 // CodeResponse is the response from the Code Runner API that gets a result
 type CodeResponse struct {
-	UUID       string `json:"uuid"`
-	Output     string `json:"output"`
-	StatusCode int    `json:"statusCode"`
-	Memory     string `json:"memory"`
-	CPUTime    string `json:"cpuTime"`
+	UUID       string    `json:"uuid"`
+	Output     string    `json:"output"`
+	StatusCode int       `json:"statusCode"`
+	Memory     string    `json:"memory"`
+	CPUTime    string    `json:"cpuTime"`
+	Info       *FileInfo `json:"info"`
 
-	Info *FileInfo
+	// Information regarding the response post check
+	Correct bool `json:"correct"`
+	Length  int  `json:"length"`
 
 	awsSess *session.Session
 }
@@ -85,7 +97,7 @@ func NewClientWithCreds(id, secret string) *Client {
 }
 
 // NewCodeSubmission todo:
-func NewCodeSubmission(username, hole, filename, language, code string, client *Client, sess *session.Session) *CodeSubmission {
+func NewCodeSubmission(username, questionID, filename, language, code string, client *Client, sess *session.Session) *CodeSubmission {
 	id, _ := uuid.NewV4()
 	return &CodeSubmission{
 		UUID:         id.String(),
@@ -95,9 +107,9 @@ func NewCodeSubmission(username, hole, filename, language, code string, client *
 		ID:           client.ID,
 		Secret:       client.Secret,
 		Info: &FileInfo{
-			Name: filename,
-			User: username,
-			Hole: hole,
+			QuestionID: questionID,
+			Name:       filename,
+			User:       username,
 		},
 		awsSess: sess,
 	}

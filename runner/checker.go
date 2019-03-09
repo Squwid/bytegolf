@@ -1,10 +1,34 @@
-package questions
+package runner
 
 import (
+	"log"
 	"strings"
 
-	"github.com/Squwid/bytegolf/runner"
+	"github.com/Squwid/bytegolf/questions"
 )
+
+// Check checks the response against the correct answer and sees if it is correct
+// only returns a bool, logs any errors that have occurred
+func (resp *CodeResponse) Check() bool {
+	q := questions.GetQuestion(resp.Info.QuestionID)
+	if q.ID == "" {
+		log.Printf("question %s is not live\n", resp.Info.QuestionID)
+		return false
+	}
+
+	// todo: Explore more jdoodle status codes
+	// if resp.StatusCode != http.StatusOK {
+	// 	// make sure status is 200
+	// 	// log.Printf("expected status 200 but got %v\n", resp.StatusCode)
+	// 	return false
+	// }
+	if q.Answer == strings.TrimSpace(resp.Output) {
+		// Output is the same as the answer so it is correct
+		return true
+	}
+
+	return false
+}
 
 /*
 	Scoring System:
@@ -46,15 +70,11 @@ func gatherCustomCommentTags(code string, tags []strPair, sizeTags uint, tagFind
 }
 
 func genericScore(code string, comments []strPair, commentsSize uint, strings []strPair, stringsSize uint) uint {
-	var isInComment = false
-	var isInString = false
-	var isEscaped = false
+	var isInComment, isInString, isEscaped bool
 
 	var score uint
 	var codeLen = len(code)
-	var endCommentTag string
-	var endStringTag string
-	// can share for now, no strings in comments and vice versa ?
+	var endCommentTag, endStringTag string
 	var endTagSize int
 
 	for i, c := range code {
@@ -168,22 +188,23 @@ func genericScore(code string, comments []strPair, commentsSize uint, strings []
 // Score checks the score of a submission, however does not check if the submission is correct so that needs to
 // be done ahead of time.
 // Your score is determined by any characters except for spaces
-func (q *Question) Score(sub *runner.CodeSubmission) uint {
-	if sub.Language == runner.LangJava || sub.Language == runner.LangCPP || sub.Language == runner.LangCPP14 || sub.Language == runner.LangC {
+// func (q *Question) Score(sub *CodeSubmission) uint {
+func (sub *CodeSubmission) Score() uint {
+	if sub.Language == LangJava || sub.Language == LangCPP || sub.Language == LangCPP14 || sub.Language == LangC {
 		return genericScore(sub.Script, []strPair{{"//", "\n"}, {"/*", "*/"}}, 2, []strPair{{"\"", "\""}, {"'", "'"}}, 2)
 	}
 
-	if sub.Language == runner.LangPHP {
+	if sub.Language == LangPHP {
 		// handle <<<*\n<anything>\n*; style comments
 		var tags, sizeTags = gatherCustomCommentTags(sub.Script, []strPair{{"\"", "\""}, {"'", "'"}}, 2, strPair{"<<<", "\n"})
 		return genericScore(sub.Script, []strPair{{"//", "\n"}, {"#", "\n"}, {"/*", "*/"}}, 3, tags, sizeTags)
 	}
 
-	if sub.Language == runner.LangPy2 || sub.Language == runner.LangPy3 {
+	if sub.Language == LangPy2 || sub.Language == LangPy3 {
 		return genericScore(sub.Script, []strPair{{"#", "\n"}, {"\"\"\"", "\"\"\""}}, 2, []strPair{{"\"\"\"", "\"\"\""}, {"\"", "\""}, {"'", "'"}}, 3)
 	}
 
-	if sub.Language == runner.LangRuby {
+	if sub.Language == LangRuby {
 		// need to catch heredoc <<*\nDATA\n*\n
 		var tags, sizeTags = gatherCustomCommentTags(sub.Script, []strPair{{"\"", "\""}, {"'", "'"}, {"%(", ")"}, {"%[", "]"}, {"%{", "}"}}, 5, strPair{"<<", "\n"})
 		// need to catch %*-* comments
@@ -191,28 +212,28 @@ func (q *Question) Score(sub *runner.CodeSubmission) uint {
 		return genericScore(sub.Script, []strPair{{"#", "\n"}, {"=begin", "=end"}}, 2, tags, sizeTags)
 	}
 
-	if sub.Language == runner.LangGo {
+	if sub.Language == LangGo {
 		return genericScore(sub.Script, []strPair{{"//", "\n"}, {"/*", "*/"}}, 2, []strPair{{"\"", "\""}, {"'", "'"}, {"`", "`"}}, 3)
 	}
 
-	if sub.Language == runner.LangBash {
+	if sub.Language == LangBash {
 		// the first condition should realistically catch all bash comments, the second is rare, but there are other very rare comment tecniques i dont know
 		return genericScore(sub.Script, []strPair{{"#", "\n"}, {"${IFS#", "\n"}}, 2, []strPair{{"\"", "\""}, {"'", "'"}}, 2)
 	}
 
-	if sub.Language == runner.LangSwift {
+	if sub.Language == LangSwift {
 		return genericScore(sub.Script, []strPair{{"//", "\n"}, {"/*", "*/"}}, 2, []strPair{{"\"\"\"", "\"\"\""}, {"\"", "\""}, {"'", "'"}}, 3)
 	}
 
-	if sub.Language == runner.LangR {
+	if sub.Language == LangR {
 		return genericScore(sub.Script, []strPair{{"#", "\n"}}, 1, []strPair{{"\"", "\""}, {"'", "'"}}, 2)
 	}
 
-	if sub.Language == runner.LangNode {
+	if sub.Language == LangNode {
 		return genericScore(sub.Script, []strPair{{"//", "\n"}, {"/*", "*/"}}, 2, []strPair{{"\"", "\""}, {"'", "'"}}, 2)
 	}
 
-	if sub.Language == runner.LangFS {
+	if sub.Language == LangFS {
 		return genericScore(sub.Script, []strPair{{"//", "\n"}, {"(*", "*)"}}, 2, []strPair{{"\"\"\"", "\"\"\""}, {"@\"", "\""}, {"\"", "\""}, {"'", "'"}}, 4)
 	}
 

@@ -3,7 +3,6 @@ package runner
 import (
 	"encoding/json"
 	"net/http"
-	"os"
 	"testing"
 )
 
@@ -34,6 +33,7 @@ func TestSubmit(t *testing.T) {
 	}
 }
 
+/*
 func TestStoreSubmissionLocal(t *testing.T) {
 	sub := &CodeSubmission{
 		UUID:         "1",
@@ -57,7 +57,7 @@ func TestStoreSubmissionLocal(t *testing.T) {
 		t.Errorf("file was not created")
 	}
 }
-
+/*
 func TestStoreResponseLocal(t *testing.T) {
 	resp := &CodeResponse{
 		UUID:       "1",
@@ -78,3 +78,4 @@ func TestStoreResponseLocal(t *testing.T) {
 		t.Errorf("file was not created")
 	}
 }
+*/

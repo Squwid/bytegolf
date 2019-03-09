@@ -132,15 +132,15 @@ func GetLiveQuestions() ([]Question, error) {
 }
 
 // MapLiveQuestions creates a map of all live questions in a fasion of hole number -> question
-func MapLiveQuestions() (map[int]Question, error) {
-	m := make(map[int]Question)
+func MapLiveQuestions() (map[int]*Question, error) {
+	m := make(map[int]*Question)
 	qs, err := GetLiveQuestions()
 	if err != nil {
 		return nil, err
 	}
 
 	for i := range qs {
-		m[i] = qs[i]
+		m[i] = &qs[i]
 	}
 	return m, nil
 }

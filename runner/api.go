@@ -9,10 +9,6 @@ import (
 	"net/http"
 	"os"
 	"path"
-	"strings"
-
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 )
 
 // APIURI is the uri that execututes the api
@@ -22,9 +18,6 @@ const subBucket = "bytegolf-submissions"
 // Send sends a CodeSubmission to the server compiler to check against the output
 func (s *CodeSubmission) Send(storeLocal bool) (*CodeResponse, error) {
 	var r CodeResponse
-	if storeLocal {
-		go s.storeLocal()
-	}
 
 	reqBody, err := json.Marshal(*s)
 	if err != nil {
@@ -54,69 +47,102 @@ func (s *CodeSubmission) Send(storeLocal bool) (*CodeResponse, error) {
 		return nil, err
 	}
 
+	// pass the information from one object to the other
 	r.Info = s.Info
 	r.UUID = s.UUID
 	r.awsSess = s.awsSess // pass the aws session through
+
+	// only store if the question is correct
 	if storeLocal {
-		go r.storeLocal()
+		go StoreLocal(s, &r)
 	}
 	return &r, nil
 }
 
-/* FUNCTIONS RELATING TO STORING THE SUBMISSIONS AND RESPONSES LOCALLY */
-func (s *CodeSubmission) storeLocal() error {
-	var p = path.Join("localfiles", "subs", s.Info.User)
+// StoreLocal creates a new CodeFile and stores it in the correct spot in the file system
+// since this is run on its own go routine (even when it returns an error) it will log the error
+func StoreLocal(s *CodeSubmission, r *CodeResponse) error {
+	// log.SetPrefix("[debug] ")
+	if !r.Check() {
+		// the response was not correct
+		log.Printf("%s was not correct\n", r.Output)
+		return nil
+	}
+	// question was correct, so this holds the new score
+	newLength := int(s.Score())
 
+	var p = path.Join("localfiles", "codefiles", s.Info.QuestionID, s.Info.User)
 	if _, err := os.Stat(p); os.IsNotExist(err) {
 		os.MkdirAll(p, os.ModePerm)
-	}
+	} else {
+		// The folder already exists, see if the file beats the old one and add it
+		// check to make sure the previous submission does not exist
+		filelist, err := ioutil.ReadDir(p)
+		if err != nil {
+			log.Printf("error reading files: %v\n", err)
+			return err
+		}
+		if len(filelist) > 1 {
+			// there should only be a single file per person per question
+			log.Printf("expected less than 1 file but got %v\n", len(filelist))
+			return fmt.Errorf("expected less than 1 file but got %v", len(filelist))
+		}
 
-	f, err := os.Create(path.Join(p, s.UUID))
+		// there is either 1 file or 0 files, so just iterate to ignore the logic
+		for _, fileinfo := range filelist {
+			if fileinfo.Mode().IsRegular() {
+				contents, err := ioutil.ReadFile(path.Join(p, fileinfo.Name()))
+				if err != nil {
+					log.Printf("error reading file %s : %v\n", fileinfo.Name(), err)
+					return err
+				}
+				var prev CodeFile
+				err = json.Unmarshal(contents, &prev)
+				if err != nil {
+					log.Printf("error unmarshalling file : %v\n", err)
+					return err
+				}
+				// only update the file if the old is longer than the new
+				if newLength >= prev.Length {
+					// nothing needs to happen if the previous submission is better
+					return nil
+				}
+				os.Remove(path.Join(p, fileinfo.Name()))
+				log.Printf("removing file %s\n", path.Join(p, fileinfo.Name()))
+			}
+		}
+	}
+	// all of the folders are created and ready to insert a file into
+	var cf = CodeFile{
+		Submission: *s,
+		Response:   *r,
+		Correct:    true,
+		Length:     newLength,
+	}
+	bs, err := json.Marshal(cf)
 	if err != nil {
+		log.Printf("err marshalling %v\n", err)
 		return err
 	}
-	defer f.Close()
 
-	bs, err := json.Marshal(*s)
+	fileName := path.Join(p, cf.Submission.ID+".json")
+	f, err := os.Create(fileName)
 	if err != nil {
+		log.Printf("err creating file: %v\n", err)
 		return err
 	}
+
 	_, err = f.Write(bs)
 	if err != nil {
+		log.Printf("err writing to file: %v\n", err)
 		return err
 	}
-	err = f.Sync()
-	if err != nil {
-		return err
-	}
+	log.Printf("successfully wrote file %s", fileName)
 	return nil
 }
 
-// Store local stores a code response to the local file system rather than an s3 bucket
-func (s *CodeResponse) storeLocal() error {
-	var p = path.Join("localfiles", "resp", s.Info.User)
-
-	if _, err := os.Stat(p); os.IsNotExist(err) {
-		os.MkdirAll(p, os.ModePerm)
-	}
-
-	f, err := os.Create(path.Join(p, s.UUID))
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-
-	store, err := json.Marshal(*s)
-	if err != nil {
-		return err
-	}
-	_, err = f.Write(store)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
+/*
+REENABLE IN FUTURE VERSIONS FOR DB STORAGE
 // Store stores a submission to an S3 Bucket
 func (s *CodeSubmission) store() {
 	key := path.Join(s.Info.Hole, s.Info.User, fmt.Sprintf("sub_%s_%s", s.Info.Name, s.UUID))
@@ -149,3 +175,4 @@ func (s *CodeResponse) store() {
 		return
 	}
 }
+*/

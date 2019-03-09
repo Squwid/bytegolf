@@ -80,9 +80,14 @@ func login(w http.ResponseWriter, req *http.Request) {
 }
 
 func holes(w http.ResponseWriter, req *http.Request) {
+	qs := questions.GetAllQuestions()
+	var m = make(map[int]questions.Question)
+	for k, v := range qs {
+		m[k] = *v
+	}
 	tpl.ExecuteTemplate(w, "holes.html", struct {
 		Questions map[int]questions.Question
 	}{
-		Questions: questions.GetAllQuestions(),
+		Questions: m,
 	})
 }

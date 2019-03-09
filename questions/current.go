@@ -8,7 +8,7 @@ import (
 
 // question variables, such as the lock for reading and writing
 var (
-	qs     = map[int]Question{}
+	qs     = map[int]*Question{}
 	qMutex = &sync.Mutex{}
 )
 
@@ -18,16 +18,16 @@ func init() {
 }
 
 // GetQuestion gets a specific question from the map of questions, if it does not exist, an error is returned
-func GetQuestion(holeID string) *Question {
+func GetQuestion(holeID string) Question {
 	qMutex.Lock()
 	defer qMutex.Unlock()
 
 	for _, q := range qs {
 		if q.ID == holeID {
-			return &q
+			return *q
 		}
 	}
-	return nil
+	return Question{}
 }
 
 // updateQuestions updates the questions every certain amount of time
@@ -50,7 +50,7 @@ func UpdateQuestions() {
 }
 
 // Must takes in a map and a error, and if an error has occurred it will panic
-func Must(qs map[int]Question, err error) map[int]Question {
+func Must(qs map[int]*Question, err error) map[int]*Question {
 	if err != nil {
 		panic(err)
 	}
@@ -58,8 +58,8 @@ func Must(qs map[int]Question, err error) map[int]Question {
 }
 
 // GetAllQuestions returns the map of questions
-func GetAllQuestions() map[int]Question {
-	newq := map[int]Question{}
+func GetAllQuestions() map[int]*Question {
+	newq := map[int]*Question{}
 	qMutex.Lock()
 	for k, v := range qs {
 		newq[k] = v

@@ -1,10 +1,13 @@
 package runner
 
 import (
-	"os"
 	"testing"
 )
 
+func TestStoreLocal(t *testing.T) {
+}
+
+/*
 func TestGetPlayerSubmissions(t *testing.T) {
 	sub := &CodeSubmission{
 		UUID:         "1",
@@ -36,7 +39,7 @@ func TestGetPlayerSubmissions(t *testing.T) {
 		t.Errorf("expected at least 2 subs but got %v\n", err)
 	}
 }
-
+/*
 func TestGetPlayerResponses(t *testing.T) {
 	resp := &CodeResponse{
 		UUID:       "1",
@@ -65,3 +68,4 @@ func TestGetPlayerResponses(t *testing.T) {
 		t.Errorf("expected at least 2 subs but got %v\n", err)
 	}
 }
+*/

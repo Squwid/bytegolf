@@ -139,7 +139,7 @@
     <!-- SUBMIT SECTION -->
     <div class="container w-25">
         <h1 class="display-4 text-center">Submission</h1>
-        <form method="POST" action="/submit/" enctype="multipart/form-data">
+        <form method="POST" action="/submit/{{.Question.ID}}" enctype="multipart/form-data">
             <div class="form-group">
                 <label for="exampleFormControlSelect1">Language</label>
                 <select class="form-control" id="exampleFormControlSelect1" name="language">

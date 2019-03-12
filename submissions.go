@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"path"
 	"strings"
+	"time"
 
 	"github.com/Squwid/bytegolf/questions"
 	"github.com/Squwid/bytegolf/runner"
@@ -66,13 +67,14 @@ func submission(w http.ResponseWriter, req *http.Request) {
 	// run the code from the input through the submission system
 	// TODO: pass entire question through the runner rather than just the id to not have to make multiple calls to get the question (not a big deal for now just double logs)
 	runnerClient := runner.NewClient() // todo: New way to do a runner rather than each call
-	submission := runner.NewCodeSubmission(user.Email, question.ID, fileHead.Filename, lang, string(bs), runnerClient, awsSess)
+	submission := runner.NewCodeSubmission(user.Email, user.DisplayName, question.ID, question.Input, fileHead.Filename, lang, string(bs), runnerClient, awsSess)
 	_, err = submission.Send(true) // true stands for save local
 	if err != nil {
 		logger.Printf("error using code runner : %s\n", err.Error())
 		intErr()
 		return
 	}
+	time.Sleep(1 * time.Second) // let the page update
 	http.Redirect(w, req, "/play/"+question.ID, http.StatusSeeOther)
 	return
 }
@@ -133,7 +135,7 @@ func play(w http.ResponseWriter, req *http.Request) {
 			intErr()
 			return
 		}
-		prev := runner.PreviouslyAnswered(holeID, user.DisplayName)
+		prev := runner.PreviouslyAnswered(holeID, user.Email)
 		if prev.Correct {
 			// TODO: add a date to the correct screen
 			playPage.ShowCorrect = true

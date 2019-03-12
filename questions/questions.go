@@ -22,6 +22,7 @@ type Question struct {
 	ID         string `json:"id"`
 	Name       string `json:"name"`
 	Question   string `json:"question"`
+	Input      string `json:"input"`
 	Answer     string `json:"answer"`
 	Difficulty string `json:"difficulty"`
 	Source     string `json:"source"`
@@ -32,12 +33,13 @@ type Question struct {
 }
 
 // NewQuestion creates a new question with a UUID
-func NewQuestion(name, question, answer, difficulty, source string, live bool) *Question {
+func NewQuestion(name, question, input, answer, difficulty, source string, live bool) *Question {
 	uuid, _ := uuid.NewV4()
 	return &Question{
 		ID:         uuid.String(),
 		Name:       name,
 		Question:   question,
+		Input:      input,
 		Answer:     answer,
 		Difficulty: difficulty,
 		Source:     source,

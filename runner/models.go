@@ -1,6 +1,7 @@
 package runner
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -40,6 +41,7 @@ type CodeSubmission struct {
 	Script       string `json:"script"`
 	Language     string `json:"language"`
 	VersionIndex string `json:"versionIndex"`
+	Stdin        string `json:"stdin"`
 
 	ID     string    `json:"clientId"`
 	Secret string    `json:"clientSecret"`
@@ -54,6 +56,7 @@ type FileInfo struct {
 	QuestionID string `json:"questionID"`
 	Name       string `json:"name"`
 	User       string `json:"user"`
+	Username   string `json:"username"`
 }
 
 // CodeResponse is the response from the Code Runner API that gets a result
@@ -95,6 +98,7 @@ type PrevAnswered struct {
 // NewClient returns a new client using the environmental variables
 // of RUNNER_ID for the ID and RUNNER_SECRET for the secret
 func NewClient() *Client {
+	fmt.Println(os.Getenv("RUNNER_ID"), os.Getenv("RUNNER_SECRET"))
 	return &Client{
 		ID:     os.Getenv("RUNNER_ID"),
 		Secret: os.Getenv("RUNNER_SECRET"),
@@ -111,7 +115,7 @@ func NewClientWithCreds(id, secret string) *Client {
 }
 
 // NewCodeSubmission todo:
-func NewCodeSubmission(username, questionID, filename, language, code string, client *Client, sess *session.Session) *CodeSubmission {
+func NewCodeSubmission(email, username, questionID, input, filename, language, code string, client *Client, sess *session.Session) *CodeSubmission {
 	id, _ := uuid.NewV4()
 	return &CodeSubmission{
 		UUID:         id.String(),
@@ -120,10 +124,12 @@ func NewCodeSubmission(username, questionID, filename, language, code string, cl
 		VersionIndex: "0",
 		ID:           client.ID,
 		Secret:       client.Secret,
+		Stdin:        input,
 		Info: &FileInfo{
 			QuestionID: questionID,
 			Name:       filename,
-			User:       username,
+			User:       email,
+			Username:   username,
 		},
 		awsSess: sess,
 	}

@@ -19,7 +19,7 @@ func TestSubmit(t *testing.T) {
 	if len(c.ID) == 0 {
 		t.Fatalf("error creating new client w/id: %s\n", c.ID)
 	}
-	sub := NewCodeSubmission("bwhitelaw24", "343", "main.go", LangGo, codeBody, c, nil)
+	sub := NewCodeSubmission("bwhitelaw24", "343", "", "main.go", LangGo, codeBody, c, nil)
 	resp, err := sub.Send(false)
 	if err != nil {
 		t.Error(err)

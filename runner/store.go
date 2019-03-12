@@ -65,6 +65,7 @@ func StoreLocal(s *CodeSubmission, r *CodeResponse) error {
 	// log.SetPrefix("[debug] ")
 	if !r.Check() {
 		// the response was not correct
+		log.Printf("(CODE): %v\t(OUTPUT): %v\n", r.StatusCode, r.Output)
 		log.Printf("%s was not correct\n", r.Output)
 		return nil
 	}

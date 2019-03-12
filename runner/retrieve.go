@@ -54,7 +54,7 @@ func GetHoleLB(holeID string) map[int]LbOverview {
 			continue
 		}
 		var newLB = LbOverview{
-			Username: cf.Submission.Info.User,
+			Username: cf.Submission.Info.Username,
 			Language: cf.Submission.Language,
 			Score:    cf.Length,
 		}

@@ -54,16 +54,17 @@ func createQuestion(w http.ResponseWriter, req *http.Request) {
 	}
 	if req.Method == http.MethodPost {
 		logger.Printf("adding new question request\n")
-		var name, question, answer, difficulty, source string
+		var name, question, answer, difficulty, source, input string
 		var live bool
 		name = req.FormValue("name")
 		question = req.FormValue("question")
+		input = req.FormValue("input")
 		answer = req.FormValue("answer")
 		difficulty = req.FormValue("difficulty")
 		live = req.FormValue("live") == "true"
 		source = req.FormValue("source")
 
-		q := questions.NewQuestion(name, question, answer, difficulty, source, live)
+		q := questions.NewQuestion(name, question, input, answer, difficulty, source, live)
 		err := q.Store()
 		if err != nil {
 			logger.Println("error storing q:", err)

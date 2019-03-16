@@ -150,6 +150,10 @@ func play(w http.ResponseWriter, req *http.Request) {
 		} else {
 			playPage.ShowNeverAnswered = true
 		}
+		if runner.LS.IsIncorrect(user.DisplayName, holeID) {
+			playPage.ShowIncorrect = true
+			playPage.IncorrectMessage = fmt.Sprintf("Your last submission of this hole at %s is incorrect", runner.LS.GetTime(user.DisplayName).Format("Jan 2 15:04 MST 2006"))
+		}
 	} else {
 		// not logged in so show nothing
 		playPage.ShowNeverAnswered = false

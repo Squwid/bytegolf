@@ -3,9 +3,62 @@ package runner
 import (
 	"log"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/Squwid/bytegolf/questions"
 )
+
+// LastSub holds the users most recent submission for the hole page
+type LastSub map[string]struct {
+	Hole    string
+	Correct bool
+	Time    time.Time
+}
+
+// LS holds a last sub data
+var LS = LastSub{}
+
+var lastSubmittedLock = &sync.RWMutex{}
+
+// Write writes to the last submission using a name and a hole
+func (ls LastSub) Write(name, hole string, correct bool) {
+	lastSubmittedLock.Lock()
+	ls[name] = struct {
+		Hole    string
+		Correct bool
+		Time    time.Time
+	}{
+		Hole:    hole,
+		Correct: correct,
+		Time:    time.Now(),
+	}
+	lastSubmittedLock.Unlock()
+}
+
+// IsIncorrect checks to see if the users last submission was incorrect
+func (ls LastSub) IsIncorrect(name, hole string) bool {
+	lastSubmittedLock.RLock()
+	defer lastSubmittedLock.RUnlock()
+	if sub, ok := ls[name]; ok {
+		if !sub.Correct && sub.Hole == hole {
+			// the question was incorrect and the right hole
+			return true
+		}
+	}
+	return false
+}
+
+// GetTime returns the time of when a player submitted their last sub
+func (ls LastSub) GetTime(name string) time.Time {
+	lastSubmittedLock.RLock()
+	defer lastSubmittedLock.RUnlock()
+	if sub, ok := ls[name]; ok {
+		return sub.Time
+	}
+	return time.Now()
+
+}
 
 // Check checks the response against the correct answer and sees if it is correct
 // only returns a bool, logs any errors that have occurred
@@ -22,12 +75,13 @@ func (resp *CodeResponse) Check() bool {
 	// 	// log.Printf("expected status 200 but got %v\n", resp.StatusCode)
 	// 	return false
 	// }
+	var correct bool
 	if q.Answer == strings.TrimSpace(resp.Output) {
 		// Output is the same as the answer so it is correct
-		return true
+		correct = true
 	}
-
-	return false
+	LS.Write(resp.Info.Username, resp.Info.QuestionID, correct)
+	return correct
 }
 
 /*

@@ -13,6 +13,7 @@ import (
 type LastSub map[string]struct {
 	Hole    string
 	Correct bool
+	Output  string
 	Time    time.Time
 }
 
@@ -22,15 +23,17 @@ var LS = LastSub{}
 var lastSubmittedLock = &sync.RWMutex{}
 
 // Write writes to the last submission using a name and a hole
-func (ls LastSub) Write(name, hole string, correct bool) {
+func (ls LastSub) Write(name, hole, output string, correct bool) {
 	lastSubmittedLock.Lock()
 	ls[name] = struct {
 		Hole    string
 		Correct bool
+		Output  string
 		Time    time.Time
 	}{
 		Hole:    hole,
 		Correct: correct,
+		Output:  output,
 		Time:    time.Now(),
 	}
 	lastSubmittedLock.Unlock()
@@ -57,7 +60,16 @@ func (ls LastSub) GetTime(name string) time.Time {
 		return sub.Time
 	}
 	return time.Now()
+}
 
+// GetOutput gets the output of the last message
+func (ls LastSub) GetOutput(name string) string {
+	lastSubmittedLock.RLock()
+	defer lastSubmittedLock.RUnlock()
+	if sub, ok := ls[name]; ok {
+		return sub.Output
+	}
+	return ""
 }
 
 // Check checks the response against the correct answer and sees if it is correct
@@ -80,7 +92,7 @@ func (resp *CodeResponse) Check() bool {
 		// Output is the same as the answer so it is correct
 		correct = true
 	}
-	LS.Write(resp.Info.Username, resp.Info.QuestionID, correct)
+	LS.Write(resp.Info.Username, resp.Info.QuestionID, resp.Output, correct)
 	return correct
 }
 

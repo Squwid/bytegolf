@@ -100,6 +100,7 @@ func play(w http.ResponseWriter, req *http.Request) {
 		ShowNeverAnswered bool
 		ShowIncorrect     bool
 		IncorrectMessage  string
+		IncorrectSub      string
 		ShowCorrect       bool
 		CorrectMessage    string
 		CurrentScore      int
@@ -153,6 +154,7 @@ func play(w http.ResponseWriter, req *http.Request) {
 		if runner.LS.IsIncorrect(user.DisplayName, holeID) {
 			playPage.ShowIncorrect = true
 			playPage.IncorrectMessage = fmt.Sprintf("Your last submission of this hole at %s is incorrect", runner.LS.GetTime(user.DisplayName).Format("Jan 2 15:04 MST 2006"))
+			playPage.IncorrectSub = runner.LS.GetOutput(user.DisplayName)
 		}
 	} else {
 		// not logged in so show nothing

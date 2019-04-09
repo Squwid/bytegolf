@@ -117,11 +117,15 @@ func NewClientWithCreds(id, secret string) *Client {
 // NewCodeSubmission todo:
 func NewCodeSubmission(email, username, questionID, input, filename, language, code string, client *Client, sess *session.Session) *CodeSubmission {
 	id, _ := uuid.NewV4()
+	vi := "0"
+	if language == LangBash {
+		vi = "2"
+	}
 	return &CodeSubmission{
 		UUID:         id.String(),
 		Script:       code,
 		Language:     language,
-		VersionIndex: "0",
+		VersionIndex: vi,
 		ID:           client.ID,
 		Secret:       client.Secret,
 		Stdin:        input,

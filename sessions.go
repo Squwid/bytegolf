@@ -16,10 +16,7 @@ func logOn(w http.ResponseWriter, email string) (aws.User, error) {
 	if err != nil {
 		return user, err
 	}
-	id, err := uuid.NewV4()
-	if err != nil {
-		return user, err // this code is probably not accessable but just in case of bs
-	}
+	id := uuid.NewV4()
 
 	idString := id.String()
 	cookie := &http.Cookie{

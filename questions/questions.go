@@ -34,7 +34,7 @@ type Question struct {
 
 // NewQuestion creates a new question with a UUID
 func NewQuestion(name, question, input, answer, difficulty, source string, live bool) *Question {
-	uuid, _ := uuid.NewV4()
+	uuid := uuid.NewV4()
 	return &Question{
 		ID:         uuid.String(),
 		Name:       name,

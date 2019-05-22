@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"path"
+	"strconv"
 	"strings"
 	"time"
 
@@ -26,7 +27,7 @@ func submission(w http.ResponseWriter, req *http.Request) {
 	// declare the internal server error handling to show the user the error the occurred
 	intErr := func() { http.Error(w, "an internal server error occurred", http.StatusInternalServerError) }
 
-	user, err := FetchUser(w, req)
+	user, err := fetchUser(w, req)
 	if err != nil {
 		logger.Printf("error fetching user: %v\n", err)
 		intErr()
@@ -54,7 +55,7 @@ func submission(w http.ResponseWriter, req *http.Request) {
 	defer file.Close()
 
 	lang := req.FormValue("language") // todo: handle false languages in the future
-	logger.Printf("new submission %s %v (Lang): %s\n", user.Email, question.Name, lang)
+	logger.Printf("new submission %v %v (Lang): %s\n", user.ID, question.Name, lang)
 
 	// read the file
 	bs, err := ioutil.ReadAll(file) // buffer in the future?
@@ -67,7 +68,7 @@ func submission(w http.ResponseWriter, req *http.Request) {
 	// run the code from the input through the submission system
 	// TODO: pass entire question through the runner rather than just the id to not have to make multiple calls to get the question (not a big deal for now just double logs)
 	runnerClient := runner.NewClient() // todo: New way to do a runner rather than each call
-	submission := runner.NewCodeSubmission(user.Email, user.DisplayName, question.ID, question.Input, fileHead.Filename, lang, string(bs), runnerClient, awsSess)
+	submission := runner.NewCodeSubmission(strconv.Itoa(user.ID), user.Username, question.ID, question.Input, fileHead.Filename, lang, string(bs), runnerClient, awsSess)
 	_, err = submission.Send(true) // true stands for save local
 	if err != nil {
 		logger.Printf("error using code runner : %s\n", err.Error())
@@ -130,13 +131,13 @@ func play(w http.ResponseWriter, req *http.Request) {
 
 	if loggedIn(w, req) {
 		// the player is logged in so grab them
-		user, err := FetchUser(w, req)
+		user, err := fetchUser(w, req)
 		if err != nil {
 			logger.Printf("error fetching user: %v\n", err)
 			intErr()
 			return
 		}
-		prev := runner.PreviouslyAnswered(holeID, user.Email)
+		prev := runner.PreviouslyAnswered(holeID, strconv.Itoa(user.ID))
 		if prev.Correct {
 			// TODO: add a date to the correct screen
 			playPage.ShowCorrect = true
@@ -145,16 +146,16 @@ func play(w http.ResponseWriter, req *http.Request) {
 
 			// for the custom leaderboard spot
 			playPage.Player.Language = prev.Language
-			playPage.Player.Username = user.DisplayName
+			playPage.Player.Username = user.Username
 			playPage.Player.Score = prev.Score
 			playPage.Player.Place = "--" // TODO: make a current place
 		} else {
 			playPage.ShowNeverAnswered = true
 		}
-		if runner.LS.IsIncorrect(user.DisplayName, holeID) {
+		if runner.LS.IsIncorrect(user.Username, holeID) {
 			playPage.ShowIncorrect = true
-			playPage.IncorrectMessage = fmt.Sprintf("Your last submission of this hole at %s is incorrect", runner.LS.GetTime(user.DisplayName).Format("Jan 2 15:04 MST 2006"))
-			playPage.IncorrectSub = runner.LS.GetOutput(user.DisplayName)
+			playPage.IncorrectMessage = fmt.Sprintf("Your last submission of this hole at %s is incorrect", runner.LS.GetTime(user.Username).Format("Jan 2 15:04 MST 2006"))
+			playPage.IncorrectSub = runner.LS.GetOutput(user.Username)
 		}
 	} else {
 		// not logged in so show nothing
@@ -163,28 +164,3 @@ func play(w http.ResponseWriter, req *http.Request) {
 	exeTpl()
 	return
 }
-
-// 	playPage.Question = question
-
-// 	if !loggedIn(w, req) {
-// 		playPage.ShowNeverAnswered = true
-// 	} else {
-// 		user, err := FetchUser(w, req)
-// 		if err != nil {
-// 			logger.Printf("error fetching user: %v\n", err)
-// 			intErr()
-// 			return
-// 		}
-// 		_, idx, exist := userHasSubmission(hole, user.Email)
-// 		if exist {
-// 			playPage.CorrectMessage = fmt.Sprintf("You have already answered this hole correctly in %v bytes!", holeScores[hole][idx].Score)
-// 			playPage.ShowCorrect = true
-// 			playPage.CurrentScore = holeScores[hole][idx].Score
-// 		} else {
-// 			playPage.ShowNeverAnswered = true
-// 		}
-// 	}
-
-// 	exeTpl()
-// 	return
-// }

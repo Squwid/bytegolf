@@ -87,6 +87,13 @@ func (q *Question) RemoveLive() error {
 	return q.Store()
 }
 
+// GetSQLQuestions returns a list of questions from SQL
+func GetSQLQuestions() ([]Question, error) {
+	// var qs = []Question{}
+
+	return nil, nil
+}
+
 // GetLocalQuestions returns a list of questions that are retrieved from the local file system
 func GetLocalQuestions() ([]Question, error) {
 	var qs = []Question{}

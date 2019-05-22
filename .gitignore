@@ -9,3 +9,6 @@ bytegolf.exe
 qs/
 localfiles/
 vendor
+
+# auth files
+github_oauth.json

@@ -13,14 +13,8 @@ func isAdmin(w http.ResponseWriter, req *http.Request) bool {
 	if !loggedIn(w, req) {
 		return false
 	}
-	user, err := FetchUser(w, req)
-	if err != nil {
-		return false
-	}
-	if user.Role != aws.RoleAdmin && user.Role != aws.RoleDev {
-		return false
-	}
-	return true
+	// TODO: admin doesnt work with new users, need to fix using databases
+	return false
 }
 
 func adminholes(w http.ResponseWriter, req *http.Request) {

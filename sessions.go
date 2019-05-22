@@ -1,80 +1,79 @@
 package main
 
 import (
-	"errors"
 	"net/http"
+	"strconv"
 	"time"
+	"fmt"
 
-	"github.com/Squwid/bytegolf/aws"
-	uuid "github.com/satori/go.uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
-func logOn(w http.ResponseWriter, email string) (aws.User, error) {
-	// getting the user first to make sure that it doesnt error out after putting the user in the map
-	user, err := getAwsUser(email)
-	if err != nil {
-		return user, err
-	}
-	id := uuid.NewV4()
-
-	idString := id.String()
-	cookie := &http.Cookie{
-		Name:  "bgsession",
-		Value: idString,
-	}
-	http.SetCookie(w, cookie)
-	sessions[idString] = session{
-		Email:        email,
-		lastActivity: time.Now(),
-	}
-	return user, nil
-}
-
-// tryLogin tries an email and password and checks to see if its correct. It uses user caching
-// incase the user tries multiple logins. Returns errors if aws does not act as intended
-func tryLogin(email, password string) (bool, error) {
-	user, err := getAwsUser(email)
-	if err != nil {
-		return false, err
-	}
-	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
-	if err != nil {
-		logger.Printf("%s tried to login incorrectly\n", email)
-		return false, nil
-	}
-	return true, nil
-}
-
-// FetchUser checks to see if the user is logged in, and redirects them to login if they are not logged in. It also checks
-// to make sure that the pointer to the user is not nil, and if it is an error is sent back
-func FetchUser(w http.ResponseWriter, req *http.Request) (aws.User, error) {
+func fetchUser(w http.ResponseWriter, req *http.Request) (*GithubUser, error) {
 	if !loggedIn(w, req) {
-		http.Redirect(w, req, "/login", http.StatusSeeOther)
-		return aws.User{}, errors.New("this user is not logged in and has been redirected")
+		return nil, nil
 	}
+
 	cookie, err := req.Cookie("bgsession")
 	if err != nil {
-		return aws.User{}, err
+		return nil, err
 	}
-	if sess, ok := sessions[cookie.Value]; ok {
-		user, err := getAwsUser(sess.Email)
-		return user, err
-	}
-	return aws.User{}, errors.New("should be unreachable code")
+
+	sessionLock.RLock()
+	defer sessionLock.RUnlock()
+	return sessions[cookie.Value].User, nil
 }
 
-// loggedIn checks to see if a player is currently logged in
 func loggedIn(w http.ResponseWriter, req *http.Request) bool {
 	cookie, err := req.Cookie("bgsession")
 	if err != nil {
 		return false
 	}
-	// fmt.Printf("SESSIONS: %v\tMY COOKIEVAL: %s\n", sessions, cookie.Value)
+
 	var ok bool
+	sessionLock.RLock()
+	defer sessionLock.RUnlock()
 	if session, ok := sessions[cookie.Value]; ok {
 		session.lastActivity = time.Now()
 		return true
 	}
 	return ok
+}
+
+// this will login a user, make sure they are not already logged in first
+func (user *GithubUser) login(w http.ResponseWriter, req *http.Request) {
+	// hash the github login id to not store it raw
+	uid, err := bcrypt.GenerateFromPassword([]byte(strconv.Itoa(user.ID)), bcrypt.MinCost)
+	if err != nil {
+		logger.Printf("error generating cookie: %v\n", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	cookie := &http.Cookie{
+		Name:  "bgsession",
+		Value: string(uid),
+		Path: "/",
+	}
+
+	http.SetCookie(w, cookie)
+	req.AddCookie(cookie)
+
+	s := &session{
+		User:         user,
+		lastActivity: time.Now(),
+	}
+
+	// add the session to the list of sessions
+	sessionLock.Lock()
+	sessions[string(uid)] = s
+	sessionLock.Unlock()
+
+	// run a function to remove the session in a day
+	go func(id string) {
+		time.Sleep(time.Hour * 24)
+		sessionLock.Lock()
+		delete(sessions, id)
+		sessionLock.Unlock()
+	}(string(uid))
 }

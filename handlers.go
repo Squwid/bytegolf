@@ -27,57 +27,18 @@ func account(w http.ResponseWriter, req *http.Request) {
 		http.Redirect(w, req, "/login", http.StatusSeeOther)
 		return
 	}
-	tpl.ExecuteTemplate(w, "account.html", struct{}{})
+	user, err := fetchUser(w, req)
+	if err != nil {
+		logger.Fatalln("error fetching user:", err)
+		http.Error(w, "an internal server error has occurred", http.StatusInternalServerError)
+		return
+	}
+
+	tpl.ExecuteTemplate(w, "profile.html", user)
 }
 
 func leaderboards(w http.ResponseWriter, req *http.Request) {
 	tpl.ExecuteTemplate(w, "leaderboards.html", struct{}{})
-}
-
-func login(w http.ResponseWriter, req *http.Request) {
-	exeTpl := func(incorrectPass bool) {
-		tpl.ExecuteTemplate(w, "login.html", struct {
-			IncorrectPassword bool
-		}{
-			IncorrectPassword: incorrectPass,
-		})
-	}
-
-	if loggedIn(w, req) {
-		http.Redirect(w, req, "/account", http.StatusSeeOther)
-		return
-	}
-
-	// if the user is trying to login
-	if req.Method == "POST" {
-		reqEmail := req.FormValue("login_email")
-		reqPass := req.FormValue("login_password")
-
-		correctLogin, err := tryLogin(reqEmail, reqPass)
-		if err != nil {
-			logger.Printf("error logging in: %v\n", err)
-			http.Error(w, "an internal server error occurred", http.StatusInternalServerError)
-			return
-		}
-		if !correctLogin {
-			// incorrect password == true
-			logger.Printf("bad login from %v\n", req.RemoteAddr)
-			exeTpl(true)
-			return
-		}
-		// the password is correct
-		// their cookie does not exist correctly at this point
-		logger.Println("logged in successfully")
-		_, err = logOn(w, reqEmail)
-		if err != nil {
-			logger.Fatalf("error loggin user on %v\n", err)
-			return
-		}
-		http.Redirect(w, req, "/holes/", http.StatusSeeOther)
-		return
-	}
-	// incorrect password is false
-	exeTpl(false)
 }
 
 func holes(w http.ResponseWriter, req *http.Request) {

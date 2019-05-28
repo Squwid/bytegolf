@@ -27,15 +27,6 @@ var (
 	clientSecret string
 )
 
-// GithubUser is the user structure that uses github
-type GithubUser struct {
-	ID         int    `json:"id"`
-	Username   string `json:"login"`
-	PictureURI string `json:"avatar_url"`
-	GithubURI  string `json:"html_url"`
-	Name       string `json:"name"`
-}
-
 func setGitClient() {
 	type oauth struct {
 		ClientID     string `json:"ClientID"`

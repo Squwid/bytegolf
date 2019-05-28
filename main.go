@@ -9,6 +9,7 @@ import (
 	"time"
 
 	_ "github.com/Squwid/bytegolf/questions"
+	_ "github.com/Squwid/bytegolf/users"
 	"github.com/aws/aws-sdk-go/aws"
 	awss "github.com/aws/aws-sdk-go/aws/session"
 	"golang.org/x/crypto/acme/autocert"
@@ -54,7 +55,7 @@ func main() {
 	mux.HandleFunc("/holes/", holes)
 	mux.HandleFunc("/login", gitLogin)
 	mux.HandleFunc("/login/check", githubOAUTH)
-	mux.HandleFunc("/account", account)
+	mux.HandleFunc("/account/", account)
 	mux.HandleFunc("/leaderboards", leaderboards)
 
 	/* ADMIN FUNCTIONS */

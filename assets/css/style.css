@@ -1,17 +1,18 @@
 .navbar {
   opacity: 0.9;
   background: #fff;
+  
 }
 
 .navbar .nav-item {
-  font-size: 1.4rem;
-  padding-right: 1.4rem;
+  font-size: 1.1rem;
+  padding-right: .1rem;
 }
 
 #showcase {
   position: relative;
   background-color: rgba(15, 110, 33, 0.8);
-  min-height: 600px;
+  min-height: 500px;
 }
 
 #showcase .primary-overlay {

@@ -5,10 +5,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <link rel="stylesheet"
-        href="https://unpkg.com/bootstrap-material-design@4.1.1/dist/css/bootstrap-material-design.min.css"
-        integrity="sha384-wXznGJNEXNG1NFsbm0ugrLFMQPWswR3lds2VeinahP8N0zJw9VWSopbjv2x7WCvX" crossorigin="anonymous">
+    <link rel="stylesheet" href="\assets\css\bootstrap.css">
     <link rel="stylesheet" href="\assets\css\profile.css">
+    <link rel="stylesheet" href="\assets\css\style.css">
 
     <title>Profile</title>
 </head>
@@ -19,7 +18,7 @@
         <div class="container">
             <a href="/" class="navbar-brand">
                 <img src="\assets\media\bytegolf-logo-small.png" width="50" height="50" alt="logo">
-                <h3 class="d-inline align-middle">Byte Golf</h3>
+                <h4 class="d-inline align-middle">Byte Golf</h4>
             </a>
             <button class="navbar-toggler" data-toggle="collapse" data-target="#navbarCollapse">
                 <span class="navbar-toggler-icon"></span>
@@ -35,8 +34,8 @@
                     <li class="nav-item">
                         <a href="/leaderboards" class="nav-link">Leaderboards</a>
                     </li>
-                    <li class="nav-item active">
-                        <a href="/account" class="nav-link">Account</a>
+                    <li class="nav-item">
+                        <a href="/account" class="nav-link active">Profile</a>
                     </li>
                 </ul>
             </div>
@@ -52,8 +51,8 @@
                     <div class="col-md-6 ml-auto mr-auto">
                         <div class="profile">
                             <div class="avatar">
-                                <img src="{{.PictureURI}}"
-                                    alt="Circle Image" class="img-raised rounded-circle img-fluid">
+                                <img src="{{.PictureURI}}" alt="Circle Image"
+                                    class="img-raised rounded-circle img-fluid">
 
                             </div>
                             <div class="name">

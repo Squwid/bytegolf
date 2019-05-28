@@ -4,7 +4,6 @@ import (
 	"net/http"
 	"strconv"
 	"time"
-	"fmt"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -53,7 +52,7 @@ func (user *GithubUser) login(w http.ResponseWriter, req *http.Request) {
 	cookie := &http.Cookie{
 		Name:  "bgsession",
 		Value: string(uid),
-		Path: "/",
+		Path:  "/",
 	}
 
 	http.SetCookie(w, cookie)

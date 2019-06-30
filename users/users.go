@@ -31,7 +31,6 @@ func init() {
 	dbPort = os.Getenv("db_port")
 	if dbUsername == "" {
 		logger.Panic("db_username ENV NOT SET")
-		logger.p
 	}
 	if dbPassword == "" {
 		logger.Panic("db_password ENV NOT SET")

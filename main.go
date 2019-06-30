@@ -43,7 +43,7 @@ func main() {
 	mux := http.NewServeMux()
 	certManager := autocert.Manager{
 		Prompt: autocert.AcceptTOS,
-		Cache:  autocert.DirCache("certs"),
+		Cache:  autocert.DirCache("cert-cache"),
 	}
 
 	mux.Handle("/assets/", http.StripPrefix("/assets", http.FileServer(http.Dir("./assets"))))

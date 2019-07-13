@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/Squwid/bytegolf/questions"
@@ -42,14 +43,15 @@ func leaderboards(w http.ResponseWriter, req *http.Request) {
 }
 
 func holes(w http.ResponseWriter, req *http.Request) {
-	qs := questions.GetAllQuestions()
-	var m = make(map[int]questions.Question)
-	for k, v := range qs {
-		m[k] = *v
+	qs, err := questions.GetActiveQuestions()
+	if err != nil {
+		logger.Printf("error getting all questions: %v\n", err)
+		w.Write([]byte(fmt.Sprintf("error getting all questions: %v\n", err)))
+		return
 	}
 	tpl.ExecuteTemplate(w, "holes.html", struct {
-		Questions map[int]questions.Question
+		Questions []questions.Question
 	}{
-		Questions: m,
+		Questions: qs,
 	})
 }

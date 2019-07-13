@@ -63,7 +63,11 @@ func (s *CodeSubmission) Send(storeLocal bool) (*CodeResponse, error) {
 // since this is run on its own go routine (even when it returns an error) it will log the error
 func StoreLocal(s *CodeSubmission, r *CodeResponse) error {
 	// log.SetPrefix("[debug] ")
-	if !r.Check() {
+	correct, err := r.Check()
+	if err != nil {
+		return err
+	}
+	if !correct {
 		// the response was not correct
 		log.Printf("(CODE): %v\t(OUTPUT): %v\n", r.StatusCode, r.Output)
 		log.Printf("%s was not correct\n", r.Output)

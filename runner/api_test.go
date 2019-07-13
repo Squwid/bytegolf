@@ -1,11 +1,5 @@
 package runner
 
-import (
-	"encoding/json"
-	"net/http"
-	"testing"
-)
-
 const codeBody = `package main
 import "fmt"
 
@@ -14,24 +8,24 @@ func main() {
 }
 	`
 
-func TestSubmit(t *testing.T) {
-	c := NewClient()
-	if len(c.ID) == 0 {
-		t.Fatalf("error creating new client w/id: %s\n", c.ID)
-	}
-	sub := NewCodeSubmission("bwhitelaw24", "343", "", "main.go", LangGo, codeBody, c, nil)
-	resp, err := sub.Send(false)
-	if err != nil {
-		t.Error(err)
-	}
-	if resp.StatusCode != http.StatusOK {
-		t.Errorf("got bad status : %v", resp.StatusCode)
-	} else {
-		t.Logf(resp.Output)
-		bs, _ := json.Marshal(*resp)
-		t.Log(string(bs))
-	}
-}
+// func TestSubmit(t *testing.T) {
+// 	c := NewClient()
+// 	if len(c.ID) == 0 {
+// 		t.Fatalf("error creating new client w/id: %s\n", c.ID)
+// 	}
+// 	sub := NewCodeSubmission("bwhitelaw24", "343", "", "main.go", LangGo, codeBody, c, nil)
+// 	resp, err := sub.Send(false)
+// 	if err != nil {
+// 		t.Error(err)
+// 	}
+// 	if resp.StatusCode != http.StatusOK {
+// 		t.Errorf("got bad status : %v", resp.StatusCode)
+// 	} else {
+// 		t.Logf(resp.Output)
+// 		bs, _ := json.Marshal(*resp)
+// 		t.Log(string(bs))
+// 	}
+// }
 
 /*
 func TestStoreSubmissionLocal(t *testing.T) {

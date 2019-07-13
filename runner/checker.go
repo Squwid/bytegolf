@@ -1,7 +1,7 @@
 package runner
 
 import (
-	"log"
+	"fmt"
 	"strings"
 	"sync"
 	"time"
@@ -74,11 +74,13 @@ func (ls LastSub) GetOutput(name string) string {
 
 // Check checks the response against the correct answer and sees if it is correct
 // only returns a bool, logs any errors that have occurred
-func (resp *CodeResponse) Check() bool {
-	q := questions.GetQuestion(resp.Info.QuestionID)
-	if q.ID == "" {
-		log.Printf("question %s is not live\n", resp.Info.QuestionID)
-		return false
+func (resp *CodeResponse) Check() (bool, error) {
+	q, err := questions.GetQuestionByID(resp.Info.QuestionID)
+	if err != nil {
+		return false, err
+	}
+	if !q.Live {
+		return false, fmt.Errorf("question %v is not live", q.Name)
 	}
 
 	// todo: Explore more jdoodle status codes
@@ -93,7 +95,7 @@ func (resp *CodeResponse) Check() bool {
 		correct = true
 	}
 	LS.Write(resp.Info.Username, resp.Info.QuestionID, resp.Output, correct)
-	return correct
+	return correct, nil
 }
 
 /*

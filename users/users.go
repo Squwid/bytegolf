@@ -20,10 +20,15 @@ var (
 
 var db *sql.DB
 var logger *log.Logger
+var skipDatabase = true
 
 // initializes the database using connection strings
 func init() {
 	logger = log.New(os.Stdout, "[users] ", log.Ldate|log.Ltime)
+	if skipDatabase {
+		logger.Println("skipping db connection")
+		return
+	}
 	dbUsername = os.Getenv("db_username")
 	dbPassword = os.Getenv("db_password")
 	dbHost = os.Getenv("db_host")

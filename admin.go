@@ -1,15 +1,19 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 
-	"github.com/Squwid/bytegolf/aws"
+	"github.com/Squwid/bytegolf/database"
 	"github.com/Squwid/bytegolf/questions"
 )
 
 // isAdmin checks to see if a user has admin status
 func isAdmin(w http.ResponseWriter, req *http.Request) bool {
+	if !database.InProd() {
+		return true
+	}
 	if !loggedIn(w, req) {
 		return false
 	}
@@ -22,21 +26,18 @@ func adminholes(w http.ResponseWriter, req *http.Request) {
 		http.Redirect(w, req, "/", http.StatusSeeOther)
 		return
 	}
-	qs, err := questions.GetLocalQuestions()
+	qs, err := questions.GetAllQuestions()
 	if err != nil {
-		logger.Printf("error getting local questions: %v\n", err)
+		logger.Printf("error getting all questions: %v\n", err)
 		w.Write([]byte(err.Error()))
 		return
 	}
-	var qsMap = map[int]questions.Question{}
-	for i, q := range qs {
-		qsMap[i+1] = q
-	}
+
 	tpl.ExecuteTemplate(w, "adminqs.html", struct {
-		Questions       map[int]questions.Question
+		Questions       []questions.Question
 		QuestionsAmount int
 	}{
-		Questions:       qsMap,
+		Questions:       qs,
 		QuestionsAmount: len(qs),
 	})
 }
@@ -78,32 +79,8 @@ func deployQuestion(w http.ResponseWriter, req *http.Request) {
 		s := strings.Split(req.URL.Path, "/")
 		path := s[3]
 
-		allQs, err := questions.GetLocalQuestions()
-		if err != nil {
-			logger.Println("err getting all local qs", err)
-			w.Write([]byte(err.Error()))
-			return
-		}
-		for i, q := range allQs {
-			if q.ID == path {
-				err = allQs[i].Deploy()
-				if err != nil {
-					logger.Println("error deploying q:", err)
-					w.Write([]byte(err.Error()))
-				}
-				break
-			}
-		}
+		questions.MakeLive(path)
 	}
-	http.Redirect(w, req, "/admin/holes", http.StatusSeeOther)
-}
-
-func refreshQuestions(w http.ResponseWriter, req *http.Request) {
-	if !isAdmin(w, req) {
-		http.Redirect(w, req, "/login", http.StatusSeeOther)
-		return
-	}
-	questions.UpdateQuestions()
 	http.Redirect(w, req, "/admin/holes", http.StatusSeeOther)
 }
 
@@ -116,75 +93,24 @@ func archiveQuestion(w http.ResponseWriter, req *http.Request) {
 		s := strings.Split(req.URL.Path, "/")
 		path := s[3]
 
-		allQs, err := questions.GetLocalQuestions()
-		if err != nil {
-			logger.Println("err getting all local qs", err)
-			w.Write([]byte(err.Error()))
-			return
-		}
-		for i, q := range allQs {
-			if q.ID == path {
-				err = allQs[i].RemoveLive()
-				if err != nil {
-					logger.Println("error storing q:", err)
-					w.Write([]byte(err.Error()))
-				}
-				break
-			}
-		}
+		questions.ArchiveQuestion(path)
 	}
 	http.Redirect(w, req, "/admin/holes", http.StatusSeeOther)
 }
 
-func createUser(w http.ResponseWriter, req *http.Request) {
-	if !isAdmin(w, req) {
-		http.Redirect(w, req, "/login", http.StatusSeeOther)
+func deletehole(w http.ResponseWriter, req *http.Request) {
+	s := strings.Split(req.URL.Path, "/")
+	path := s[3]
+	err := questions.RemoveQuestion(path)
+	if err != nil {
+		logger.Printf("error deleting question %s: %v\n", path, err)
+		w.Write([]byte(fmt.Sprintf("error deleting question %s: %v", path, err)))
 		return
 	}
-	if req.Method == http.MethodPost {
-		logger.Printf("adding user request\n")
-		var email, username, password, role string
-		email = req.FormValue("email")
-		username = req.FormValue("username")
-		password = req.FormValue("password")
-		role = req.FormValue("role")
-
-		user := aws.NewUser(email, username, role, password)
-		err := user.Store()
-		if err != nil {
-			logger.Printf("error adding user %s to aws: %v\n", username, err)
-		} else {
-			logger.Printf("successfully added %s to aws\n", username)
-		}
-	}
 	http.Redirect(w, req, "/admin/holes", http.StatusSeeOther)
+	return
 }
-
-// func deletehole(w http.ResponseWriter, req *http.Request) {
-// 	s := strings.Split(req.URL.Path, "/")
-// 	path := s[3]
-// 	RemoveQuestion(path)
-// 	// qs = questions.ToMap(questions.GetLocalQuestions())
-// 	http.Redirect(w, req, "/admin/holes", http.StatusSeeOther)
-// 	return
 
 func admin(w http.ResponseWriter, req *http.Request) {
 	http.Redirect(w, req, "/admin/holes", http.StatusSeeOther)
 }
-
-// // RemoveQuestion removes a specific quetsion using a link to the question
-// func RemoveQuestion(link string) {
-// 	logger.Printf("trying to remove question by the link of %s\n", link)
-// 	for _, q := range qs {
-// 		if q.Link == link {
-// 			// err := q.Remove()
-// 			if err != nil {
-// 				panic(err)
-// 			}
-// 		}
-// 	}
-// }
-
-// func removeGame(gameID string) error {
-// 	return nil
-// }

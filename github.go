@@ -8,6 +8,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/Squwid/bytegolf/database"
 )
 
 // Session information regarding github logins
@@ -28,6 +30,10 @@ var (
 )
 
 func setGitClient() {
+	// todo: is this how I want to handle this?
+	if !database.InProd() {
+		return
+	}
 	type oauth struct {
 		ClientID     string `json:"ClientID"`
 		ClientSecret string `json:"ClientSecret"`

@@ -1,21 +1,20 @@
 package questions
 
 import (
-	"encoding/json"
-	"io/ioutil"
+	"log"
 	"os"
-	"path"
 
-	uuid "github.com/satori/go.uuid"
+	db "github.com/Squwid/bytegolf/database"
 )
 
 // DefaultRegion is the default aws region for this package
 const DefaultRegion = "us-east-1"
 
-// Questions Constants
-const (
-	questionsTable = "bytegolf-questions"
-)
+var logger *log.Logger
+
+func init() {
+	logger = log.New(os.Stdout, "[questions] ", log.Ldate|log.Ltime)
+}
 
 // Question is the type that gets stored as a question in dynamodb
 type Question struct {
@@ -26,7 +25,6 @@ type Question struct {
 	Answer     string `json:"answer"`
 	Difficulty string `json:"difficulty"`
 	Source     string `json:"source"`
-	Created    string `json:"created"`
 
 	// Information regarding whether or not the hole is live or not and what number the hole is
 	Live bool `json:"live"`
@@ -34,9 +32,7 @@ type Question struct {
 
 // NewQuestion creates a new question with a UUID
 func NewQuestion(name, question, input, answer, difficulty, source string, live bool) *Question {
-	uuid := uuid.NewV4()
 	return &Question{
-		ID:         uuid.String(),
 		Name:       name,
 		Question:   question,
 		Input:      input,
@@ -47,109 +43,179 @@ func NewQuestion(name, question, input, answer, difficulty, source string, live 
 	}
 }
 
-// Store stores a question locally, however it does not make the question live
+// Store will store the question after it is created
 func (q *Question) Store() error {
-	var p = path.Join("localfiles", "qs")
-	if _, err := os.Stat(p); os.IsNotExist(err) {
-		os.MkdirAll(p, os.ModePerm)
-	}
-
-	filePath := path.Join(p, q.ID+".json")
-	os.Remove(filePath) // remove the file before removing it
-	f, err := os.Create(filePath)
+	// TODO: check to see if a question already exists, update if it is instead
+	stmt, err := db.DB.Prepare(`INSERT INTO question(name, question, input, answer, difficulty, source, live)
+	VALUES ($1, $2, $3, $4, $5, $6, $7);`)
 	if err != nil {
 		return err
 	}
-	defer f.Close()
+	defer stmt.Close()
 
-	bs, err := json.Marshal(*q)
+	_, err = stmt.Exec(q.Name, q.Question, q.Input, q.Answer, q.Difficulty, q.Source, q.Live)
 	if err != nil {
 		return err
 	}
 
-	_, err = f.Write(bs)
+	logger.Printf("successfully stored %s as a question\n", q.Name)
+	return nil
+}
+
+// RemoveQuestion removes a question by id rather than the question itself
+func RemoveQuestion(id string) error {
+	return removeQ(id)
+}
+
+// Remove removes the question from the database
+func (q *Question) Remove() error {
+	return removeQ(q.ID)
+}
+
+func removeQ(id string) error {
+	stmt, err := db.DB.Prepare("DELETE FROM question WHERE id=$1;")
 	if err != nil {
 		return err
 	}
-	return f.Sync()
-}
+	defer stmt.Close()
 
-// Deploy deploys a question to live, if a number already exists that is requested that hole will be removed
-func (q *Question) Deploy() error {
-	q.Live = true
-	return q.Store()
-}
-
-// RemoveLive removes q question from being live and moves it to the
-func (q *Question) RemoveLive() error {
-	// remove the live information and restore it
-	q.Live = false
-	return q.Store()
-}
-
-// GetSQLQuestions returns a list of questions from SQL
-func GetSQLQuestions() ([]Question, error) {
-	// var qs = []Question{}
-
-	return nil, nil
-}
-
-// GetLocalQuestions returns a list of questions that are retrieved from the local file system
-func GetLocalQuestions() ([]Question, error) {
-	var qs = []Question{}
-	filelist, err := ioutil.ReadDir(path.Join("localfiles", "qs"))
+	_, err = stmt.Exec(id)
 	if err != nil {
-		if os.IsNotExist(err) {
-			// create the folder if it doesnt exist
-			os.MkdirAll(path.Join("localfiles", "qs"), os.ModePerm)
-			return qs, nil
-		}
+		return err
+	}
+
+	logger.Printf("successfully deleted question with id: %s\n", id)
+	return nil
+}
+
+// ArchiveQuestion archives a question
+func ArchiveQuestion(id string) error {
+	return archive(id)
+}
+
+// Archive archives a question
+func (q *Question) Archive() error {
+	return archive(q.ID)
+}
+
+// MakeLive makes an archived question live
+func (q *Question) MakeLive() error {
+	return makeLive(q.ID)
+}
+
+// MakeLive makes a question live using an id rather than a question
+func MakeLive(id string) error {
+	return makeLive(id)
+}
+
+func makeLive(id string) error {
+	stmt, err := db.DB.Prepare("UPDATE question SET live=true WHERE id=$1")
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	_, err = stmt.Exec(id)
+	if err != nil {
+		return err
+	}
+
+	logger.Printf("successfully made live question with id: %s\n", id)
+	return nil
+}
+
+func archive(id string) error {
+	stmt, err := db.DB.Prepare("UPDATE question SET live=false WHERE id=$1")
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	_, err = stmt.Exec(id)
+	if err != nil {
+		return err
+	}
+
+	logger.Printf("successfully archived question with id: %s\n", id)
+	return nil
+}
+
+// GetActiveQuestions Retreive all of the live questions that are active
+func GetActiveQuestions() ([]Question, error) {
+	stmt, err := db.DB.Prepare("SELECT * FROM question WHERE live=true;")
+	if err != nil {
 		return nil, err
 	}
+	defer stmt.Close()
 
-	for _, fileinfo := range filelist {
-		if fileinfo.Mode().IsRegular() {
-			contents, err := ioutil.ReadFile(path.Join("localfiles", "qs", fileinfo.Name()))
-			if err != nil {
-				return nil, err
-			}
-
-			var q Question
-			err = json.Unmarshal(contents, &q)
-			if err != nil {
-				return nil, err
-			}
-			qs = append(qs, q)
-		}
+	rows, err := stmt.Query()
+	if err != nil {
+		return nil, err
 	}
+	defer rows.Close()
+
+	var qs []Question
+	for rows.Next() {
+		var q Question
+		err = rows.Scan(&q.ID, &q.Name, &q.Question, &q.Input, &q.Answer, &q.Difficulty, &q.Source, &q.Live)
+		if err != nil {
+			return nil, err
+		}
+		qs = append(qs, q)
+	}
+
 	return qs, nil
 }
 
-// GetLiveQuestions gets a list of live questions
-func GetLiveQuestions() ([]Question, error) {
-	var live = []Question{}
-	qs, err := GetLocalQuestions()
+// GetAllQuestions gets all of the questions from the database without using any queries
+func GetAllQuestions() ([]Question, error) {
+	stmt, err := db.DB.Prepare("SELECT * FROM question;")
 	if err != nil {
 		return nil, err
 	}
-	for _, q := range qs {
-		if q.Live {
-			live = append(live, q)
-		}
+	defer stmt.Close()
+
+	rows, err := stmt.Query()
+	if err != nil {
+		return nil, err
 	}
-	return live, nil
+	defer rows.Close()
+
+	var qs []Question
+	for rows.Next() {
+		var q Question
+		err = rows.Scan(&q.ID, &q.Name, &q.Question, &q.Input, &q.Answer, &q.Difficulty, &q.Source, &q.Live)
+		if err != nil {
+			return nil, err
+		}
+		qs = append(qs, q)
+	}
+
+	return qs, nil
 }
 
-// MapLiveQuestions creates a map of all live questions in a fasion of hole number -> question
-func MapLiveQuestions() (map[int]*Question, error) {
-	m := make(map[int]*Question)
-	qs, err := GetLiveQuestions()
+// GetQuestionByID gets a question by using its ID
+func GetQuestionByID(id string) (*Question, error) {
+	stmt, err := db.DB.Prepare("SELECT * FROM question WHERE id=$1;")
 	if err != nil {
 		return nil, err
 	}
+	defer stmt.Close()
 
-	for i := range qs {
-		m[i] = &qs[i]
+	rows, err := stmt.Query(id)
+	if err != nil {
+		return nil, err
 	}
-	return m, nil
+	defer rows.Close()
+
+	// rows in this case should just be 1
+
+	var q Question
+	for rows.Next() {
+		err = rows.Scan(&q.ID, &q.Name, &q.Question, &q.Input, &q.Answer, &q.Difficulty, &q.Source, &q.Live)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return &q, nil
 }

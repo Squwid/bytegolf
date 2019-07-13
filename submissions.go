@@ -38,8 +38,13 @@ func submission(w http.ResponseWriter, req *http.Request) {
 	holeID := strings.Split(req.URL.Path, "/")[2]
 	logger.Printf("holeID: %v\tSplit: %v\n", holeID, strings.Split(req.URL.Path, "/"))
 
-	question := questions.GetQuestion(holeID)
-	if question.ID == "" {
+	question, err := questions.GetQuestionByID(holeID)
+	if err != nil {
+		logger.Printf("error trying to get question %v\n", holeID)
+		http.Redirect(w, req, "/holes/", http.StatusSeeOther)
+		return
+	}
+	if !question.Live {
 		logger.Printf("tried to get %v hole that isnt live\n", holeID)
 		http.Redirect(w, req, "/holes/", http.StatusSeeOther)
 		return
@@ -120,14 +125,19 @@ func play(w http.ResponseWriter, req *http.Request) {
 		tpl.ExecuteTemplate(w, "play.html", playPage)
 	}
 
-	question := questions.GetQuestion(holeID)
-	if question.ID == "" {
-		logger.Printf("tried to get %s hole that isnt live\n", holeID)
+	question, err := questions.GetQuestionByID(holeID)
+	if err != nil {
+		logger.Printf("error trying to get question %v\n", holeID)
+		http.Redirect(w, req, "/holes/", http.StatusSeeOther)
+		return
+	}
+	if !question.Live {
+		logger.Printf("tried to get %v hole that isnt live\n", holeID)
 		http.Redirect(w, req, "/holes/", http.StatusSeeOther)
 		return
 	}
 
-	playPage.Question = &question
+	playPage.Question = question
 
 	if loggedIn(w, req) {
 		// the player is logged in so grab them

@@ -1,16 +1,15 @@
-package main
+package users
 
-// variables that are needed for the database
-var (
-	dbUsername string
-	dbPassword string
-	dbHost     string
-	dbName     string
+import (
+	"log"
+	"os"
 )
 
-// initializeDB initializes the database using connection strings
-func initializeDB() {
+var logger *log.Logger
 
+func init() {
+	logger = log.New(os.Stdout, "[users] ", log.Ldate|log.Ltime)
+	setGitClient()
 }
 
 // GithubUser is the user structure that uses github

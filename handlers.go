@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/Squwid/bytegolf/questions"
+	"github.com/Squwid/bytegolf/users"
 )
 
 // motd returns a string which is the message of the day
@@ -24,11 +25,11 @@ func index(w http.ResponseWriter, req *http.Request) {
 }
 
 func account(w http.ResponseWriter, req *http.Request) {
-	if !loggedIn(w, req) {
+	if !users.LoggedIn(req) {
 		http.Redirect(w, req, "/login", http.StatusSeeOther)
 		return
 	}
-	user, err := fetchUser(w, req)
+	user, err := users.GetUser(req)
 	if err != nil {
 		logger.Fatalln("error fetching user:", err)
 		http.Error(w, "an internal server error has occurred", http.StatusInternalServerError)

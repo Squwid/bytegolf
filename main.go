@@ -9,15 +9,13 @@ import (
 	"time"
 
 	"github.com/Squwid/bytegolf/database"
-
 	_ "github.com/Squwid/bytegolf/questions"
-	_ "github.com/Squwid/bytegolf/users"
+	"github.com/Squwid/bytegolf/users"
 	"github.com/aws/aws-sdk-go/aws"
 	awss "github.com/aws/aws-sdk-go/aws/session"
 	"golang.org/x/crypto/acme/autocert"
 )
 
-var gitState = "abcdefg" // TODO: change this after testing if it works
 var siteAddr = "https://bytegolf.io"
 var tpl *template.Template
 var awsSess *awss.Session
@@ -38,7 +36,6 @@ func init() {
 	tpl = template.Must(template.ParseGlob("views/*"))
 	logger = log.New(os.Stdout, "[bytegolf] ", log.Ldate|log.Ltime)
 	awsSess = awss.Must(awss.NewSessionWithOptions(awss.Options{Config: aws.Config{Region: aws.String("us-east-1")}}))
-	setGitClient()
 }
 
 func main() {
@@ -56,8 +53,8 @@ func main() {
 		mux.HandleFunc("/play/", play)
 		mux.HandleFunc("/submit/", submission)
 		mux.HandleFunc("/holes/", holes)
-		mux.HandleFunc("/login", gitLogin)
-		mux.HandleFunc("/login/check", githubOAUTH)
+		mux.HandleFunc("/login", users.GitLogin)
+		mux.HandleFunc("/login/check", users.GithubOAUTH)
 		mux.HandleFunc("/account/", account)
 		mux.HandleFunc("/leaderboards", leaderboards)
 
@@ -90,8 +87,8 @@ func main() {
 		http.HandleFunc("/play/", play)
 		http.HandleFunc("/submit/", submission)
 		http.HandleFunc("/holes/", holes)
-		http.HandleFunc("/login", gitLogin)
-		http.HandleFunc("/login/check", githubOAUTH)
+		http.HandleFunc("/login", users.GitLogin)
+		http.HandleFunc("/login/check", users.GithubOAUTH)
 		http.HandleFunc("/account/", account)
 		http.HandleFunc("/leaderboards", leaderboards)
 

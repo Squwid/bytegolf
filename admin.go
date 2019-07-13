@@ -7,6 +7,7 @@ import (
 
 	"github.com/Squwid/bytegolf/database"
 	"github.com/Squwid/bytegolf/questions"
+	"github.com/Squwid/bytegolf/users"
 )
 
 // isAdmin checks to see if a user has admin status
@@ -14,7 +15,7 @@ func isAdmin(w http.ResponseWriter, req *http.Request) bool {
 	if !database.InProd() {
 		return true
 	}
-	if !loggedIn(w, req) {
+	if !users.LoggedIn(req) {
 		return false
 	}
 	// TODO: admin doesnt work with new users, need to fix using databases

@@ -83,7 +83,6 @@ func TestGetDatabase(t *testing.T) {
 	defer rows.Close()
 
 	fmt.Println("*** ROWS:")
-	fmt.Println(rows)
 }
 
 func TestCreateTable(t *testing.T) {

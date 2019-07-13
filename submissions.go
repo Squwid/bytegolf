@@ -11,6 +11,7 @@ import (
 
 	"github.com/Squwid/bytegolf/questions"
 	"github.com/Squwid/bytegolf/runner"
+	"github.com/Squwid/bytegolf/users"
 )
 
 func submission(w http.ResponseWriter, req *http.Request) {
@@ -20,14 +21,14 @@ func submission(w http.ResponseWriter, req *http.Request) {
 	}
 
 	// Do user stuff before the logic
-	if !loggedIn(w, req) {
+	if !users.LoggedIn(req) {
 		http.Redirect(w, req, "/login", http.StatusSeeOther)
 		return
 	}
 	// declare the internal server error handling to show the user the error the occurred
 	intErr := func() { http.Error(w, "an internal server error occurred", http.StatusInternalServerError) }
 
-	user, err := fetchUser(w, req)
+	user, err := users.GetUser(req)
 	if err != nil {
 		logger.Printf("error fetching user: %v\n", err)
 		intErr()
@@ -60,7 +61,7 @@ func submission(w http.ResponseWriter, req *http.Request) {
 	defer file.Close()
 
 	lang := req.FormValue("language") // todo: handle false languages in the future
-	logger.Printf("new submission %v %v (Lang): %s\n", user.ID, question.Name, lang)
+	logger.Printf("new submission %v %v (Lang): %s\n", user.GithubUser.ID, question.Name, lang)
 
 	// read the file
 	bs, err := ioutil.ReadAll(file) // buffer in the future?
@@ -73,7 +74,7 @@ func submission(w http.ResponseWriter, req *http.Request) {
 	// run the code from the input through the submission system
 	// TODO: pass entire question through the runner rather than just the id to not have to make multiple calls to get the question (not a big deal for now just double logs)
 	runnerClient := runner.NewClient() // todo: New way to do a runner rather than each call
-	submission := runner.NewCodeSubmission(strconv.Itoa(user.ID), user.Username, question.ID, question.Input, fileHead.Filename, lang, string(bs), runnerClient, awsSess)
+	submission := runner.NewCodeSubmission(strconv.Itoa(user.GithubUser.ID), user.GithubUser.Username, question.ID, question.Input, fileHead.Filename, lang, string(bs), runnerClient, awsSess)
 	_, err = submission.Send(true) // true stands for save local
 	if err != nil {
 		logger.Printf("error using code runner : %s\n", err.Error())
@@ -139,15 +140,15 @@ func play(w http.ResponseWriter, req *http.Request) {
 
 	playPage.Question = question
 
-	if loggedIn(w, req) {
+	if users.LoggedIn(req) {
 		// the player is logged in so grab them
-		user, err := fetchUser(w, req)
+		user, err := users.GetUser(req)
 		if err != nil {
 			logger.Printf("error fetching user: %v\n", err)
 			intErr()
 			return
 		}
-		prev := runner.PreviouslyAnswered(holeID, strconv.Itoa(user.ID))
+		prev := runner.PreviouslyAnswered(holeID, strconv.Itoa(user.GithubUser.ID))
 		if prev.Correct {
 			// TODO: add a date to the correct screen
 			playPage.ShowCorrect = true
@@ -156,16 +157,16 @@ func play(w http.ResponseWriter, req *http.Request) {
 
 			// for the custom leaderboard spot
 			playPage.Player.Language = prev.Language
-			playPage.Player.Username = user.Username
+			playPage.Player.Username = user.GithubUser.Username
 			playPage.Player.Score = prev.Score
 			playPage.Player.Place = "--" // TODO: make a current place
 		} else {
 			playPage.ShowNeverAnswered = true
 		}
-		if runner.LS.IsIncorrect(user.Username, holeID) {
+		if runner.LS.IsIncorrect(user.GithubUser.Username, holeID) {
 			playPage.ShowIncorrect = true
-			playPage.IncorrectMessage = fmt.Sprintf("Your last submission of this hole at %s is incorrect", runner.LS.GetTime(user.Username).Format("Jan 2 15:04 MST 2006"))
-			playPage.IncorrectSub = runner.LS.GetOutput(user.Username)
+			playPage.IncorrectMessage = fmt.Sprintf("Your last submission of this hole at %s is incorrect", runner.LS.GetTime(user.GithubUser.Username).Format("Jan 2 15:04 MST 2006"))
+			playPage.IncorrectSub = runner.LS.GetOutput(user.GithubUser.Username)
 		}
 	} else {
 		// not logged in so show nothing

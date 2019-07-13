@@ -1,4 +1,4 @@
-package main
+package users
 
 import (
 	"encoding/json"
@@ -6,32 +6,21 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
-	"sync"
-	"time"
 
 	"github.com/Squwid/bytegolf/database"
 )
 
-// Session information regarding github logins
-var (
-	sessions    = map[string]*session{}
-	sessionLock = &sync.RWMutex{}
-)
+var gitState = "abcdefg" // TODO: change this after testing if it works
 
-type session struct {
-	User         *GithubUser
-	lastActivity time.Time
-}
-
-// github variables
+// variables for github oauth client
 var (
 	clientID     string
 	clientSecret string
 )
 
 func setGitClient() {
-	// todo: is this how I want to handle this?
 	if !database.InProd() {
+		logger.Println("github oauth was skipped!")
 		return
 	}
 	type oauth struct {
@@ -53,7 +42,8 @@ func setGitClient() {
 	clientSecret = oa.ClientSecret
 }
 
-func githubOAUTH(w http.ResponseWriter, req *http.Request) {
+// GithubOAUTH logs in using github
+func GithubOAUTH(w http.ResponseWriter, req *http.Request) {
 	// get the github response back to the site and make sure it matches everything from before
 	code := req.URL.Query().Get("code")
 	state := req.URL.Query().Get("state")
@@ -141,9 +131,10 @@ func githubOAUTH(w http.ResponseWriter, req *http.Request) {
 	http.Redirect(w, req, "/account", http.StatusSeeOther)
 }
 
-func gitLogin(w http.ResponseWriter, req *http.Request) {
+// GitLogin checks to see if you are logged in, and sends the request to login if not
+func GitLogin(w http.ResponseWriter, req *http.Request) {
 	// the user is already logged in so dont send them to the auth page
-	if loggedIn(w, req) {
+	if LoggedIn(req) {
 		http.Redirect(w, req, "/account", http.StatusSeeOther)
 		return
 	}

@@ -1,0 +1,32 @@
+img {
+    height: 100px;
+    vertical-align: middle;
+    margin-top: -20px;
+    max-width: 125px;
+}
+
+.submission {
+    padding: 2em;
+    border-bottom: 1px solid #d9d9d9;
+    height: 150px;
+}
+
+.img-wrapper {
+    width: 130px;
+    height: 100px;
+    vertical-align: center;
+    background-color: orange;
+    text-align: center;
+}
+
+.red {
+    background-color: red;
+}
+
+.blue {
+    background-color: blue;
+}
+
+.gray{
+    background-color: antiquewhite;
+}

@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/Squwid/bytegolf/firestore"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -37,6 +36,7 @@ type results struct {
 	}
 }
 
+// this is a function from the future and will be used in the future (long time)
 func compile(w http.ResponseWriter, req *http.Request) {
 	if req.Method != http.MethodPost {
 		log.Warnf("got %s request for /compile but expected 'POST'", req.Method)
@@ -54,7 +54,7 @@ func compile(w http.ResponseWriter, req *http.Request) {
 
 	// i could unmarshal the code struct here and then remarshal it but
 	// that seems useless (maybe for debugging at some point)
-	creq, err := http.NewRequest(http.MethodPost, compilerURI, bytes.NewReader(bs))
+	creq, err := http.NewRequest(http.MethodPost, "", bytes.NewReader(bs))
 	if err != nil {
 		log.Errorf("error creating new request for /compile: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -85,18 +85,21 @@ func compile(w http.ResponseWriter, req *http.Request) {
 	}
 	overall := time.Since(start)
 
+	// TODO: all of this code is good but needs to be moved to the compile folder
+	// in the future and run our own compiler. but thats alot of work right now
+
 	// this go function should upload this data to the database of all requests
-	go func(req, resp []byte, dur time.Duration) {
-		err := firestore.StoreData("compiles", map[string]interface{}{
-			"code_request":     string(req),
-			"code_results":     string(resp),
-			"request_duration": overall.String(),
-		})
-		if err != nil {
-			log.Errorf("Error storing fire data store: %v", err)
-			return
-		}
-	}(bs, bsr, overall)
+	// go func(req, resp []byte, dur time.Duration) {
+	// 	err := firestore.StoreData("compiles", map[string]interface{}{
+	// 		"code_request":     string(req),
+	// 		"code_results":     string(resp),
+	// 		"request_duration": overall.String(),
+	// 	})
+	// 	if err != nil {
+	// 		log.Errorf("Error storing fire data store: %v", err)
+	// 		return
+	// 	}
+	// }(bs, bsr, overall)
 	log.Infof("overall time for compile request: %v", overall)
 	w.Write(bsr)
 }

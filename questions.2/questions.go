@@ -27,6 +27,11 @@ type Test struct {
 	Answer string `json:"answer"`
 }
 
+// NewQuestion returns a new Question after generating a uuid
+func NewQuestion() Question {
+	return Question{ID: uuid.New().String()}
+}
+
 // ErrNil gets returned if a question is nil
 var ErrNil = errors.New("given <nil> pointer")
 
@@ -39,9 +44,10 @@ func (q *Question) create() error {
 	if q.ID == "" {
 		q.ID = uuid.New().String()
 	}
-	return firestore.StoreData("questions", q)
+	return firestore.StoreData("questions", q.ID, q)
 }
 
+// GetLiveQuestions gets a list of questions that have the Live bool
 func GetLiveQuestions() ([]Question, error) {
 	var qs = []Question{}
 	ctx := context.Background()

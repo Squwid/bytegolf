@@ -9,8 +9,6 @@ import (
 
 var siteAddr = "https://bytegolf.io"
 
-const compilerURI = "http://jorts/compile"
-
 func init() {
 	rdsClient = redis.NewClient(&redis.Options{
 		Addr:     "redis:80",

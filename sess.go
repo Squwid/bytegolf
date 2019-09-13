@@ -73,6 +73,6 @@ func sess(w http.ResponseWriter, req *http.Request) {
 		w.Write([]byte("just tried to log out"))
 		return
 	}
-	log.Println("Logged in. Cookie: %v", cookie.Value)
+	log.Printf("Logged in. Cookie: %v", cookie.Value)
 	w.Write([]byte("logged in, cookie: " + cookie.Value))
 }

@@ -1,0 +1,104 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "description": "JDoodle Compiler API",
+    "version": "1.0.0",
+    "title": "JDoodle Compiler API",
+    "termsOfService": "https://www.jdoodle.com/terms",
+    "contact": {
+      "email": "jdoodle@nutpan.com"
+    }
+  },
+  "host": "api.jdoodle.com",
+  "basePath": "/v1",
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/execute": {
+      "post": {
+        "summary": "Execute Program",
+        "description": "Endpoint to execute code",
+        "tags": [
+          "execute"
+        ],
+        "parameters": [{
+          "name": "execute",
+          "in": "body",
+          "description": "the body",
+          "required": true,
+          "schema": {
+            "properties": {
+              "clientId": {
+                "type": "string"
+              },
+              "clientSecret": {
+                "type": "string"
+              },
+              "script": {
+                "type": "string"
+              },
+              "language": {
+                "type": "string"
+              },
+              "versionIndex": {
+                "type": "string"
+              }
+            }
+          }
+        }],
+        "responses": {
+          "200": {
+            "description": "Execution success"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "429": {
+            "description": "Daily limit reached"
+          }
+        }
+      }
+    },
+    "/credit-spent": {
+      "post": {
+        "summary": "Credit Spent",
+        "description": "Endpoint to execute code",
+        "tags": [
+          "credit-spent"
+        ],
+        "parameters": [{
+          "name": "credit",
+          "in": "body",
+          "description": "the body",
+          "required": true,
+          "schema": {
+            "properties": {
+              "clientId": {
+                "type": "string"
+              },
+              "clientSecret": {
+                "type": "string"
+              }
+            }
+          }
+        }],
+        "responses": {
+          "200": {
+            "description": "Execution success"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    }
+  },
+  "externalDocs": {
+    "description": "Find out more about JDoodle Compiler API",
+    "url": "https://www.jdoodle.com/compiler-api"
+  }
+}

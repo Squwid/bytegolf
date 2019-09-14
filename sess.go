@@ -51,7 +51,7 @@ func remove(id string) {
 	log.Infoln("remove:", rdsClient.Del(id+"-sess").Err())
 }
 
-func sess(w http.ResponseWriter, req *http.Request) {
+func sesss(w http.ResponseWriter, req *http.Request) {
 	if req.URL.Query().Get("login") != "" {
 		sess := generateSession()
 		err := sess.Add(time.Minute * 5)

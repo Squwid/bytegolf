@@ -1,0 +1,26 @@
+.code-card {
+    width: 18rem;
+    border-width: 1px;
+    border-style: solid;
+    border-color: black;
+    margin: .8rem;
+}
+
+.code-card p {
+    font-size: .9rem;
+}
+
+.code-card-footer {
+    font-size: .8rem;
+    
+}
+
+.easy {
+    background-color: lightgreen;
+    color: darkgreen;
+}
+
+.hard {
+    background-color: salmon;
+    color: darkred;
+}

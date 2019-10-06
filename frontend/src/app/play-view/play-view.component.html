@@ -1,0 +1,42 @@
+<div class="container bg-pattern">
+  <div class="container db-green">
+    <div class="title-wrapper">
+      <h1>{{ hole.title }} </h1>
+      <p class="text-muted">Do this do that doadlkfj jfalkdsjfa djakakdj kd alkjdf aldkf adk ajdf adjf alksjdf alkdjf
+        alj
+      </p>
+    </div>
+    <hr>
+    <div class="container d-flex justify-content-start bg-gray language-wrapper">
+      <div class="language-icon text-center" data-toggle="tooltip" data-placement="top" title="{{ language.tooltip }}"
+        *ngFor="let language of languages" (click)="onSelectLanguage(language)"
+        [ngStyle]="{'background-color': mode  === language.language ? '#3f3f3f' : 'lightgray'}">
+        <img class="fit" src="{{ language.icon }}" alt="{{ language.language }}">
+      </div>
+    </div>
+
+    <!-- text editor part -->
+    <div ace-editor [(text)]="content" class="editor" [theme]="activeTheme"
+      [mode]="mode"></div>
+
+    <div class="container button-wrapper">
+      <button type="button" class="btn btn-success btn-space" (click)="onSubmit()">Submit</button>
+      <button type="button" class="btn btn-info btn-space" (click)="onClear()">Clear</button>
+      <div class="dropdown inline-block">
+        <button class="btn btn-secondary dropdown-toggle btn-space" type="button" id="dropdownMenuButton" data-toggle="dropdown"
+          aria-haspopup="true" aria-expanded="false">Editor Theme</button>
+
+        <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+          <a class="dropdown-item" *ngFor="let theme of themes"
+            [ngStyle]="{'background-color': theme.name === activeTheme ? 'lightgray' : 'inherit'}"
+            (click)="onChangeTheme(theme)">{{ theme.name }}</a>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- here
+  <ace [config]="config" [mode]="mode" [disabled]="disabled" [(value)]="content">Some example content</ace>
+  <div class="ace-editor" [ace]="config" [disabled]="disabled"></div> -->
+  </div>
+</div>

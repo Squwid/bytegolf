@@ -18,9 +18,9 @@ const collection = "sessions"
 const sessionID = "bg-session"
 
 type Session struct {
-	ID       string `json:"id"`
-	Username string `json:"username"`
-	Timeout  int64  `json:"timeout"`
+	ID      string `json:"id"`
+	BGID    string `json:"bg_id"`
+	Timeout int64  `json:"timeout"`
 }
 
 // GetSession returns a session, if error is ErrNotFound that means the session
@@ -83,15 +83,15 @@ func removeWhere(path, op string, value interface{}) error {
 
 // Login logs a user in, and returns the session and any other errors that occurred
 // you need to check if you are logged in before using this function
-func Login(username string) (*Session, error) {
+func Login(bgID string) (*Session, error) {
 	uid := uuid.New().String()
 	s := Session{
-		ID:       uid,
-		Username: username,
-		Timeout:  time.Now().Local().Add(time.Minute * 1).Unix(),
+		ID:      uid,
+		BGID:    bgID,
+		Timeout: time.Now().Local().Add(time.Hour * 24).Unix(),
 	}
-	if err := removeWhere("Username", "==", username); err != nil {
-		log.Errorf("error removing old username: %v", err)
+	if err := removeWhere("BGID", "==", bgID); err != nil {
+		log.Errorf("error removing old bgID: %v", err)
 	} // delete all old sessions
 	if err := removeWhere("Timeout", "<", time.Now().Local()); err != nil {
 		log.Errorf("error removing timeouts: %v", err)

@@ -1,0 +1,22 @@
+<div class="container">
+  <div class="title-wrapper">
+    <h1>Holes</h1>
+    <h4 class="text-muted font-weight-light">Secondary Text</h4>
+  </div>
+  <hr>
+</div>
+<div class="container d-flex align-content-around flex-wrap justify-content-center">
+
+  <div class="card code-card" *ngFor="let hole of holes">
+    <div class="card-header" [ngClass]="hole.difficulty">
+      <h4 class="card-title">{{ hole.title }}</h4>
+    </div>
+    <div class="card-body">
+      <p class="card-text">Some quick card text that is going to wrap around this thing akdjfalksdjf alkjdf alskdjf alkdfj alsdkjfa ls;dkfj</p>
+    </div>
+    <div class="card-footer  code-card-footer text-right" [ngClass]="hole.difficulty">
+      Created 10/20/2019
+    </div>
+  </div>
+
+</div>

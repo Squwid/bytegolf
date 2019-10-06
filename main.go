@@ -1,34 +1,36 @@
 package main
 
 import (
+	"html/template"
 	"net/http"
+	"os"
 
 	_ "github.com/Squwid/bytegolf/firestore"
+	"github.com/Squwid/bytegolf/github"
 )
 
 var siteAddr = "https://bytegolf.io"
 
+var tpl *template.Template
+
 func init() {
-	// rdsClient = redis.NewClient(&redis.Options{
-	// 	Addr:     "redis:80",
-	// 	Password: "",
-	// 	DB:       0,
-	// })
+	tpl = template.Must(template.ParseGlob("views/*"))
 }
 
 func main() {
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "80"
+	}
+
 	http.Handle("/assets/", http.StripPrefix("/assets", http.FileServer(http.Dir("./assets"))))
 
 	// handlers
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("byte golf"))
-	})
-	http.HandleFunc("/login", login)
+	http.HandleFunc("/", indexHTML)
+	http.HandleFunc("/login/check", github.Oauth)
+	http.HandleFunc("/login", github.Login)
 	http.HandleFunc("/check", isLoggedIn)
-	// http.HandleFunc("/", index)
-	// http.HandleFunc("/testing", sesss)
-	// http.HandleFunc("/compile", compile)
-	http.ListenAndServe(":80", nil)
+	http.ListenAndServe(":"+port, nil)
 }
 
 func index(w http.ResponseWriter, req *http.Request) {

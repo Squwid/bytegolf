@@ -7,16 +7,16 @@ import (
 )
 
 func isLoggedIn(w http.ResponseWriter, req *http.Request) {
+
+	w.Header().Set("Content-Type", "application/json")
 	loggedIn, err := sess.LoggedIn(req)
 	if err != nil {
-		w.Write([]byte("error trying to check login " + err.Error()))
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 	if !loggedIn {
-		w.Write([]byte("not logged in"))
+		w.Write([]byte(`{"logged_in": false}`))
 		return
 	}
-	w.Write([]byte("logged in"))
-	// 1568570210 timeout: 1568483866 actual
-	// fmt.Println(time.Now().Local().Unix())
+	w.Write([]byte(`{"logged_in": true}`))
 }

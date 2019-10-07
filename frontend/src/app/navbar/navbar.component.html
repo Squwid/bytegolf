@@ -1,24 +1,27 @@
 <nav class="navbar-expand-lg navbar navbar-dark bg-dark">
+  <a class="navbar-brand" routerLink="/">
+    <img src="../../assets/images/bytegolf-logo-full.png" alt="Byte Golf Logo">
+  </a>
   <a class="navbar-brand" routerLink="/">Byte Golf</a>
   <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarText"
     aria-controls="navbarText" aria-expanded="false" aria-label="Toggle Navigation">
     <span class="navbar-toggler-icon"></span></button>
 
-    <div class="collapse navbar-collapse" id="navbarText">
-        <!-- <ul class="navbar-nav mr-auto">
+  <div class="collapse navbar-collapse" id="navbarText">
+    <!-- <ul class="navbar-nav mr-auto">
             <li class="nav-item" routerLinkActive="active" [routerLinkOptions]="{exact: true}">
                 <a class="nav-link" routerLink="/">Home</a>
             </li>
         </ul> -->
-        <ul class="navbar-nav mr-auto">
-            <li class="nav-item" routerLinkActive="active" >
-                <a class="nav-link" routerLink="/holes">Holes</a>
-            </li>
-            <!-- this should be temporary -->
-            
-            <li class="nav-item" routerLinkActive="active">
-                <a class="nav-link" routerLink="/hole">Hole</a>
-            </li>
-        </ul>
-    </div>
+    <ul class="navbar-nav mr-auto">
+      <li class="nav-item" routerLinkActive="active">
+        <a class="nav-link" routerLink="/">Holes</a>
+      </li>
+      <!-- this should be temporary -->
+
+      <li class="nav-item" routerLinkActive="active">
+        <a class="nav-link" routerLink="/hole">Hole</a>
+      </li>
+    </ul>
+  </div>
 </nav>

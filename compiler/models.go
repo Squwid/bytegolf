@@ -38,9 +38,6 @@ var (
 
 // Post ...
 func (exe Execute) Post() (*Response, error) {
-	exe.ClientID = os.Getenv("BG_CLIENT_ID")
-	exe.ClientSecret = os.Getenv("BG_CLIENT_SECRET")
-
 	bs, err := json.Marshal(exe)
 	if err != nil {
 		log.Infof("error marshalling the request: %v", err)
@@ -77,4 +74,48 @@ func (exe Execute) Post() (*Response, error) {
 	}
 	log.Infoln("successfully made post request to jquery got response", resp.StatusCode)
 	return &codeResp, nil
+}
+
+// Handler is the rest api function handler for golang
+func Handler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "POST,OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "*")
+	w.Header().Set("Content-Type", "application/json")
+	if r.Method == http.MethodOptions {
+		// this is for cors
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+	if r.Method != http.MethodPost {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	bs, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	defer r.Body.Close()
+
+	var exe Execute
+	err = json.Unmarshal(bs, &exe)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	exe.ClientID = os.Getenv("JDOODLE_ID")
+	exe.ClientSecret = os.Getenv("JDOODLE_SECRET")
+
+	resp, err := exe.Post()
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	bs, err = json.Marshal(*resp)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	w.Write(bs)
 }

@@ -12,7 +12,7 @@
 }
 
 .rest {
-    background-color: orange;
+    /* background-color: orange; */
     background-image: url("../assets/images/pattern.png");
     background-repeat: repeat;
     padding: 0;

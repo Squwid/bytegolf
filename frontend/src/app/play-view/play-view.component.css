@@ -38,6 +38,12 @@ img {
   background-color: lightslategray;
 }
 
+.pad-top {
+  padding-top: .8rem;
+  -webkit-border-radius: 32px;
+  -moz-border-radius: 32px;
+  border-radius: 32px;
+}
 
 .btn-space {
   margin: .3rem;
@@ -58,7 +64,7 @@ img {
 }
 
 .button-wrapper {
-  background-color: orange;
+  /* background-color: orange; */
   padding: .3rem;
   max-width: 50rem;
   margin: 0 auto;

@@ -1,15 +1,19 @@
-import { NgModule } from '@angular/core';
+import { HttpClientModule } from '@angular/common/http';
+import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { RouterModule, Routes } from '@angular/router';
+import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { AceEditorModule } from 'ng2-ace-editor';
 import { AceConfigInterface, ACE_CONFIG } from 'ngx-ace-wrapper';
+import { ToastrModule } from 'ngx-toastr';
 import { AppComponent } from './app.component';
 import { HolesComponent } from './holes/holes.component';
 import { NavbarComponent } from './navbar/navbar.component';
 import { PlayViewComponent } from './play-view/play-view.component';
+import { PreviousComponent } from './play-view/previous/previous.component';
 
 const appRoutes: Routes = [
-  { path: 'holes', component: HolesComponent},
+  { path: '', component: HolesComponent},
   { path: 'hole', component: PlayViewComponent}
 ];
 
@@ -23,12 +27,19 @@ const DEFAULT_ACE_CONFIG: AceConfigInterface = {
     AppComponent,
     NavbarComponent,
     HolesComponent,
-    PlayViewComponent
+    PlayViewComponent,
+    PreviousComponent
   ],
   imports: [
     RouterModule.forRoot(appRoutes),
     BrowserModule,
-    AceEditorModule
+    AceEditorModule,
+    NgbModule,
+    HttpClientModule,
+    ToastrModule.forRoot()
+  ],
+  schemas: [
+    CUSTOM_ELEMENTS_SCHEMA
   ],
   providers: [
     {

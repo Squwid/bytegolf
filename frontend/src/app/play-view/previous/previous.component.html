@@ -1,0 +1,9 @@
+<div class="container">
+    <hr>
+    <!-- warning container -->
+    <div class="container" *ngIf="showAlerts()">
+        <p *ngFor="let alert of gameAlerts">
+            <ngb-alert [type]="alert.type" (close)="closeGameAlert(alert)">{{ alert.message }}</ngb-alert>
+        </p>
+    </div>
+</div>

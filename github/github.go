@@ -15,7 +15,7 @@ import (
 var state = "abcdefg"
 
 func Login(w http.ResponseWriter, req *http.Request) {
-	loggedIn, err := sess.LoggedIn(req)
+	loggedIn, _, err := sess.LoggedIn(req)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		log.Errorf("error logging in: %v", err)

@@ -99,7 +99,7 @@ export class PlayViewComponent implements OnInit {
       // todo: change this to not info when i can return a type from a request
       this.toastr.success(responseData.toString(), 'Success!', {
         tapToDismiss: true,
-      })
+      });
       this.submitDisabled = false;
     });
   }

@@ -37,10 +37,6 @@ func main() {
 	http.ListenAndServe(":"+port, nil)
 }
 
-func index(w http.ResponseWriter, req *http.Request) {
-	w.Write([]byte("byte golf api"))
-}
-
 func frontend(dir string) http.Handler {
 	handler := http.FileServer(http.Dir(dir))
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {

@@ -97,26 +97,26 @@ func Login(bgID string) (*Session, error) {
 		log.Errorf("error removing timeouts: %v", err)
 	}
 	// TODO: also should put a delete old sessions here to remove all the old junk
+	// HAHA its there now
 	return &s, s.Put() // add the session and return it
 }
 
 // LoggedIn checks if a user is logged in using the incoming request
-func LoggedIn(req *http.Request) (bool, error) {
+// ONLY use the session here if they are logged in AND there are no errors
+func LoggedIn(req *http.Request) (bool, *Session, error) {
 	cookie, err := req.Cookie(sessionID)
 	if err != nil {
-		return false, nil
+		return false, nil, nil
 	}
 	s, err := retreiveSess(cookie.Value)
 	if err == ErrNotFound {
-		return false, nil
+		// the user was not found
+		return false, nil, nil
 	} else if err != nil {
-		return false, err
+		return false, nil, err
 	}
-	if s == nil {
-		return false, nil
+	if s == nil || s.Timeout < time.Now().Local().Unix() {
+		return false, nil, nil
 	}
-	if s.Timeout < time.Now().Local().Unix() {
-		return false, nil
-	}
-	return true, nil
+	return true, s, nil
 }

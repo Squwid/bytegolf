@@ -88,7 +88,7 @@ export class PlayViewComponent implements OnInit {
     this.submitDisabled = true;
 
     // this is a good request create it and send here
-    const exe = new Execute(this.content, this.lang);
+    const exe = new Execute(this.content, this.lang, '');
 
     this.http.post(url + '/compile', exe, {
       headers: new HttpHeaders({

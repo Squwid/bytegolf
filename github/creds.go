@@ -1,6 +1,14 @@
 package github
 
-import "os"
+import (
+	"github.com/Squwid/bytegolf/secrets"
+)
+
+var githubClient *secrets.Client
+
+func init() {
+	githubClient = secrets.Must(secrets.GetClient("BGGH")).(*secrets.Client)
+}
 
 type client struct {
 	ID     string `json:"client_id"`
@@ -9,7 +17,7 @@ type client struct {
 
 func getClient() client {
 	return client{
-		ID:     os.Getenv("BGGH_CLIENT"),
-		Secret: os.Getenv("BGGH_SECRET"),
+		ID:     githubClient.Client,
+		Secret: githubClient.Secret,
 	}
 }

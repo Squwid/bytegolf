@@ -11,6 +11,7 @@ COPY --from=build /bytegolf .
 # Set the environmental variables for no panic
 ENV db_username null
 ENV prod false
+
 ENV PROJECT_ID bytegolf
 
 CMD ["./bytegolf"]

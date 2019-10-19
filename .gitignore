@@ -13,3 +13,5 @@ vendor
 # auth files
 github_oauth.json
 creds.json
+
+todo.txt

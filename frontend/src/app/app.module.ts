@@ -1,6 +1,10 @@
 import { HttpClientModule } from '@angular/common/http';
 import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
+import { FlexLayoutModule } from '@angular/flex-layout';
+import { MatButtonModule } from '@angular/material/button';
+import { MatToolbarModule } from '@angular/material/toolbar';
 import { BrowserModule } from '@angular/platform-browser';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterModule, Routes } from '@angular/router';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { AceEditorModule } from 'ng2-ace-editor';
@@ -36,7 +40,11 @@ const DEFAULT_ACE_CONFIG: AceConfigInterface = {
     AceEditorModule,
     NgbModule,
     HttpClientModule,
-    ToastrModule.forRoot()
+    ToastrModule.forRoot(),
+    BrowserAnimationsModule,
+    MatToolbarModule,
+    MatButtonModule,
+    FlexLayoutModule
   ],
   schemas: [
     CUSTOM_ELEMENTS_SCHEMA

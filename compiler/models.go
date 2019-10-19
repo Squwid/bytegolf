@@ -2,34 +2,40 @@ package compiler
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"os"
 
 	"github.com/Squwid/bytegolf/firestore"
+	"github.com/Squwid/bytegolf/secrets"
 	"github.com/Squwid/bytegolf/sess"
 	"github.com/google/uuid"
-	"github.com/mitchellh/mapstructure"
 	log "github.com/sirupsen/logrus"
-	"google.golang.org/api/iterator"
 )
 
 const compileURI = "https://api.jdoodle.com/v1/execute"
 
+var jdoodleClient *secrets.Client
+
+func init() {
+	jdoodleClient = secrets.Must(secrets.GetClient("JDOODLE")).(*secrets.Client)
+}
+
+// Execute ...
 type Execute struct {
 	Script       string `json:"script"`
 	Language     string `json:"language"`
 	VersionIndex string `json:"versionIndex"`
+	HoleID       string `json:"holeId"`
 
 	// TODO: remove these from here and put them somewhere else
 	ClientID     string `json:"clientId"`
 	ClientSecret string `json:"clientSecret"`
 }
 
+// Response ...
 type Response struct {
 	Output     string `json:"output"`
 	StatusCode int    `json:"statusCode"`
@@ -89,6 +95,7 @@ func (exe Execute) Post(s *sess.Session) (*Response, error) {
 			Resp:    codeResp,
 			BGID:    bgid,
 			Correct: true,
+			HoleID:  exe.HoleID,
 		}
 		uid := uuid.New().String()
 		err := firestore.StoreData("executes", uid, c)
@@ -102,11 +109,13 @@ func (exe Execute) Post(s *sess.Session) (*Response, error) {
 	return &codeResp, nil
 }
 
+// TotalStore ...
 type TotalStore struct {
 	Exe     Execute  `json:"submission"`
 	Resp    Response `json:"response"`
 	BGID    string   `json:"bgid"`
 	Correct bool     `json:"correct"`
+	HoleID  string   `json:"holeId"`
 }
 
 // Handler is the rest api function handler for golang
@@ -159,8 +168,9 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	exe.ClientID = os.Getenv("JDOODLE_ID")
-	exe.ClientSecret = os.Getenv("JDOODLE_SECRET")
+	// change to secrets manager from environmental variables
+	exe.ClientID = jdoodleClient.Client
+	exe.ClientSecret = jdoodleClient.Secret
 
 	resp, err := exe.Post(s)
 	if err != nil {
@@ -173,51 +183,4 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Write(bs)
-}
-
-func getExecutes(w http.ResponseWriter, r *http.Request, s *sess.Session) {
-	qs, err := getQuestions(s.BGID)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(err.Error()))
-		return
-	}
-	if len(qs) == 0 {
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("[]"))
-		return
-	}
-	bs, err := json.Marshal(qs)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		log.Errorf("error marshalling execute list: %v", err)
-		return
-	}
-	w.WriteHeader(http.StatusOK)
-	w.Write(bs)
-	return
-}
-
-// getQuestions returns a list of executes using a BGID. Currently gets all but should
-// max out at some point
-func getQuestions(BGID string) ([]TotalStore, error) {
-	ctx := context.Background()
-	iter := firestore.Client.Collection("executes").Where("BGID", "==", BGID).Limit(20).Documents(ctx)
-	var exes = []TotalStore{}
-	for {
-		doc, err := iter.Next()
-		if err == iterator.Done {
-			break
-		}
-		if err != nil {
-			return nil, err
-		}
-		var exe TotalStore
-		err = mapstructure.Decode(doc.Data(), &exe)
-		if err != nil {
-			return nil, err
-		}
-		exes = append(exes, exe)
-	}
-	return exes, nil
 }

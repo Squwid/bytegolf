@@ -1,0 +1,42 @@
+<div class="container">
+    <hr>
+    <!-- warning container -->
+    <div class="container" *ngIf="showAlerts()">
+        <p *ngFor="let alert of gameAlerts">
+            <ngb-alert [type]="alert.type" (close)="closeGameAlert(alert)">{{ alert.message }}</ngb-alert>
+        </p>
+    </div>
+    <!-- title -->
+    <div class="title-wrapper">
+        <h2>Your Best Score</h2>
+    </div>
+
+    <div class="title-wrapper">
+        <h2>Submissions</h2>
+        <div class="submission-box overflow-auto">
+            <div class="submission wrong">
+                Something here
+            </div>
+            <div class="submission right"></div>
+            <!-- <div class="submission"></div>
+            <div class="submission"></div>
+            <div class="submission"></div>
+            <div class="submission"></div>
+            <div class="submission"></div>
+            <div class="submission"></div>
+            <div class="submission"></div>
+            <div class="submission"></div>
+            <div class="submission"></div>
+            <div class="submission"></div>
+            <div class="submission"></div>
+            <div class="submission"></div>
+            <div class="submission"></div>
+            <div class="submission"></div>
+            <div class="submission"></div>
+            <div class="submission"></div>
+            <div class="submission"></div>
+            <div class="submission"></div> -->
+            
+        </div>
+    </div>
+</div>

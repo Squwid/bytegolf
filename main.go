@@ -1,104 +1,50 @@
 package main
 
 import (
-	"crypto/tls"
 	"html/template"
-	"log"
 	"net/http"
 	"os"
-	"time"
+	"path"
+	"strings"
 
-	"github.com/Squwid/bytegolf/database"
-	_ "github.com/Squwid/bytegolf/questions"
-	"github.com/Squwid/bytegolf/users"
-	"github.com/aws/aws-sdk-go/aws"
-	awss "github.com/aws/aws-sdk-go/aws/session"
-	"golang.org/x/crypto/acme/autocert"
+	"github.com/Squwid/bytegolf/compiler"
+	_ "github.com/Squwid/bytegolf/firestore"
+	"github.com/Squwid/bytegolf/github"
 )
 
 var siteAddr = "https://bytegolf.io"
+
 var tpl *template.Template
-var awsSess *awss.Session
-
-// Loggers
-var (
-	logger *log.Logger
-)
-
-type code struct {
-	Show    bool
-	Correct bool
-	Bytes   int64
-	Output  string
-}
 
 func init() {
-	tpl = template.Must(template.ParseGlob("views/*"))
-	logger = log.New(os.Stdout, "[bytegolf] ", log.Ldate|log.Ltime)
-	awsSess = awss.Must(awss.NewSessionWithOptions(awss.Options{Config: aws.Config{Region: aws.String("us-east-1")}}))
+	tpl = template.Must(template.ParseFiles("dist/frontend/index.html"))
 }
 
 func main() {
-	if database.InProd() {
-		mux := http.NewServeMux()
-		certManager := autocert.Manager{
-			Prompt: autocert.AcceptTOS,
-			Cache:  autocert.DirCache("cert-cache"),
-		}
-
-		mux.Handle("/assets/", http.StripPrefix("/assets", http.FileServer(http.Dir("./assets"))))
-
-		// handlers
-		mux.HandleFunc("/", index)
-		mux.HandleFunc("/play/", play)
-		mux.HandleFunc("/submit/", submission)
-		mux.HandleFunc("/holes/", holes)
-		mux.HandleFunc("/login", users.GitLogin)
-		mux.HandleFunc("/login/check", users.GithubOAUTH)
-		mux.HandleFunc("/account/", account)
-		mux.HandleFunc("/leaderboards", leaderboards)
-
-		/* ADMIN FUNCTIONS */
-		mux.HandleFunc("/admin/", admin)
-		mux.HandleFunc("/admin/archive/", archiveQuestion)
-		mux.HandleFunc("/admin/deploy/", deployQuestion)
-		mux.HandleFunc("/admin/addhole", createQuestion)
-		mux.HandleFunc("/admin/delete/", deletehole)
-		mux.HandleFunc("/admin/holes", adminholes)
-
-		// listen and serve
-		server := &http.Server{
-			ReadTimeout:  5 * time.Second,
-			WriteTimeout: 5 * time.Second,
-			IdleTimeout:  120 * time.Second,
-			Addr:         ":443",
-			Handler:      mux,
-			TLSConfig: &tls.Config{
-				GetCertificate: certManager.GetCertificate,
-			},
-		}
-		go http.ListenAndServe(":80", certManager.HTTPHandler(nil))
-		server.ListenAndServeTLS("", "")
-	} else {
-		http.Handle("/assets/", http.StripPrefix("/assets", http.FileServer(http.Dir("./assets"))))
-
-		// handlers
-		http.HandleFunc("/", index)
-		http.HandleFunc("/play/", play)
-		http.HandleFunc("/submit/", submission)
-		http.HandleFunc("/holes/", holes)
-		http.HandleFunc("/login", users.GitLogin)
-		http.HandleFunc("/login/check", users.GithubOAUTH)
-		http.HandleFunc("/account/", account)
-		http.HandleFunc("/leaderboards", leaderboards)
-
-		/* ADMIN FUNCTIONS */
-		http.HandleFunc("/admin/", admin)
-		http.HandleFunc("/admin/archive/", archiveQuestion)
-		http.HandleFunc("/admin/deploy/", deployQuestion)
-		http.HandleFunc("/admin/addhole", createQuestion)
-		http.HandleFunc("/admin/delete/", deletehole)
-		http.HandleFunc("/admin/holes", adminholes)
-		http.ListenAndServe(":80", nil)
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "80"
 	}
+
+	http.Handle("/dist/frontend/", http.StripPrefix("/dist/frontend", http.FileServer(http.Dir("./dist/frontend"))))
+
+	// handlers
+	http.Handle("/", frontend("dist/frontend"))
+	http.HandleFunc("/login/check", github.Oauth)
+	http.HandleFunc("/login", github.Login)
+	http.HandleFunc("/check", isLoggedIn)
+	http.HandleFunc("/compile", compiler.Handler)
+	http.ListenAndServe(":"+port, nil)
+}
+
+func frontend(dir string) http.Handler {
+	handler := http.FileServer(http.Dir(dir))
+	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		p := req.URL.Path
+		if strings.Contains(p, ".") || p == "/" {
+			handler.ServeHTTP(w, req)
+			return
+		}
+		http.ServeFile(w, req, path.Join(dir, "/index.html"))
+	})
 }

@@ -1,0 +1,22 @@
+.holder {
+    width: 50%;
+    background-color: white;
+    margin: 0 auto;
+    /* min-height: 100vh; */
+    min-height: 100vh;
+    height: 100%;
+    -webkit-box-shadow: -1px 4px 5px 1px rgba(117,117,117,1);
+    -moz-box-shadow: -1px 4px 5px 1px rgba(117,117,117,1);
+    box-shadow: -1px 4px 5px 1px rgba(117,117,117,1);
+    min-width: 25rem;
+}
+
+.rest {
+    /* background-color: orange; */
+    background-image: url("../assets/images/pattern.png");
+    background-repeat: repeat;
+    padding: 0;
+    margin: 0;
+    min-height: 100vh;
+    height: fit-content;
+}

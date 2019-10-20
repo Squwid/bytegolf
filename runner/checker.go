@@ -1,3 +1,7 @@
+/*
+This package is depracated as of 9/12. Please see the compiler library rather than using the runner library
+*/
+
 package runner
 
 import (

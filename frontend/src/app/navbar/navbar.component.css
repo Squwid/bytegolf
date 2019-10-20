@@ -1,0 +1,20 @@
+img {
+  max-width: 3rem;
+  max-height: 3rem;
+}
+
+.under-shadow {
+  -webkit-box-shadow: 0px 3px 8px -1px rgba(0,0,0,0.58);
+  -moz-box-shadow: 0px 3px 8px -1px rgba(0,0,0,0.58);
+  box-shadow: 0px 3px 8px -1px rgba(0,0,0,0.58);
+}
+
+
+a {
+  color: #fff;
+  text-decoration: none;
+}
+
+a:hover, a:active {
+  color: lightgray;
+}

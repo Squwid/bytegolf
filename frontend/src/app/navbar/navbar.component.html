@@ -1,0 +1,31 @@
+<mat-toolbar color="primary" class="under-shadow">
+  <div><a routerLink="/">Byte Golf</a></div>
+  <div fxFlex fxLayout fxLayoutAlign="end" fxhide.xs>
+    <button mat-button routerLink="/">Holes</button>
+    <button mat-button routerLink="/profile" *ngIf="this.user !== null && this.user.logged_in === true">Logged in as {{ this.user.username }}</button>
+    <button mat-button onclick="window.location.href='/login'" *ngIf="this.user === null || this.user.logged_in === false">Login</button>
+  </div>
+</mat-toolbar>
+
+
+<!-- <nav class="navbar-expand-lg navbar navbar-dark bg-dark">
+  <a class="navbar-brand" routerLink="/">
+    <img src="../../assets/images/bytegolf-logo-full.png" alt="Byte Golf Logo">
+  </a>
+  <a class="navbar-brand" routerLink="/">Byte Golf</a>
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarText"
+    aria-controls="navbarText" aria-expanded="false" aria-label="Toggle Navigation">
+    <span class="navbar-toggler-icon"></span></button>
+
+  <div class="collapse navbar-collapse" id="navbarText">
+    <ul class="navbar-nav mr-auto">
+      <li class="nav-item" routerLinkActive="active">
+        <a class="nav-link" routerLink="/">Holes</a>
+      </li>
+
+      <li class="nav-item" routerLinkActive="active">
+        <a class="nav-link" routerLink="/hole">Hole</a>
+      </li>
+    </ul>
+  </div>
+</nav> -->

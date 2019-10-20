@@ -1,0 +1,33 @@
+/* You can add global styles to this file, and also import other style files */
+
+.title-wrapper {
+    padding-top: 30px;
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+/* disable button click outlines */
+*:focus {
+    outline: 0;
+}
+
+button:focus {
+    outline: 0;
+}
+
+/* colors for debugging */
+
+.db-green {
+    background-color: lightgreen;
+}
+
+.db-blue {
+    background-color: aquamarine;
+}
+
+.db-orange {
+    background-color: orange;
+}
+
+html, body { height: 100%; }
+body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }

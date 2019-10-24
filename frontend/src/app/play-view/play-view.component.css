@@ -74,3 +74,10 @@ img {
   max-width: 50rem;
   margin: 0 auto;
 }
+
+.small-btn-wrapper {
+  margin-left: .2rem;
+  margin-right: .2rem;
+  margin-bottom: .2rem;
+  margin-top: .2rem;
+}

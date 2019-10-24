@@ -6,17 +6,25 @@
   <hr>
 </div>
 <div class="container d-flex align-content-around flex-wrap justify-content-center">
+  <mat-card *ngFor="let hole of holes" class="example-card incorrect no-padding">
+    <mat-card-header>
+      <!-- <div mat-card-avatar class="example-header-image"></div> -->
+      <mat-card-title> {{hole.title}}</mat-card-title>
+      <mat-card-subtitle>{{hole.difficulty}}</mat-card-subtitle>
+    </mat-card-header>
 
-  <div class="card code-card" *ngFor="let hole of holes">
-    <div class="card-header" [ngClass]="hole.difficulty">
-      <h4 class="card-title">{{ hole.title }}</h4>
-    </div>
-    <div class="card-body">
-      <p class="card-text">Some quick card text that is going to wrap around this thing akdjfalksdjf alkjdf alskdjf alkdfj alsdkjfa ls;dkfj</p>
-    </div>
-    <div class="card-footer  code-card-footer text-right" [ngClass]="hole.difficulty">
-      Created 10/20/2019
-    </div>
-  </div>
+    <app-leaderboard></app-leaderboard>
+    <mat-card-content>
+      <br>
+      <p>
+        this is the hole description
+      </p>
+    </mat-card-content>
+    <mat-card-actions>
+      <button mat-button routerLink="/hole">TEE OFF</button>
+      <button mat-button>SHARE</button>
+    </mat-card-actions>
+  </mat-card>
+
 
 </div>

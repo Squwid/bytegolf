@@ -1,0 +1,9 @@
+<div class="container overall-wrapper">
+  <mat-list>
+    <mat-divider></mat-divider>
+      <div *ngFor="let sub of data">
+        <mat-list-item class="div-row">{{ sub.score}} - {{sub.language}}</mat-list-item>
+        <mat-divider></mat-divider>
+      </div>
+  </mat-list>
+</div>

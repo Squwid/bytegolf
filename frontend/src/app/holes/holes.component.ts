@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { QUESTIONS } from './holes';
+import { HOLES } from './holes';
 
 @Component({
   selector: 'app-holes',
@@ -7,7 +7,7 @@ import { QUESTIONS } from './holes';
   styleUrls: ['./holes.component.css']
 })
 export class HolesComponent implements OnInit {
-  holes = QUESTIONS;
+  holes = HOLES;
 
   constructor() { }
 

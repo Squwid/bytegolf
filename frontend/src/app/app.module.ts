@@ -2,6 +2,11 @@ import { HttpClientModule } from '@angular/common/http';
 import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
 import { FlexLayoutModule } from '@angular/flex-layout';
 import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
+import { MatDividerModule } from '@angular/material/divider';
+import { MatExpansionModule } from '@angular/material/expansion';
+import { MatMenuModule } from '@angular/material/menu';
+import { MatTableModule } from '@angular/material/table';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
@@ -12,9 +17,12 @@ import { AceConfigInterface, ACE_CONFIG } from 'ngx-ace-wrapper';
 import { ToastrModule } from 'ngx-toastr';
 import { AppComponent } from './app.component';
 import { HolesComponent } from './holes/holes.component';
+import { LeaderboardComponent } from './holes/leaderboard/leaderboard.component';
 import { NavbarComponent } from './navbar/navbar.component';
+import { MiniLeaderboardComponent } from './play-view/mini-leaderboard/mini-leaderboard.component';
 import { PlayViewComponent } from './play-view/play-view.component';
 import { PreviousComponent } from './play-view/previous/previous.component';
+
 
 const appRoutes: Routes = [
   { path: '', component: HolesComponent},
@@ -32,9 +40,13 @@ const DEFAULT_ACE_CONFIG: AceConfigInterface = {
     NavbarComponent,
     HolesComponent,
     PlayViewComponent,
-    PreviousComponent
+    PreviousComponent,
+    MiniLeaderboardComponent,
+    LeaderboardComponent
   ],
   imports: [
+    MatDividerModule,
+    MatMenuModule,
     RouterModule.forRoot(appRoutes),
     BrowserModule,
     AceEditorModule,
@@ -44,7 +56,10 @@ const DEFAULT_ACE_CONFIG: AceConfigInterface = {
     BrowserAnimationsModule,
     MatToolbarModule,
     MatButtonModule,
-    FlexLayoutModule
+    FlexLayoutModule,
+    MatTableModule,
+    MatCardModule,
+    MatExpansionModule
   ],
   schemas: [
     CUSTOM_ELEMENTS_SCHEMA

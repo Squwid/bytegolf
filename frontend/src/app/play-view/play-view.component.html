@@ -20,21 +20,36 @@
       <div ace-editor [(text)]="content" class="editor" [theme]="activeTheme" [mode]="mode"></div>
 
       <div class="container d-flex button-wrapper justify-content-center">
-        <button type="button" class="btn btn-outline-success btn-space" [disabled]="submitDisabled"
-          (click)="onSubmit()">Submit</button>
-        <button type="button" class="btn btn-outline-info btn-space" (click)="onClear()">Clear</button>
-        <div class="dropdown inline-block">
-          <button class="btn btn-outline-secondary dropdown-toggle btn-space" type="button" id="dropdownMenuButton"
-            data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Editor Theme</button>
+        <div class="small-btn-wrapper">
+          <button mat-raised-button color="primary" [disabled]="submitDisabled" (click)="onSubmit()">Submit</button>
+        </div>
+        <div class="small-btn-wrapper">
+          <button mat-raised-button color="accent" (click)="onClear()">Clear</button>
+        </div>
 
-          <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-            <a class="dropdown-item" *ngFor="let theme of themes"
-              [ngStyle]="{'background-color': theme.name === activeTheme ? 'lightgray' : 'inherit'}"
-              (click)="onChangeTheme(theme)">{{ theme.name }}</a>
+
+        <div class="small-btn-wrapper">
+          <div class="dropdown inline-block">
+            <mat-menu #menu="matMenu">
+              <button mat-menu-item *ngFor="let theme of themes"
+                (click)="onChangeTheme(theme)">{{ theme.name }}</button>
+            </mat-menu>
+
+            <button mat-raised-button color="" [matMenuTriggerFor]="menu">Editor Theme &nbsp;<i class="fas
+              fa-chevron-down"></i></button>
+
+            <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+              <a class="dropdown-item" *ngFor="let theme of themes"
+                [ngStyle]="{'background-color': theme.name === activeTheme ? 'lightgray' : 'inherit'}"
+                (click)="onChangeTheme(theme)">{{ theme.name }}</a>
+            </div>
           </div>
         </div>
+
       </div>
     </div>
+
+    <app-mini-leaderboard></app-mini-leaderboard>
 
     <app-previous>
 

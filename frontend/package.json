@@ -24,7 +24,7 @@
     "@angular/router": "^8.2.12",
     "@ng-bootstrap/ng-bootstrap": "^5.1.1",
     "bootstrap": "^4.3.1",
-    "jquery": "^1.12.4",
+    "jquery": "^3.4.0",
     "ng2-ace-editor": "^0.3.9",
     "ngx-ace-wrapper": "^8.0.0",
     "ngx-toastr": "^11.1.2",

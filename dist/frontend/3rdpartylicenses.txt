@@ -112,6 +112,16 @@ THE SOFTWARE.
 
 @angular/material/button
 
+@angular/material/card
+
+@angular/material/divider
+
+@angular/material/expansion
+
+@angular/material/menu
+
+@angular/material/table
+
 @angular/material/toolbar
 
 @angular/platform-browser

@@ -41,8 +41,9 @@
 } */
 
 .incorrect {
-  color: darkred;
-  background-color: salmon;
+  /* color: darkred; */
+  /* background-color: salmon; */
+  background-color: rgb(238, 238, 238);
 }
 
 .example-header-image {

@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"strings"
 
 	"github.com/Squwid/bytegolf/firestore"
 	"github.com/mitchellh/mapstructure"
@@ -50,6 +51,56 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	}
 	// forbidden for other requests that are not cors, get
 	w.WriteHeader(http.StatusForbidden)
+}
+
+// SingleHandler is the handler that you use to receive a single question from the database whether it is
+// live or not. You should be able to get questions without being logged in
+func SingleHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "POST,OPTIONS,GET")
+	w.Header().Set("Access-Control-Allow-Headers", "*")
+	w.Header().Set("Content-Type", "application/json")
+
+	if r.Method == http.MethodOptions {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
+	if r.Method == http.MethodGet {
+		qID := r.URL.Query().Get("hole") // get the hole from the query strings to query the hole
+		if qID == "" {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		ctx := context.Background()
+		ref, err := firestore.Client.Collection(collection).Doc(qID).Get(ctx)
+		if err != nil && strings.Contains(err.Error(), "code = NotFound") {
+			// the hole was not found
+			w.WriteHeader(http.StatusNotFound)
+			return
+		} else if err != nil {
+			// the error is REAL
+			log.Errorf("error getting question %s from firestore", qID, err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		var q Question
+		err = mapstructure.Decode(ref.Data(), &q)
+		if err != nil {
+			log.Errorf("error parsing question %s: %v", qID, err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		bs, err := json.Marshal(q)
+		if err != nil {
+			log.Errorf("error marshalling question %s: %v", qID, err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+		w.Write(bs)
+	}
 }
 
 // listQuestions gets a list of questions that have the Live bool

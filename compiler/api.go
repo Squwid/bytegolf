@@ -6,6 +6,8 @@ package compiler
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"io/ioutil"
 	"net/http"
 
 	"github.com/Squwid/bytegolf/firestore"
@@ -17,8 +19,73 @@ import (
 
 const maxReturns = 20
 
-// GetUsersRecentScores gets the users recent scores by using their cookie and getting the last
-// amount of holes. It gets the hole from the query param 'hole'
+// Handler is the rest api function handler for golang
+func Handler(w http.ResponseWriter, r *http.Request) {
+	// you can try this password but it wont work
+	loggedIn, s, err := sess.LoggedIn(r)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		log.Errorf("error checking to see if a user is signed in: %v", err)
+		return
+	}
+	if !loggedIn {
+		w.WriteHeader(http.StatusForbidden)
+		w.Write([]byte(fmt.Sprintf(`{"error": "unauthorized"}`)))
+		return
+	}
+	if s == nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		log.Errorf("error: session was blank")
+		return
+	}
+	// the user is logged in
+
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "POST,OPTIONS,GET")
+	w.Header().Set("Access-Control-Allow-Headers", "*")
+	w.Header().Set("Content-Type", "application/json")
+	if r.Method == http.MethodOptions {
+		// this is for cors
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+	if r.Method == http.MethodGet {
+		getExecutes(w, r, s)
+		return
+	}
+	if r.Method != http.MethodPost {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	bs, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	defer r.Body.Close()
+
+	var exe Execute
+	err = json.Unmarshal(bs, &exe)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	// change to secrets manager from environmental variables
+	exe.ClientID = jdoodleClient.Client
+	exe.ClientSecret = jdoodleClient.Secret
+
+	resp, err := exe.Post(s)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	bs, err = json.Marshal(*resp)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	w.Write(bs)
+}
 
 // getExecutes runs each time a hole is loaded to grab all of the responses, if none exist then a blank list
 // will be returned meaning that the user has never submited a successful

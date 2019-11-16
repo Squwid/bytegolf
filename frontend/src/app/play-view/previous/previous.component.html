@@ -5,30 +5,17 @@
   </div>
 
   <mat-accordian>
-    <mat-expansion-panel class="wrong">
+    <mat-expansion-panel *ngFor="let submission of submissions">
       <mat-expansion-panel-header>
-        <mat-panel-title>
-          Submission 1
-        </mat-panel-title>
+        <mat-pannel-title>
+          {{ submission.submitted_time }}
+        </mat-pannel-title>
         <mat-panel-description>
-          Length 50
+          {{ submission.submission.language }} - {{ submission.length }}
         </mat-panel-description>
       </mat-expansion-panel-header>
-
-      <p>I am open now </p>
+      <p>I am open now!</p>
     </mat-expansion-panel>
-    <mat-expansion-panel class="wrong">
-        <mat-expansion-panel-header>
-          <mat-panel-title>
-            Submission 1
-          </mat-panel-title>
-          <mat-panel-description>
-            Length 50
-          </mat-panel-description>
-        </mat-expansion-panel-header>
-  
-        <p>I am open now </p>
-      </mat-expansion-panel>
   </mat-accordian>
 </div>
 

@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io/ioutil"
 	"net/http"
+	"time"
 
 	"github.com/Squwid/bytegolf/firestore"
 	"github.com/Squwid/bytegolf/secrets"
@@ -33,6 +33,7 @@ type Execute struct {
 	// TODO: remove these from here and put them somewhere else
 	ClientID     string `json:"clientId"`
 	ClientSecret string `json:"clientSecret"`
+	Correct      bool   `json:"correct"`
 }
 
 // Response ...
@@ -87,15 +88,23 @@ func (exe Execute) Post(s *sess.Session) (*Response, error) {
 		return &codeResp, ErrGotBadStatus
 	}
 
+	// TODO: There is some work to do here regarding checking the answer, attaching the uuid
+	// TODO: also could this be dangerous regarding the container getting killed before the go func
+	// can finish? definitely a race condition but its probably ok
+
+	// todo: also the score here is just the length, but there is lots of code written to remove comments so remove that from the grave
+
 	// should only store if the request is 200 for now, but could come back later and move this somewhere else
 	// as a q if credits run out or some other error
 	go func(exe Execute, r Response, bgid string) {
 		var c = TotalStore{
-			Exe:     exe,
-			Resp:    codeResp,
-			BGID:    bgid,
-			Correct: true,
-			HoleID:  exe.HoleID,
+			Exe:           exe,
+			Resp:          codeResp,
+			BGID:          bgid,
+			Correct:       true,
+			HoleID:        exe.HoleID,
+			SubmittedTime: time.Now().String(),
+			Length:        len(exe.Script),
 		}
 		uid := uuid.New().String()
 		err := firestore.StoreData("executes", uid, c)
@@ -111,76 +120,11 @@ func (exe Execute) Post(s *sess.Session) (*Response, error) {
 
 // TotalStore ...
 type TotalStore struct {
-	Exe     Execute  `json:"submission"`
-	Resp    Response `json:"response"`
-	BGID    string   `json:"bgid"`
-	Correct bool     `json:"correct"`
-	HoleID  string   `json:"holeId"`
-}
-
-// Handler is the rest api function handler for golang
-func Handler(w http.ResponseWriter, r *http.Request) {
-	loggedIn, s, err := sess.LoggedIn(r)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		log.Errorf("error checking to see if a user is signed in: %v", err)
-		return
-	}
-	if !loggedIn {
-		w.WriteHeader(http.StatusForbidden)
-		w.Write([]byte(fmt.Sprintf(`{"error": "unauthorized"}`)))
-		return
-	}
-	if s == nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		log.Errorf("error: session was blank")
-		return
-	}
-	// the user is logged in
-
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Methods", "POST,OPTIONS,GET")
-	w.Header().Set("Access-Control-Allow-Headers", "*")
-	w.Header().Set("Content-Type", "application/json")
-	if r.Method == http.MethodOptions {
-		// this is for cors
-		w.WriteHeader(http.StatusOK)
-		return
-	}
-	if r.Method == http.MethodGet {
-		getExecutes(w, r, s)
-		return
-	}
-	if r.Method != http.MethodPost {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-	bs, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-	defer r.Body.Close()
-
-	var exe Execute
-	err = json.Unmarshal(bs, &exe)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-	// change to secrets manager from environmental variables
-	exe.ClientID = jdoodleClient.Client
-	exe.ClientSecret = jdoodleClient.Secret
-
-	resp, err := exe.Post(s)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-	bs, err = json.Marshal(*resp)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-	w.Write(bs)
+	Exe           Execute  `json:"submission"`
+	Resp          Response `json:"response"`
+	BGID          string   `json:"bgid"`
+	Correct       bool     `json:"correct"`
+	HoleID        string   `json:"holeId"`
+	SubmittedTime string   `json:"submitted_time"`
+	Length        int      `json:"length"`
 }

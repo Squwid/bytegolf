@@ -1,14 +1,23 @@
-export class Submission {
-    public language: string;
-    public score: number;
-    public user: string;
-    public date: string;
+export interface Submission {
+    submission: Request;
+    response: Response;
+    bgid: string;
+    correct: boolean;
+    holeId: string;
+    submitted_time: string;
+    length: number;
+}
 
-    constructor(lang: string, score: number, date: string) {
-        this.language = lang;
-        this.score = score;
-        this.date = date;
-        this.user = '';
-    }
+export interface Response {
+    output: string;
+    statusCode: string;
+    memory: string;
+    cpuTime: string;
+}
 
+export interface Request {
+    script: string;
+    language: string;
+    versionIndex: string;
+    holeId: string;
 }

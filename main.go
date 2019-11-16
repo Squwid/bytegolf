@@ -10,6 +10,7 @@ import (
 	"github.com/Squwid/bytegolf/compiler"
 	_ "github.com/Squwid/bytegolf/firestore"
 	"github.com/Squwid/bytegolf/github"
+	question "github.com/Squwid/bytegolf/questions"
 )
 
 var siteAddr = "https://bytegolf.io"
@@ -31,6 +32,8 @@ func main() {
 	// handlers
 	http.Handle("/", frontend("dist/frontend"))
 	http.HandleFunc("/login/check", github.Oauth)
+	http.HandleFunc("/holes", question.Handler)
+	http.HandleFunc("/hole", question.SingleHandler)
 	http.HandleFunc("/login", github.Login)
 	http.HandleFunc("/check", isLoggedIn)
 	http.HandleFunc("/compile", compiler.Handler)

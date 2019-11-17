@@ -8,6 +8,7 @@ import (
 	"github.com/Squwid/bytegolf/sess"
 )
 
+// isLoggedIn is the api call that the front end makes to see if a user is signed in
 func isLoggedIn(w http.ResponseWriter, req *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	loggedIn, s, err := sess.LoggedIn(req)
@@ -25,6 +26,6 @@ func isLoggedIn(w http.ResponseWriter, req *http.Request) {
 		w.Write([]byte("error: " + err.Error()))
 		return
 	}
-
+	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(fmt.Sprintf(`{"logged_in": true, "username": "%s"}`, user.Username)))
 }

@@ -22,11 +22,13 @@ func init() {
 }
 
 func main() {
+	// getting the port here is essential when using google cloud run
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "80"
 	}
 
+	// host file server for frontend assets
 	http.Handle("/dist/frontend/", http.StripPrefix("/dist/frontend", http.FileServer(http.Dir("./dist/frontend"))))
 
 	// handlers

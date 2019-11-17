@@ -6,7 +6,6 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
-	"strings"
 
 	"github.com/Squwid/bytegolf/firestore"
 	"github.com/mitchellh/mapstructure"
@@ -73,34 +72,49 @@ func SingleHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		var qs = []Question{}
 		ctx := context.Background()
-		ref, err := firestore.Client.Collection(collection).Doc(qID).Get(ctx)
-		if err != nil && strings.Contains(err.Error(), "code = NotFound") {
-			// the hole was not found
+		iter := firestore.Client.Collection(collection).Where("ID", "==", qID).Documents(ctx)
+		for {
+			doc, err := iter.Next()
+			if err == iterator.Done {
+				break
+			}
+			if err != nil {
+				log.Errorf("error getting hole with id %s: %v", qID, err)
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			var q Question
+			err = mapstructure.Decode(doc.Data(), &q)
+			if err != nil {
+				log.Errorf("error decoding hole with id %s: %v", qID, err)
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			qs = append(qs, q)
+		}
+		log.Infof("expected 1 or 0 questions got %v", len(qs))
+
+		if len(qs) == 0 {
 			w.WriteHeader(http.StatusNotFound)
 			return
-		} else if err != nil {
-			// the error is REAL
-			log.Errorf("error getting question %s from firestore", qID, err)
-			w.WriteHeader(http.StatusInternalServerError)
-			return
 		}
-		var q Question
-		err = mapstructure.Decode(ref.Data(), &q)
-		if err != nil {
-			log.Errorf("error parsing question %s: %v", qID, err)
-			w.WriteHeader(http.StatusInternalServerError)
-			return
+		if len(qs) > 1 {
+			log.Warnf("did not expect more than one question but got %v. Returning the first one", len(qs))
 		}
-		bs, err := json.Marshal(q)
+
+		bs, err := json.Marshal(qs[0])
 		if err != nil {
-			log.Errorf("error marshalling question %s: %v", qID, err)
+			log.Errorf("error marshalling hole %s: %v", qID, err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 		w.WriteHeader(http.StatusOK)
 		w.Write(bs)
+		return
 	}
+	w.WriteHeader(http.StatusUnauthorized)
 }
 
 // listQuestions gets a list of questions that have the Live bool

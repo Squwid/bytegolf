@@ -22,6 +22,8 @@ type User struct {
 	PictureURI string `json:"avatar_url"`
 	GithubURI  string `json:"html_url"`
 	Name       string `json:"name"`
+
+	PermissionLevel string `json:"permission_level"`
 }
 
 // ErrNotFound is an error that is returned when a doc is not found

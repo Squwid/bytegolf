@@ -9,6 +9,7 @@ import (
 
 const collection = "questions"
 
+// Question is a byte golf hole that gets store
 type Question struct {
 	ID         string `json:"id"`
 	Name       string `json:"name"`
@@ -20,6 +21,7 @@ type Question struct {
 	Live       bool   `json:"live"`
 }
 
+// Test is the tests that each compile request needs to pass in order to be correct
 type Test struct {
 	Input  string `json:"input"`
 	Answer string `json:"answer"`

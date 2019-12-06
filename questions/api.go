@@ -5,9 +5,11 @@ package question
 import (
 	"context"
 	"encoding/json"
+	"io/ioutil"
 	"net/http"
 
 	"github.com/Squwid/bytegolf/firestore"
+	"github.com/Squwid/bytegolf/sess"
 	"github.com/mitchellh/mapstructure"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/api/iterator"
@@ -114,7 +116,58 @@ func SingleHandler(w http.ResponseWriter, r *http.Request) {
 		w.Write(bs)
 		return
 	}
+	if r.Method == http.MethodPost {
+		// if the request is to create a new question then this function will
+		// handle everything including permissions`
+		CreateHole(w, r)
+		return
+	}
 	w.WriteHeader(http.StatusUnauthorized)
+}
+
+// CreateHole is what gets called to create a new question, it will be denied if the uesr
+// is not a game master
+func CreateHole(w http.ResponseWriter, r *http.Request) {
+	loggedIn, sess, err := sess.LoggedIn(r)
+	if !loggedIn {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+	if err != nil {
+		log.Errorf("Error getting a session to create hole: %v", err)
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+	if !sess.IsGamemaster() {
+		log.Warnf("User %s tried to create a hole but insufficient permissions", sess.BGID)
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+
+	bs, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		log.Errorf("Could not read new hole creation by %s: %v", sess.BGID, err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	defer r.Body.Close()
+
+	var q Question
+	err = json.Unmarshal(bs, &q)
+	if err != nil {
+		log.Errorf("Error unmarshalling new hole by %s: %v", sess.BGID, err)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	if err = q.create(); err != nil {
+		log.Errorf("Error creating new question by %s: %v", sess.BGID, err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(`{"success": "success"}`))
 }
 
 // listQuestions gets a list of questions that have the Live bool

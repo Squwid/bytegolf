@@ -14,6 +14,7 @@ import (
 
 var state = "abcdefg"
 
+// Login handler
 func Login(w http.ResponseWriter, req *http.Request) {
 	loggedIn, _, err := sess.LoggedIn(req)
 	if err != nil {
@@ -44,6 +45,7 @@ func Login(w http.ResponseWriter, req *http.Request) {
 	http.Redirect(w, req2, "https://github.com"+req2.URL.RequestURI(), http.StatusSeeOther)
 }
 
+// Oauth handler
 func Oauth(w http.ResponseWriter, req *http.Request) {
 	code := req.URL.Query().Get("code")
 	state := req.URL.Query().Get("state")

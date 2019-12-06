@@ -57,9 +57,14 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
+
 	bs, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		log.Errorf("Error reading all of code from compile post request: %v", err)
+		// since this probably happened because some a-hole submitted super long code so send a
+		// bad request back.
+		// TODO: should i check the length here and see if it is too much memory for my little container
+		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 	defer r.Body.Close()
@@ -67,23 +72,28 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	var exe Execute
 	err = json.Unmarshal(bs, &exe)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		log.Errorf("Error unmarshalling code from compile post request: %v", err)
+		// this is probably a json formatting thing but im not even sure if that errors out and im not going
+		// to send myself bad json so just return a bad error
+		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	// change to secrets manager from environmental variables
-	exe.ClientID = jdoodleClient.Client
-	exe.ClientSecret = jdoodleClient.Secret
-
 	resp, err := exe.Post(s)
 	if err != nil {
+		log.Errorf("Error compiling code from post request %v: %v", exe.HoleID, err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	bs, err = json.Marshal(*resp)
+
+	// once we get the response, write it to the api
+	bs, err = json.Marshal(resp)
 	if err != nil {
+		log.Errorf("Error marshalling compile request for hole %v: %v", exe.HoleID, err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+
+	w.WriteHeader(http.StatusOK)
 	w.Write(bs)
 }
 

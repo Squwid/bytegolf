@@ -30,18 +30,21 @@ type Execute struct {
 	VersionIndex string `json:"versionIndex"`
 	HoleID       string `json:"holeId"`
 
-	// TODO: remove these from here and put them somewhere else
+	// ClientID and ClientSecret can stay here because they are needed in the body of the jdoodle api
 	ClientID     string `json:"clientId"`
 	ClientSecret string `json:"clientSecret"`
-	Correct      bool   `json:"correct"`
 }
 
-// Response ...
+// Response that gets sent to the user after each request is made, includes whether it is correct, the length
+// and if it is the users best score so far
 type Response struct {
 	Output     string `json:"output"`
 	StatusCode int    `json:"statusCode"`
 	Memory     string `json:"memory"`
 	CPUTime    string `json:"cpuTime"`
+	Correct    bool   `json:"correct"`
+	Length     int64  `json:"length"`
+	BestScore  bool   `json:"bestScore"`
 }
 
 // Possible errors that can come from jdoodle
@@ -52,7 +55,14 @@ var (
 
 // Post ...
 func (exe Execute) Post(s *sess.Session) (*Response, error) {
-	// loggedIn, err := sess.LoggedIn(req)
+	exe.ClientID = jdoodleClient.Client
+	exe.ClientSecret = jdoodleClient.Secret
+
+	// for this to get called the user would already need to be logged in
+	// which is why the session gets passed through
+	if s == nil {
+		return nil, errors.New("Received invalid session")
+	}
 
 	bs, err := json.Marshal(exe)
 	if err != nil {
@@ -74,6 +84,7 @@ func (exe Execute) Post(s *sess.Session) (*Response, error) {
 
 	bs, _ = ioutil.ReadAll(resp.Body)
 	defer resp.Body.Close()
+
 	var codeResp Response
 	if err = json.Unmarshal(bs, &codeResp); err != nil {
 		log.Errorf("error unmarshalling: %v", err)
@@ -92,6 +103,9 @@ func (exe Execute) Post(s *sess.Session) (*Response, error) {
 	// TODO: also could this be dangerous regarding the container getting killed before the go func
 	// can finish? definitely a race condition but its probably ok
 
+	// set the response to true for now but it needs to have a checker if its the expected output
+	codeResp.Correct = true
+
 	// todo: also the score here is just the length, but there is lots of code written to remove comments so remove that from the grave
 
 	// should only store if the request is 200 for now, but could come back later and move this somewhere else
@@ -101,7 +115,6 @@ func (exe Execute) Post(s *sess.Session) (*Response, error) {
 			Exe:           exe,
 			Resp:          codeResp,
 			BGID:          bgid,
-			Correct:       true,
 			HoleID:        exe.HoleID,
 			SubmittedTime: time.Now().String(),
 			Length:        len(exe.Script),
@@ -114,6 +127,7 @@ func (exe Execute) Post(s *sess.Session) (*Response, error) {
 		}
 		log.Infof("Saved firestore data for %s at %s", bgid, uid)
 	}(exe, codeResp, s.BGID)
+
 	log.Infoln("successfully made post request to jquery got response", resp.StatusCode)
 	return &codeResp, nil
 }

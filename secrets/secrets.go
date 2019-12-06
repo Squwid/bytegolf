@@ -17,6 +17,7 @@ type Client struct {
 	Secret string
 }
 
+// Store ...
 func (c *Client) Store(key string) error {
 	ctx := context.Background()
 	if c == nil {
@@ -26,6 +27,7 @@ func (c *Client) Store(key string) error {
 	return err
 }
 
+// GetClient ...
 func GetClient(key string) (*Client, error) {
 	ctx := context.Background()
 	ref, err := firestore.Client.Collection(collection).Doc(key).Get(ctx)
@@ -48,23 +50,3 @@ func Must(s interface{}, err error) interface{} {
 	}
 	return s
 }
-
-/*
-func StoreHandler(w http.ResponseWriter, r *http.Request) {
-	err := Store("key", "value")
-	if err != nil {
-		w.Write([]byte(err.Error()))
-		return
-	}
-	w.Write([]byte("stored"))
-}
-
-func GetHandler(w http.ResponseWriter, r *http.Request) {
-	f, err := Get("key")
-	if err != nil {
-		w.Write([]byte(err.Error()))
-		return
-	}
-	w.Write([]byte(fmt.Sprintf("%v", f)))
-}
-*/

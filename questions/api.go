@@ -74,7 +74,7 @@ func SingleHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		var qs = []Question{}
+		var qs = []Light{}
 		ctx := context.Background()
 		iter := firestore.Client.Collection(collection).Where("ID", "==", qID).Documents(ctx)
 		for {
@@ -87,7 +87,7 @@ func SingleHandler(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}
-			var q Question
+			var q Light
 			err = mapstructure.Decode(doc.Data(), &q)
 			if err != nil {
 				log.Errorf("error decoding hole with id %s: %v", qID, err)

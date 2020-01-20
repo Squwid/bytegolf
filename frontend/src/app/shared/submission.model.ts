@@ -1,23 +1,26 @@
 export interface Submission {
-    submission: Request;
-    response: Response;
-    bgid: string;
-    correct: boolean;
-    holeId: string;
-    submitted_time: string;
-    length: number;
+  submission: Request;
+  response: Response;
+  bgid: string;
+  correct: boolean;
+  holeId: string;
+  submitted_time: string;
+  length: number;
 }
 
 export interface Response {
-    output: string;
-    statusCode: string;
-    memory: string;
-    cpuTime: string;
+  output: string;
+  statusCode: string;
+  memory: string;
+  cpuTime: string;
+  correct: string;
+  length: number;
+  bestScore: boolean;
 }
 
 export interface Request {
-    script: string;
-    language: string;
-    versionIndex: string;
-    holeId: string;
+  script: string;
+  language: string;
+  versionIndex: string;
+  holeId: string;
 }

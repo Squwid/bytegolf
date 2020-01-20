@@ -17,10 +17,14 @@ import (
 const collection = "sessions"
 const sessionID = "bg-session"
 
+// Session represents a users session. A permission level change will make the current users
+// session inactive
 type Session struct {
 	ID      string `json:"id"`
 	BGID    string `json:"bg_id"`
 	Timeout int64  `json:"timeout"`
+
+	PermissionLevel string `json:"permission_level"`
 }
 
 // GetSession returns a session, if error is ErrNotFound that means the session

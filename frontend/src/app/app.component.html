@@ -1,7 +1,42 @@
-<div class="rest">
-<app-navbar></app-navbar>
+<div class="main-container">
+  <div class="header-height">
+      Bytegolf
+  </div>
+  <div class="container-content f">
+      <clr-vertical-nav [clrVerticalNavCollapsible]="true" class="nav-trigger--bottom full-height">
+        <clr-vertical-nav-group >
+          <clr-icon shape="user" clrVerticalNavIcon></clr-icon>
+            Profile
+            <clr-vertical-nav-group-children>
+              <a clrVerticalNavLink routerLink="">
+                Link
+              </a>
+            </clr-vertical-nav-group-children>
 
-  <div class="holder">
-    <router-outlet></router-outlet>
+        </clr-vertical-nav-group>
+        
+        <a clrVerticalNavLink routerLink="">
+          <clr-icon clrVerticalNavIcon shape="user"></clr-icon>  
+          User
+        </a>
+
+
+
+          <a clrVerticalNavLink routerLink="" routerLinkActive="active">Charmander</a>
+          <a clrVerticalNavLink routerLink="" routerLinkActive="active">Jigglypuff</a>
+          <a clrVerticalNavLink routerLink="" routerLinkActive="active">Pikachu</a>
+          <a clrVerticalNavLink routerLink="" routerLinkActive="active">Raichu</a>
+          <a clrVerticalNavLink routerLink="" routerLinkActive="active">Snorlax</a>
+          <div class="nav-divider"></div>
+          <a clrVerticalNavLink routerLink="" routerLinkActive="active">Credit</a>
+
+          <a clrVerticalNavLink routerLink="">
+            <clr-icon clrVerticalNavIcon shape="bolt"></clr-icon>
+            Electric
+        </a>
+      </clr-vertical-nav>
+      <div class="content-area">
+          <router-outlet></router-outlet>
+      </div>
   </div>
 </div>

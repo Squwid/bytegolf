@@ -7,6 +7,12 @@ body {
   margin: 0;
 }
 
+.bg {
+  background-image: url("../src/app/assets/images/pattern.png");
+  background-repeat: repeat;
+  min-height: 100vh;
+}
+
 .nav-content {
   margin: 0;
   padding: 0;
@@ -48,4 +54,13 @@ body {
   width: fit-content;
   margin: 0 auto;
   padding-top: 2rem;
+}
+
+// get rid of borders when clicking
+*:focus {
+  outline: 0;
+}
+
+button:focus {
+  outline: 0;
 }

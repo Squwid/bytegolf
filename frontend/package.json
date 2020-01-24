@@ -11,7 +11,7 @@
   },
   "private": true,
   "dependencies": {
-    "@angular/animations": "~8.2.4",
+    "@angular/animations": "^8.2.14",
     "@angular/common": "~8.2.4",
     "@angular/compiler": "~8.2.4",
     "@angular/core": "~8.2.4",
@@ -23,6 +23,9 @@
     "@clr/icons": "2.3.5",
     "@clr/ui": "^2.3.5",
     "@webcomponents/custom-elements": "^1.0.0",
+    "brace": "^0.11.1",
+    "ng2-ace-editor": "^0.3.9",
+    "ngx-toastr": "^11.3.2",
     "rxjs": "~6.4.0",
     "tslib": "^1.10.0",
     "zone.js": "~0.9.1"

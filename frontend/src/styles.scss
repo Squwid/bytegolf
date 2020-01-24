@@ -1,7 +1,51 @@
-html, body { height: 100%; }
-body { margin: 0; }
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+}
 
 .nav-content {
-    margin: 0;
-    padding:0;
+  margin: 0;
+  padding: 0;
+}
+
+// TEXT STUFF
+.title {
+  text-align: center;
+  margin-top: .3rem;
+}
+
+.subtitle {
+  text-align: center;
+  color: lightgray;
+  padding: 0;
+  margin: 0;
+}
+
+.desc {
+  text-align: center;
+  color: rgb(170, 170, 170);
+}
+
+// stuff for the body of each page
+.body-holder {
+  margin: 0 auto;
+
+  min-width: 15rem;
+  width: 50%;
+
+  min-height: 100vh;
+  height: fit-content;
+
+  padding: .5rem;
+}
+
+// center spinner 
+.center-spinner {
+  width: fit-content;
+  margin: 0 auto;
+  padding-top: 2rem;
 }

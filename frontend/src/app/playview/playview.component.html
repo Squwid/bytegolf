@@ -1,0 +1,97 @@
+<div class="body-holder pv-container" *ngIf="!questionLoading; else noResult">
+  <h1 class="title">{{ question.name }}</h1>
+  <h4 class="subtitle">{{ question.difficulty }}</h4>
+  <p class="desc">{{ question.question }}</p>
+
+  <br>
+
+  <!-- tabs for play/leaderboard/submissions -->
+  <clr-tabs>
+    <!--  -->
+    <clr-tab>
+      <button clrTabLink id="play">Play</button>
+      <clr-tab-content id="play">
+
+        <!-- language buttons -->
+        <!-- <div class="btn-group">
+          <div class="radio btn" *ngFor="let lang of languages">
+            <input type="radio" name="language-groups" id="{{ lang.value }}">
+            <label for="{{ lang.value }}">{{ lang.language }}</label>
+          </div>
+        </div> -->
+
+        <p class="desc">
+          <clr-dropdown>
+            <button class="btn" clrDropdownTrigger>
+              {{ activeLanguage.language }}
+              <clr-icon shape="caret down"></clr-icon>
+            </button>
+            <clr-dropdown-menu clrPosition="bottom-left" *clrIfOpen>
+              <label class="dropdown-header" aria-hidden="true">Languages</label>
+
+              <!-- iterate over languages -->
+              <div clrDropdownItem (click)="setLanguage(lang)" *ngFor="let lang of languages">{{ lang.language }}</div>
+            </clr-dropdown-menu>
+          </clr-dropdown>
+        </p>
+        <div ace-editor [(text)]="braceContent" class="editor" [theme]="braceActiveTheme" [mode]="activeLanguage.brace">
+        </div>
+
+        <div class="desc space">
+          <div class="btn-group btn-primary">
+            <button class="btn" (click)="onSubmit()" [disabled]="submitDisabled">Submit</button>
+            <button class="btn btn-danger" (click)="onDelete()">Delete</button>
+          </div>
+        </div>
+
+
+      </clr-tab-content>
+    </clr-tab>
+
+    <!-- Leaderboard Tab -->
+    <clr-tab>
+      <button clrTabLink>Leaderboard</button>
+      <clr-tab-content>
+        <!-- <p class="desc">...</p> -->
+        <table class="table table-compact table-noborder">
+          <thead>
+            <tr>
+              <th class="left">Username</th>
+              <th>Language</th>
+              <th>Score</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="left">A</td>
+              <td>A</td>
+              <td>A</td>
+            </tr>
+          </tbody>
+        </table>
+      </clr-tab-content>
+    </clr-tab>
+
+    <!-- Submissions -->
+    <clr-tab>
+      <button clrTabLink>Submissions</button>
+      <clr-tab-content>
+        <p class="desc">...</p>
+
+
+
+      </clr-tab-content>
+    </clr-tab>
+
+
+  </clr-tabs>
+</div>
+
+
+<ng-template #noResult>
+  <div class="center-spinner">
+  <span class="spinner spinner-inverse">
+    Loading...
+  </span>
+</div>
+</ng-template>

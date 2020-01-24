@@ -1,42 +1,57 @@
 <div class="main-container">
-  <div class="header-height">
-      Bytegolf
-  </div>
   <div class="container-content f">
-      <clr-vertical-nav [clrVerticalNavCollapsible]="true" class="nav-trigger--bottom full-height">
-        <clr-vertical-nav-group >
-          <clr-icon shape="user" clrVerticalNavIcon></clr-icon>
-            Profile
-            <clr-vertical-nav-group-children>
-              <a clrVerticalNavLink routerLink="">
-                Link
-              </a>
-            </clr-vertical-nav-group-children>
+    <clr-vertical-nav [clrVerticalNavCollapsible]="true" class="nav-trigger--bottom full-height">
+      <!-- Home -->
+      <a clrVerticalNavLink routerLink="" routerLinkActive="active"  [routerLinkActiveOptions]="{ exact: true }">
+        <clr-icon clrVerticalNavIcon shape="home"></clr-icon>
+        Home
+      </a>
 
-        </clr-vertical-nav-group>
-        
-        <a clrVerticalNavLink routerLink="">
-          <clr-icon clrVerticalNavIcon shape="user"></clr-icon>  
-          User
-        </a>
+      <!-- Hole View -->
+      <a clrVerticalNavLink routerLink="holes" routerLinkActive="active">
+        <clr-icon clrVerticalNavIcon shape="code"></clr-icon>
+        Holes
+      </a>
+
+      <!-- Profile -->
+      <a clrVerticalNavLink routerLink="">
+        <clr-icon clrVerticalNavIcon shape="user"></clr-icon>
+        Profile
+      </a>
+
+      <!-- Leaderboards -->
+      <a clrVerticalNavLink routerLink="">
+        <clr-icon clrVerticalNavIcon shape="view-list"></clr-icon>
+        Leaderboards
+      </a>
+
+      <!-- Play -->
+      <a clrVerticalNavLink routerLink="play/10" routerLinkActive="active">
+        <clr-icon clrVerticalNavIcon shape="play"></clr-icon>
+        Play
+      </a>
+
+
+      <!-- Divider to the next part -->
+      <div class="nav-divider"></div>
+
+      <!-- Github URL -->
+      <a clrVerticalNavLink href="https://github.com/Squwid/bytegolf" target="_blank">
+        <clr-icon clrVerticalNavIcon shape="star"></clr-icon>
+        Github Repo
+      </a>
+
+      <!-- About -->
+      <a clrVerticalNavLink routerLink="">
+        <clr-icon clrVerticalNavIcon shape="happy-face"></clr-icon>
+        About
+      </a>
 
 
 
-          <a clrVerticalNavLink routerLink="" routerLinkActive="active">Charmander</a>
-          <a clrVerticalNavLink routerLink="" routerLinkActive="active">Jigglypuff</a>
-          <a clrVerticalNavLink routerLink="" routerLinkActive="active">Pikachu</a>
-          <a clrVerticalNavLink routerLink="" routerLinkActive="active">Raichu</a>
-          <a clrVerticalNavLink routerLink="" routerLinkActive="active">Snorlax</a>
-          <div class="nav-divider"></div>
-          <a clrVerticalNavLink routerLink="" routerLinkActive="active">Credit</a>
-
-          <a clrVerticalNavLink routerLink="">
-            <clr-icon clrVerticalNavIcon shape="bolt"></clr-icon>
-            Electric
-        </a>
-      </clr-vertical-nav>
-      <div class="content-area">
-          <router-outlet></router-outlet>
-      </div>
+    </clr-vertical-nav>
+    <div class="content-area second-holder">
+      <router-outlet></router-outlet>
+    </div>
   </div>
 </div>

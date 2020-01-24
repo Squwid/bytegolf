@@ -76,7 +76,28 @@
     <clr-tab>
       <button clrTabLink>Submissions</button>
       <clr-tab-content>
-        <p class="desc">...</p>
+
+        <div class="container" *ngIf="pastSubs.length !== 0; else noSubmissions">
+          <clr-datagrid class="sub-container">
+            <clr-dg-column>ID</clr-dg-column>
+            <clr-dg-column>Score</clr-dg-column>
+            <clr-dg-column>Language</clr-dg-column>
+            <clr-dg-column>Date</clr-dg-column>
+
+            <clr-dg-row [ngClass]="{
+              'correct': sub.correct,
+              'incorrect': !sub.correct
+              }" *ngFor="let sub of pastSubs">
+              <clr-dg-cell>{{sub.id}}</clr-dg-cell>
+              <clr-dg-cell>{{sub.score}}</clr-dg-cell>
+              <clr-dg-cell>{{sub.language}}</clr-dg-cell>
+              <clr-dg-cell>{{sub.date}}</clr-dg-cell>
+
+            </clr-dg-row>
+
+            <clr-dg-footer>{{pastSubs.length}} Submissions</clr-dg-footer>
+          </clr-datagrid>
+        </div>
 
 
 
@@ -88,10 +109,35 @@
 </div>
 
 
+<!-- no result loading screen -->
 <ng-template #noResult>
   <div class="center-spinner">
-  <span class="spinner spinner-inverse">
-    Loading...
-  </span>
-</div>
+    <span class="spinner spinner-inverse">
+      Loading...
+    </span>
+  </div>
+</ng-template>
+
+<ng-template #noSubmissions>
+  <div class="nosubs-container">
+    <div class="alert alert-warning" role="alert">
+      <div class="alert-items">
+          <div class="alert-item static">
+              <div class="alert-icon-wrapper">
+                  <clr-icon class="alert-icon" shape="exclamation-triangle"></clr-icon>
+              </div>
+              <span class="alert-text">No submissions for this hole</span>
+              <div class="alert-actions">
+                  <div class="alert-action dropdown bottom-right">
+                      <!-- <button class="dropdown-toggle">
+                          Actions
+                          <clr-icon shape="caret down"></clr-icon>
+                      </button> -->
+                  </div>
+              </div>
+          </div>
+
+      </div>
+  </div>
+  </div>
 </ng-template>

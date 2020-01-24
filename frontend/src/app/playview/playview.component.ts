@@ -28,7 +28,7 @@ export interface Submission {
 export class PlayviewComponent implements OnInit {
   private defaultContent = 'print(\'Hello, World!)';
 
-  public submitDisabled = false;
+  public submitDisabled = true;
 
   public languages = LANGUAGES;
   public activeLanguage: Language = null;
@@ -38,6 +38,10 @@ export class PlayviewComponent implements OnInit {
 
   public question: Question = null;
   public questionLoading = false;
+
+  // Stuff relating to past submissions
+  public pastSubs: PastSubmission[] = null;
+  public loadingPastSubs = true;
 
   constructor(private toastr: ToastrService) {
     if (this.languages.length !== 0) {
@@ -49,6 +53,7 @@ export class PlayviewComponent implements OnInit {
 
   ngOnInit() {
     this.getQuestion();
+    this.getPastSubmissions();
   }
 
   // gets and sets the question using the id
@@ -76,4 +81,43 @@ export class PlayviewComponent implements OnInit {
   public onSubmit() {
     console.log('Submission');
   }
+
+  // getPastSubmissions gets the past submissions
+  public getPastSubmissions(): void {
+    // this.pastSubs = [{
+    //   id: '100',
+    //   correct: true,
+    //   score: 20,
+    //   language: 'Go',
+    //   script: 'print(\"Hello, World!\")',
+    //   date: '10/20/2020 10:35am'
+    // },
+    // {
+    //   id: '100',
+    //   correct: true,
+    //   score: 20,
+    //   language: 'Go',
+    //   script: 'print(\"Hello, World!\")',
+    //   date: '10/20/2020 10:35am'
+    // },
+    // {
+    //   id: '100',
+    //   correct: false,
+    //   score: 20,
+    //   language: 'Go',
+    //   script: 'print(\"Hello, World!\")',
+    //   date: '10/20/2020 10:35am'
+    // },
+    // {
+    //   id: '100',
+    //   correct: false,
+    //   score: 20,
+    //   language: 'Go',
+    //   script: 'print(\"Hello, World!\")',
+    //   date: '10/20/2020 10:35am'
+    // }];
+    this.pastSubs = [];
+  }
+
+
 }

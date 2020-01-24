@@ -15,3 +15,28 @@
 .space {
   height: 4rem;
 }
+
+.cell-expansion-wrapper {
+  width: fit-content;
+}
+
+// whether the user got the question right or wrong
+.correct {
+  color: rgb(0, 56, 0);
+  background-color: lightgreen;
+}
+
+.incorrect {
+  color: rgb(68, 0, 0);
+  background-color: lightcoral;
+}
+
+.sub-container {
+  // height: 25rem;
+  overflow-y: scroll;
+  max-height: 50rem;
+}
+
+.nosubs-container {
+  padding-top: .5rem;
+}

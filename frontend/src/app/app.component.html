@@ -1,8 +1,19 @@
 <div class="main-container">
   <div class="container-content f">
     <clr-vertical-nav [clrVerticalNavCollapsible]="true" class="nav-trigger--bottom full-height">
+
+      <!-- user info -->
+      <div *ngIf="user.logged_in">
+        <a clrVerticalNavLink routerLink="profile/{{ user.username }}">
+          <clr-icon clrVerticalNavIcon shape="user"></clr-icon>
+          {{ user.username }}
+        </a>
+        <div class="nav-divider"></div>
+      </div>
+
+
       <!-- Home -->
-      <a clrVerticalNavLink routerLink="" routerLinkActive="active"  [routerLinkActiveOptions]="{ exact: true }">
+      <a clrVerticalNavLink routerLink="" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
         <clr-icon clrVerticalNavIcon shape="home"></clr-icon>
         Home
       </a>
@@ -14,10 +25,7 @@
       </a>
 
       <!-- Profile -->
-      <!-- <a clrVerticalNavLink routerLink="">
-        <clr-icon clrVerticalNavIcon shape="user"></clr-icon>
-        Profile
-      </a> -->
+
 
       <!-- Leaderboards -->
       <!-- <a clrVerticalNavLink routerLink="">
@@ -42,10 +50,10 @@
       </a>
 
       <!-- About -->
-      <a clrVerticalNavLink routerLink="">
+      <!-- <a clrVerticalNavLink routerLink="">
         <clr-icon clrVerticalNavIcon shape="happy-face"></clr-icon>
         About
-      </a>
+      </a> -->
 
     </clr-vertical-nav>
     <div class="content-area second-holder bg">

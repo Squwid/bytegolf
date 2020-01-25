@@ -1,9 +1,33 @@
 <div class="body-holder pv-container" *ngIf="!questionLoading; else noResult">
+
+  <div *ngIf="holeFound; else holeNotFoundDiv" >
+    
+  
+
   <h1 class="title">{{ question.name }}</h1>
   <h4 class="subtitle">{{ question.difficulty }}</h4>
   <p class="desc">{{ question.question }}</p>
 
   <br>
+
+  <!-- Show the best score -->
+  <div class="container" *ngIf="selfLeader === null; else bestScore">
+    <div class="alert alert-info alert-container" *ngIf="!closedWarning" role="alert">
+      <div class="alert-items">
+        <div class="alert-item static">
+          <div class="alert-icon-wrapper">
+            <clr-icon class="alert-icon" shape="info-circle"></clr-icon>
+          </div>
+          <span class="alert-text">
+            You have not yet answered this hole correctly
+          </span>
+        </div>
+      </div>
+      <button (click)="closedWarning = true" type="button" class="close" aria-label="Close">
+        <clr-icon aria-hidden="true" shape="close"></clr-icon>
+      </button>
+    </div>
+  </div>
 
   <!-- tabs for play/leaderboard/submissions -->
   <clr-tabs>
@@ -71,6 +95,15 @@
               <td>{{ leader.language }}</td>
               <td>{{ leader.score }}</td>
             </tr>
+            <br>
+            <tr *ngIf="selfLeader !== null" class="self-lb">
+              <td class="left">{{ selfLeader.place }}</td>
+              <td class="left">
+                <a href="{{ selfLeader.githubUrl }}" target="_blank">{{ selfLeader.displayName }}</a>
+              </td>
+              <td>{{ selfLeader.language }}</td>
+              <td>{{ selfLeader.score }}</td>
+            </tr>
           </tbody>
         </table>
       </clr-tab-content>
@@ -81,6 +114,7 @@
       <button clrTabLink>Submissions</button>
       <clr-tab-content>
 
+        <!-- If there are any responses at all put in the past submissions -->
         <div class="container" *ngIf="pastSubs.length !== 0; else noSubmissions">
           <clr-datagrid class="sub-container">
             <clr-dg-column>ID</clr-dg-column>
@@ -111,7 +145,20 @@
 
   </clr-tabs>
 </div>
+</div>
 
+
+<!-- 
+  if the user has not gotten a correct answer 
+  raise a warning, if they have put the best score on the screen
+-->
+<ng-template #bestScore>
+  <p class="best-sub-text">Best Submission: {{ selfLeader.score }} bytes</p>
+</ng-template>
+
+<ng-template #holeNotFound>
+
+</ng-template>
 
 <!-- no result loading screen -->
 <ng-template #noResult>
@@ -126,22 +173,28 @@
   <div class="nosubs-container">
     <div class="alert alert-warning" role="alert">
       <div class="alert-items">
-          <div class="alert-item static">
-              <div class="alert-icon-wrapper">
-                  <clr-icon class="alert-icon" shape="exclamation-triangle"></clr-icon>
-              </div>
-              <span class="alert-text">No submissions for this hole</span>
-              <div class="alert-actions">
-                  <div class="alert-action dropdown bottom-right">
-                      <!-- <button class="dropdown-toggle">
+        <div class="alert-item static">
+          <div class="alert-icon-wrapper">
+            <clr-icon class="alert-icon" shape="exclamation-triangle"></clr-icon>
+          </div>
+          <span class="alert-text">No submissions for this hole</span>
+          <div class="alert-actions">
+            <div class="alert-action dropdown bottom-right">
+              <!-- <button class="dropdown-toggle">
                           Actions
                           <clr-icon shape="caret down"></clr-icon>
                       </button> -->
-                  </div>
-              </div>
+            </div>
           </div>
+        </div>
 
       </div>
+    </div>
   </div>
-  </div>
+</ng-template>
+
+
+<!-- Basically the 404 page when a hole is not found -->
+<ng-template #holeNotFoundDiv>
+  <h2>That hole was not found!</h2>
 </ng-template>

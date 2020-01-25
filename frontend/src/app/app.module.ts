@@ -10,6 +10,8 @@ import { AppComponent } from './app.component';
 import { HolesComponent } from './holes/holes.component';
 import { HomeComponent } from './home/home.component';
 import { PlayviewComponent } from './playview/playview.component';
+import { ProfileComponent } from './profile/profile.component';
+import { LeaderboardComponent } from './leaderboard/leaderboard.component';
 
 const routes: Routes = [
   {
@@ -23,6 +25,10 @@ const routes: Routes = [
   {
     path: 'holes',
     component: HolesComponent
+  },
+  {
+    path: 'profile/:username',
+    component: ProfileComponent
   }
 ];
 
@@ -31,7 +37,9 @@ const routes: Routes = [
     AppComponent,
     HolesComponent,
     PlayviewComponent,
-    HomeComponent
+    HomeComponent,
+    ProfileComponent,
+    LeaderboardComponent
   ],
   imports: [
     BrowserModule,

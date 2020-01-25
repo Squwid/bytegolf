@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import 'brace';
@@ -47,7 +47,7 @@ export class PlayviewComponent implements OnInit {
   public braceActiveTheme = 'dracula';
   public braceContent = this.defaultContent;
 
-  public question: Question = null;
+  public question: Question = {} as Question;
   public questionLoading = false;
 
   // Stuff relating to past submissions
@@ -57,9 +57,15 @@ export class PlayviewComponent implements OnInit {
   // Leaderboard stuff
   public leaders: LeaderboardSpot[] = null;
   public loadingLeaders = true;
+  public selfLeader: LeaderboardSpot = null;
 
   // the hole id for the entire page
   private holeId: string;
+
+  public closedWarning = false;
+
+  // hole not found
+  public holeFound = true;
 
   constructor(
     private toastr: ToastrService,
@@ -82,9 +88,20 @@ export class PlayviewComponent implements OnInit {
 
   }
 
+  public getSelfLeader(): void {
+    this.selfLeader = {
+      place: 22,
+      displayName: 'Squwid',
+      githubUrl: 'https://github.com/Squwid',
+      score: 122,
+      language: 'Go'
+    };
+  }
+
   // get the leaders per hole from the backend
   public getLeaders(): void {
     this.loadingLeaders = true;
+    this.getSelfLeader();
     this.leaders = [
       {
         place: 1,
@@ -114,6 +131,25 @@ export class PlayviewComponent implements OnInit {
   // gets and sets the question using the id
   public getQuestion(): void {
     this.questionLoading = true;
+    this.http.get('http://localhost:8080/hole?hole=' + this.holeId)
+      .subscribe(
+        (q: Question) => {
+          this.holeFound = true;
+          this.question = q;
+          this.questionLoading = false;
+          console.log('Found hole: ' + this.holeId);
+          return;
+        },
+        (error: HttpErrorResponse) => {
+          if (error.status === 404) {
+            console.log('Did not find ' + this.holeId);
+            this.holeFound = false;
+            return;
+          }
+          console.log('Other error: ' + error.status);
+        }
+      );
+    /*
     this.question = {
       id: '2020',
       name: 'Question Name Here',
@@ -121,6 +157,7 @@ export class PlayviewComponent implements OnInit {
       live: true,
       difficulty: 'Hard'
     };
+    */
     this.questionLoading = false;
   }
 
@@ -139,39 +176,39 @@ export class PlayviewComponent implements OnInit {
 
   // getPastSubmissions gets the past submissions
   public getPastSubmissions(): void {
-    // this.pastSubs = [{
-    //   id: '100',
-    //   correct: true,
-    //   score: 20,
-    //   language: 'Go',
-    //   script: 'print(\"Hello, World!\")',
-    //   date: '10/20/2020 10:35am'
-    // },
-    // {
-    //   id: '100',
-    //   correct: true,
-    //   score: 20,
-    //   language: 'Go',
-    //   script: 'print(\"Hello, World!\")',
-    //   date: '10/20/2020 10:35am'
-    // },
-    // {
-    //   id: '100',
-    //   correct: false,
-    //   score: 20,
-    //   language: 'Go',
-    //   script: 'print(\"Hello, World!\")',
-    //   date: '10/20/2020 10:35am'
-    // },
-    // {
-    //   id: '100',
-    //   correct: false,
-    //   score: 20,
-    //   language: 'Go',
-    //   script: 'print(\"Hello, World!\")',
-    //   date: '10/20/2020 10:35am'
-    // }];
-    this.pastSubs = [];
+    this.pastSubs = [{
+      id: '100',
+      correct: true,
+      score: 20,
+      language: 'Go',
+      script: 'print(\"Hello, World!\")',
+      date: '10/20/2020 10:35am'
+    },
+    {
+      id: '100',
+      correct: true,
+      score: 20,
+      language: 'Go',
+      script: 'print(\"Hello, World!\")',
+      date: '10/20/2020 10:35am'
+    },
+    {
+      id: '100',
+      correct: false,
+      score: 20,
+      language: 'Go',
+      script: 'print(\"Hello, World!\")',
+      date: '10/20/2020 10:35am'
+    },
+    {
+      id: '100',
+      correct: false,
+      score: 20,
+      language: 'Go',
+      script: 'print(\"Hello, World!\")',
+      date: '10/20/2020 10:35am'
+    }];
+    // this.pastSubs = [];
   }
 
 

@@ -60,3 +60,21 @@ a:hover {
 a:active {
   color: rgb(212, 212, 212);;
 }
+
+// self leaderboard option
+.self-lb {
+  font-weight: bold;
+}
+
+.alert-container {
+  margin-bottom: .6rem;
+  margin-top: .6rem;
+}
+
+.best-sub-text {
+  font-size: 1rem;
+  text-align: center;
+  font-weight: bold;
+  color: lightgreen;
+  margin-bottom: .2rem;
+}

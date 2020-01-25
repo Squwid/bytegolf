@@ -1,24 +1,32 @@
-.f{
-	display: flex;
-	flex-direction: row;
+.f {
+  display: flex;
+  flex-direction: row;
 }
 
 .full-height {
-	padding-top: 0px;
-	margin-top: 0px;
-	height: 100vh;
-	max-height: 100vh;
+  padding-top: 0px;
+  margin-top: 0px;
+  height: 100vh;
+  max-height: 100vh;
 }
 
 .header-height {
-	background-color: #314F62;
-	height: 5vh;
+  background-color: #314F62;
+  height: 5vh;
 }
 
 .second-holder {
-	width: 100%;
-	// background-color: blue;
-	overflow-y: scroll;
-	max-height: 100vh;
-	
+  width: 100%;
+  // background-color: blue;
+  overflow-y: scroll;
+  max-height: 100vh;
+
+}
+
+.user-container {
+  background-color: red;
+}
+
+.center {
+  text-align: center;
 }

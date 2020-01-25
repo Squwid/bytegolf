@@ -56,16 +56,20 @@
         <table class="table table-compact table-noborder">
           <thead>
             <tr>
+              <th class="left">#</th>
               <th class="left">Username</th>
               <th>Language</th>
               <th>Score</th>
             </tr>
           </thead>
           <tbody>
-            <tr>
-              <td class="left">A</td>
-              <td>A</td>
-              <td>A</td>
+            <tr *ngFor="let leader of leaders">
+              <td class="left">{{ leader.place }}</td>
+              <td class="left">
+                <a href="{{ leader.githubUrl }}" target="_blank">{{ leader.displayName }}</a>
+              </td>
+              <td>{{ leader.language }}</td>
+              <td>{{ leader.score }}</td>
             </tr>
           </tbody>
         </table>

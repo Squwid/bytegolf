@@ -40,13 +40,18 @@ body {
 .body-holder {
   margin: 0 auto;
 
-  min-width: 15rem;
+  min-width: 20rem;
   width: 50%;
 
   min-height: 100vh;
   height: fit-content;
 
-  padding: .5rem;
+  padding: 1.5rem;
+
+  // shadows
+  -webkit-box-shadow: -1px 4px 5px 1px rgba(117,117,117,1);
+  -moz-box-shadow: -1px 4px 5px 1px rgba(117,117,117,1);
+  box-shadow: -1px 4px 5px 1px rgba(117,117,117,1);
 }
 
 // center spinner 

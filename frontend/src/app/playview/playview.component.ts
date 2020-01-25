@@ -20,6 +20,15 @@ export interface Submission {
   length: number;
 }
 
+// LeaderboardSpot is a spot on the leaderboard
+export interface LeaderboardSpot {
+  place: number;
+  displayName: string;
+  githubUrl: string;
+  score: number;
+  language: string;
+}
+
 @Component({
   selector: 'app-playview',
   templateUrl: './playview.component.html',
@@ -43,6 +52,10 @@ export class PlayviewComponent implements OnInit {
   public pastSubs: PastSubmission[] = null;
   public loadingPastSubs = true;
 
+  // Leaderboard stuff
+  public leaders: LeaderboardSpot[] = null;
+  public loadingLeaders = true;
+
   constructor(private toastr: ToastrService) {
     if (this.languages.length !== 0) {
       this.activeLanguage = this.languages[0];
@@ -54,6 +67,36 @@ export class PlayviewComponent implements OnInit {
   ngOnInit() {
     this.getQuestion();
     this.getPastSubmissions();
+    this.getLeaders();
+  }
+
+  // get the leaders per hole from the backend
+  public getLeaders(): void {
+    this.loadingLeaders = true;
+    this.leaders = [
+      {
+        place: 1,
+        displayName: 'Squwid',
+        githubUrl: 'https://github.com/Squwid',
+        score: 25,
+        language: 'Go'
+      },
+      {
+        place: 2,
+        displayName: 'iCollin',
+        githubUrl: 'https://github.com/icollin',
+        score: 30,
+        language: 'Python 3'
+      },
+      {
+        place: 3,
+        displayName: 'Kraftcur',
+        githubUrl: 'https://github.com/kraftcur',
+        score: 35,
+        language: 'Python 2'
+      }
+    ];
+    this.loadingLeaders = false;
   }
 
   // gets and sets the question using the id
@@ -71,7 +114,7 @@ export class PlayviewComponent implements OnInit {
 
   public onDelete() {
     this.braceContent = this.defaultContent;
-    this.toastr.info('', 'Hello!', {tapToDismiss: true});
+    // this.toastr.info('', 'Hello!', {tapToDismiss: true});
   }
 
   public setLanguage(lang: Language) {

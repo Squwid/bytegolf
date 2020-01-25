@@ -1,5 +1,7 @@
 .pv-container {
   background-color: #17242B;
+  // padding-left: 1rem;
+  // padding-right: 1rem;
 }
 
 
@@ -23,7 +25,7 @@
 // whether the user got the question right or wrong
 .correct {
   color: rgb(0, 56, 0);
-  background-color: lightgreen;
+  background-color: rgb(109, 219, 109);
 }
 
 .incorrect {
@@ -39,4 +41,22 @@
 
 .nosubs-container {
   padding-top: .5rem;
+}
+
+// Stuff about link for leaderboard
+a:link {
+  color: rgb(212, 212, 212);
+}
+
+a:visited {
+  color: rgb(212, 212, 212);
+}
+
+a:hover {
+  color: lightgreen;
+  text-decoration: none;
+}
+
+a:active {
+  color: rgb(212, 212, 212);;
 }

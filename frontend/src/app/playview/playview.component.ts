@@ -1,4 +1,6 @@
+import { HttpClient } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import 'brace';
 import 'brace/mode/golang';
 import 'brace/mode/java';
@@ -56,7 +58,14 @@ export class PlayviewComponent implements OnInit {
   public leaders: LeaderboardSpot[] = null;
   public loadingLeaders = true;
 
-  constructor(private toastr: ToastrService) {
+  // the hole id for the entire page
+  private holeId: string;
+
+  constructor(
+    private toastr: ToastrService,
+    private http: HttpClient,
+    private route: ActivatedRoute
+    ) {
     if (this.languages.length !== 0) {
       this.activeLanguage = this.languages[0];
     } else {
@@ -65,9 +74,12 @@ export class PlayviewComponent implements OnInit {
   }
 
   ngOnInit() {
+    this.holeId = this.route.snapshot.params.id;
+    console.log('this id: ' + this.holeId);
     this.getQuestion();
     this.getPastSubmissions();
     this.getLeaders();
+
   }
 
   // get the leaders per hole from the backend

@@ -15,12 +15,23 @@
 }
 
 .hole {
-  width: 12rem;
-  // height: 10rem;
-  height: fit-content;
-  // background-color: green;
+  width: 12rem;  
+  height: 10rem;
   margin: .2rem;
+  
+  overflow-y: scroll;
+
+  // turn scrollbar to nothing mozilla
+  overflow: -moz-scrollbars-none;
+  // turn scrollbar to nothing msoft
+  -ms-overflow-style: none;
 }
+
+// turn the scrollbar to nothing chrome
+.hole::-webkit-scrollbar {
+  width: 0 !important
+}
+
 
 .hard {
   background-color: rgb(126, 42, 42);

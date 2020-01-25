@@ -1,30 +1,45 @@
-<div class="holes-container">
-  <div class="card clickable hole hard">
+<div class="holes-container" *ngIf="!loadingHoles; else noResult">
+  <div class="card clickable hole" [ngClass]="{'easy': hole.difficulty === 'easy', 
+    'hard': hole.difficulty === 'hard'}" *ngFor="let hole of holes" 
+    routerLink="/play/{{hole.id}}">
     <div class="card-block">
       <div class="card-title">
-        Block
+        {{ hole.name }}
       </div>
       <div class="card-text">
         <p>
-          Lorem ipsum dolor sit amet, consectetur adipisicing elit. Fugiat ipsa, id sit hic ea officia harum in tempore
-          incidunt laboriosam, iusto neque quos non corporis. Temporibus repellendus ea aliquam est?
+          {{ hole.question }}
         </p>
       </div>
     </div>
   </div>
 
   <!-- Single Hole -->
-  <div class="card clickable hole easy">
+  <!-- <div class="card clickable hole easy">
     <div class="card-block">
       <div class="card-title">
-        Block
+        Hello, World
       </div>
       <div class="card-text">
         <p>
           Lorem ipsum dolor sit amet, consectetur adipisicing elit. Fugiat ipsa, id sit hic ea officia harum in tempore
           incidunt laboriosam, iusto neque quos non corporis. Temporibus repellendus ea aliquam est?
+          <br>
+          Lorem ipsum, dolor sit amet consectetur adipisicing elit. Eveniet soluta atque laborum ab fugit repudiandae, a itaque accusantium ipsum ea molestiae modi vitae laudantium expedita, quasi aperiam tempora quidem doloribus?
+          Lorem ipsum dolor sit amet, consectetur adipisicing elit. Eaque omnis in esse, deserunt, odio eligendi iure nobis sequi mollitia veniam illo ex. Impedit dolore modi dolores? Cumque atque aspernatur ullam!
         </p>
       </div>
     </div>
   </div>
-</div>
+</div> -->
+
+
+<ng-template #noResult>
+  <div class="center-spinner">
+    <span class="spinner spinner-inverse">
+
+    </span>
+    <!-- <p>Loading...</p> -->
+    
+  </div>
+</ng-template>

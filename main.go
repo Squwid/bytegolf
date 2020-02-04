@@ -34,12 +34,13 @@ func main() {
 	// handlers
 	http.Handle("/", frontend("dist/frontend"))
 	http.HandleFunc("/login/check", github.Oauth)
+	http.HandleFunc("/login", github.Login)
 	http.HandleFunc("/holes", question.Handler)
 	http.HandleFunc("/hole", question.SingleHandler)
-	http.HandleFunc("/login", github.Login)
 	http.HandleFunc("/check", isLoggedIn)
 	http.HandleFunc("/compile", compiler.Handler)
-	http.ListenAndServe(":"+port, nil)
+	http.HandleFunc("/api/submissions", compiler.SubmissionsHandler)
+	http.ListenAndServe(":8080", nil)
 }
 
 func frontend(dir string) http.Handler {

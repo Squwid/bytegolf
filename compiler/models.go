@@ -31,8 +31,8 @@ type Execute struct {
 	HoleID       string `json:"holeId"`
 
 	// ClientID and ClientSecret can stay here because they are needed in the body of the jdoodle api
-	ClientID     string `json:"clientId"`
-	ClientSecret string `json:"clientSecret"`
+	ClientID     string `json:"clientId,omitempty"`
+	ClientSecret string `json:"clientSecret,omitempty"`
 }
 
 // Response that gets sent to the user after each request is made, includes whether it is correct, the length
@@ -111,15 +111,18 @@ func (exe Execute) Post(s *sess.Session) (*Response, error) {
 	// should only store if the request is 200 for now, but could come back later and move this somewhere else
 	// as a q if credits run out or some other error
 	go func(exe Execute, r Response, bgid string) {
+		exe.ClientID = ""
+		exe.ClientSecret = ""
+		uid := uuid.New().String()
 		var c = TotalStore{
+			UUID:          uid,
 			Exe:           exe,
 			Resp:          codeResp,
 			BGID:          bgid,
 			HoleID:        exe.HoleID,
-			SubmittedTime: time.Now().String(),
+			SubmittedTime: time.Now(),
 			Length:        len(exe.Script),
 		}
-		uid := uuid.New().String()
 		err := firestore.StoreData("executes", uid, c)
 		if err != nil {
 			log.Errorf("error storing fire data store (%s): %v", uid, err)
@@ -128,17 +131,18 @@ func (exe Execute) Post(s *sess.Session) (*Response, error) {
 		log.Infof("Saved firestore data for %s at %s", bgid, uid)
 	}(exe, codeResp, s.BGID)
 
-	log.Infoln("successfully made post request to jquery got response", resp.StatusCode)
+	log.Infof("successfully made post request to jdoodle got response %v", resp.StatusCode)
 	return &codeResp, nil
 }
 
 // TotalStore ...
 type TotalStore struct {
-	Exe           Execute  `json:"submission"`
-	Resp          Response `json:"response"`
-	BGID          string   `json:"bgid"`
-	Correct       bool     `json:"correct"`
-	HoleID        string   `json:"holeId"`
-	SubmittedTime string   `json:"submitted_time"`
-	Length        int      `json:"length"`
+	UUID          string    `json:"uuid"`
+	Exe           Execute   `json:"submission"`
+	Resp          Response  `json:"response"`
+	BGID          string    `json:"bgid"`
+	Correct       bool      `json:"correct"`
+	HoleID        string    `json:"holeId"`
+	SubmittedTime time.Time `json:"submitted_time"`
+	Length        int       `json:"length"`
 }

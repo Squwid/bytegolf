@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"time"
 
 	"github.com/Squwid/bytegolf/firestore"
 	"github.com/Squwid/bytegolf/sess"
@@ -97,104 +96,6 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	w.Write(bs)
-}
-
-// SubmissionsHandler handles all of the submissions api stuff
-func SubmissionsHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Methods", "OPTIONS,GET")
-	w.Header().Set("Access-Control-Allow-Headers", "*")
-	w.Header().Set("Content-Type", "application/json")
-	if r.Method == http.MethodOptions {
-		// Cors stuff
-		w.WriteHeader(http.StatusOK)
-		return
-	}
-
-	// if the user is not logged in return a 503, they have to be signed in to see their response
-	loggedIn, s, err := sess.LoggedIn(r)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		log.Errorf("error checking if a user is signed in for submissions: %v", err)
-		return
-	}
-	if !loggedIn {
-		w.WriteHeader(http.StatusForbidden)
-		w.Write([]byte(`{"error": "unauthorized"}`))
-		return
-	}
-	if s == nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		log.Errorf("error: session was blank")
-		return
-	}
-
-	if r.Method != http.MethodGet {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	// get request so get all of the requests for that user
-	getExecutes(w, r, s)
-}
-
-// getExecutes runs each time a hole is loaded to grab all of the responses, if none exist then a blank list
-// will be returned meaning that the user has never submited a successful
-func getExecutes(w http.ResponseWriter, r *http.Request, s *sess.Session) {
-	hole := r.URL.Query().Get("hole")
-	if hole == "" {
-		// no hole on get means bad request
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	qs, err := getQuestions(s.BGID, hole, maxReturns)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(err.Error()))
-		return
-	}
-	if len(qs) == 0 {
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("[]"))
-		return
-	}
-
-	type submission struct {
-		ID            string    `json:"id"`
-		Correct       bool      `json:"correct"`
-		Language      string    `json:"language"`
-		Score         int       `json:"score"`
-		Script        string    `json:"script"`
-		SubmittedTime time.Time `json:"submitted_time"`
-	}
-
-	// Getting all past submissions will then be parsed to a new structure to make sure that
-	// the user doesnt see anything that they shouldnt
-	var submissions = []submission{}
-
-	for _, q := range qs {
-		submissions = append(submissions, submission{
-			ID:            q.UUID,
-			Correct:       q.Correct,
-			Language:      q.Exe.Language,
-			Score:         len(q.Exe.Script),
-			Script:        q.Exe.Script,
-			SubmittedTime: q.SubmittedTime,
-		})
-	}
-
-	bs, err := json.Marshal(submissions)
-	if err != nil {
-		log.Errorf("Error unmarshalling new short submissions: %v", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	log.Infof("Got %v responses for %v", len(submissions), s.BGID)
-	w.WriteHeader(http.StatusInternalServerError)
-	w.Write(bs)
-	return
 }
 
 // getQuestions returns a list of executes using a BGID. Currently gets all but should

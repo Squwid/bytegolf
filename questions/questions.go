@@ -5,6 +5,7 @@ import (
 
 	"github.com/Squwid/bytegolf/firestore"
 	"github.com/google/uuid"
+	log "github.com/sirupsen/logrus"
 )
 
 const collection = "questions"
@@ -37,11 +38,6 @@ type Light struct {
 	Difficulty string `json:"difficulty"`
 }
 
-// NewQuestion returns a new Question after generating a uuid
-func NewQuestion() Question {
-	return Question{ID: uuid.New().String()}
-}
-
 // ErrNil gets returned if a question is nil
 var ErrNil = errors.New("given <nil> pointer")
 
@@ -54,5 +50,13 @@ func (q *Question) create() error {
 	if q.ID == "" {
 		q.ID = uuid.New().String()
 	}
+
+	// if there are no test cases make it an empty list
+	if q.TestCases == nil {
+		q.TestCases = []Test{}
+	}
+	q.TestCount = len(q.TestCases)
+
+	log.Infof("Creating new question %v (%v)", q.ID, q.Name)
 	return firestore.StoreData(collection, q.ID, q)
 }

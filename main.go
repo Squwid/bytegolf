@@ -35,9 +35,9 @@ func main() {
 	http.Handle("/", frontend("dist/frontend"))
 	http.HandleFunc("/login/check", github.Oauth)
 	http.HandleFunc("/login", github.Login)
-	http.HandleFunc("/holes", question.Handler)
-	http.HandleFunc("/hole", question.SingleHandler)
-	http.HandleFunc("/check", isLoggedIn)
+	http.HandleFunc("/api/holes", question.ListQuestionsHandler) // list all of the holes
+	http.HandleFunc("/api/hole", question.SingleHandler)         // list a single hole
+	http.HandleFunc("/api/user", isLoggedIn)                     // checks if a user is logged in
 	http.HandleFunc("/compile", compiler.Handler)
 	http.HandleFunc("/api/submissions", compiler.SubmissionsHandler)
 	http.ListenAndServe(":8080", nil)

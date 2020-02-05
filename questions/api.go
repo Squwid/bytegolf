@@ -8,15 +8,17 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/Squwid/bytegolf/firestore"
+	"cloud.google.com/go/firestore"
+	fs "github.com/Squwid/bytegolf/firestore"
 	"github.com/Squwid/bytegolf/sess"
+	"github.com/Squwid/bytegolf/util"
 	"github.com/mitchellh/mapstructure"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/api/iterator"
 )
 
-// Handler is the questions handler which takes care of all question related endpoint tasks
-func Handler(w http.ResponseWriter, r *http.Request) {
+// ListQuestionsHandler is the questions handler which takes care of all question related endpoint tasks
+func ListQuestionsHandler(w http.ResponseWriter, r *http.Request) {
 	// stupid cors stuff
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "POST,OPTIONS,GET")
@@ -29,7 +31,12 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if r.Method == http.MethodGet {
-		lightQs, err := listQuestions()
+		var onlyLive = true
+		if r.URL.Query().Get("allQs") == "true" {
+			onlyLive = false
+		}
+
+		lightQs, err := listQuestions(onlyLive)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(err.Error()))
@@ -46,6 +53,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 			w.Write([]byte(err.Error()))
 			return
 		}
+
 		w.WriteHeader(http.StatusOK)
 		w.Write(bs)
 		return
@@ -76,7 +84,7 @@ func SingleHandler(w http.ResponseWriter, r *http.Request) {
 
 		var qs = []Light{}
 		ctx := context.Background()
-		iter := firestore.Client.Collection(collection).Where("ID", "==", qID).Documents(ctx)
+		iter := fs.Client.Collection(collection).Where("ID", "==", qID).Documents(ctx)
 		for {
 			doc, err := iter.Next()
 			if err == iterator.Done {
@@ -96,7 +104,7 @@ func SingleHandler(w http.ResponseWriter, r *http.Request) {
 			}
 			qs = append(qs, q)
 		}
-		log.Infof("expected 1 or 0 questions got %v", len(qs))
+		log.Debugf("expected 1 or 0 questions got %v", len(qs))
 
 		if len(qs) == 0 {
 			w.WriteHeader(http.StatusNotFound)
@@ -160,9 +168,11 @@ func CreateHole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// create will generate an id for the hole as well as storing it
 	if err = q.create(); err != nil {
 		log.Errorf("Error creating new question by %s: %v", sess.BGID, err)
 		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(util.WrapError(err))
 		return
 	}
 
@@ -171,10 +181,20 @@ func CreateHole(w http.ResponseWriter, r *http.Request) {
 }
 
 // listQuestions gets a list of questions that have the Live bool
-func listQuestions() ([]Light, error) {
+func listQuestions(onlyLive bool) ([]Light, error) {
 	var qs = []Light{}
 	ctx := context.Background()
-	iter := firestore.Client.Collection(collection).Where("Live", "==", true).Documents(ctx)
+
+	// if onlyLive return only live questions, if not return every question
+	var iter *firestore.DocumentIterator
+	if onlyLive {
+		// only live questions
+		iter = fs.Client.Collection(collection).Where("Live", "==", true).Documents(ctx)
+	} else {
+		// all questions
+		iter = fs.Client.Collection(collection).Documents(ctx)
+	}
+
 	for {
 		doc, err := iter.Next()
 		if err == iterator.Done {

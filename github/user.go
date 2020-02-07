@@ -29,10 +29,10 @@ type User struct {
 // ErrNotFound is an error that is returned when a doc is not found
 var ErrNotFound = errors.New("users not found")
 
-// RetreiveUser exists checks to see if a user exists
-func RetreiveUser(id string) (*User, error) {
+// RetreiveUser exists checks to see if a user exists by their BGID
+func RetreiveUser(bgid string) (*User, error) {
 	ctx := context.Background()
-	ref, err := firestore.Client.Collection(collection).Doc(id).Get(ctx)
+	ref, err := firestore.Client.Collection(collection).Doc(bgid).Get(ctx)
 	if err != nil && strings.Contains(err.Error(), "code = NotFound") {
 		return nil, ErrNotFound
 	} else if err != nil {

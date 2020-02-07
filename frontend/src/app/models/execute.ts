@@ -1,8 +1,8 @@
 interface PastSubmission {
   id: string;
-  score: number;
   correct: boolean;
-  language: string;
+  languauge: string;
+  score: number;
   script: string;
-  date: string;
+  submitted_time: string;
 }

@@ -22,6 +22,10 @@ export interface Submission {
   length: number;
 }
 
+interface LoggedIn {
+  logged_in: boolean;
+}
+
 // LeaderboardSpot is a spot on the leaderboard
 export interface LeaderboardSpot {
   place: number;
@@ -51,7 +55,7 @@ export class PlayviewComponent implements OnInit {
   public questionLoading = false;
 
   // Stuff relating to past submissions
-  public pastSubs: PastSubmission[] = null;
+  public pastSubs: PastSubmission[] = [];
   public loadingPastSubs = true;
 
   // Leaderboard stuff
@@ -176,39 +180,21 @@ export class PlayviewComponent implements OnInit {
 
   // getPastSubmissions gets the past submissions
   public getPastSubmissions(): void {
-    this.pastSubs = [{
-      id: '100',
-      correct: true,
-      score: 20,
-      language: 'Go',
-      script: 'print(\"Hello, World!\")',
-      date: '10/20/2020 10:35am'
-    },
-    {
-      id: '100',
-      correct: true,
-      score: 20,
-      language: 'Go',
-      script: 'print(\"Hello, World!\")',
-      date: '10/20/2020 10:35am'
-    },
-    {
-      id: '100',
-      correct: false,
-      score: 20,
-      language: 'Go',
-      script: 'print(\"Hello, World!\")',
-      date: '10/20/2020 10:35am'
-    },
-    {
-      id: '100',
-      correct: false,
-      score: 20,
-      language: 'Go',
-      script: 'print(\"Hello, World!\")',
-      date: '10/20/2020 10:35am'
-    }];
-    // this.pastSubs = [];
+    this.loadingPastSubs = true;
+    this.http.get('http://localhost:8080/api/submissions?hole=' + this.holeId)
+      .subscribe(
+        (ps: PastSubmission[]) => {
+          this.pastSubs = ps;
+          this.loadingPastSubs = false;
+          return;
+        },
+        (error: HttpErrorResponse) => {
+          console.log('Error getting past submissions for ' + this.holeId);
+          this.toastr.error(error.message, 'Error loading past submissions', {tapToDismiss: true});
+          this.loadingPastSubs = false;
+          return;
+        }
+      );
   }
 
 

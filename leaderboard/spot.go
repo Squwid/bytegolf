@@ -2,6 +2,9 @@ package leaderboard
 
 import (
 	"context"
+	"encoding/json"
+	"net/http"
+	"strconv"
 
 	"cloud.google.com/go/firestore"
 	"github.com/Squwid/bytegolf/compiler"
@@ -20,6 +23,69 @@ type Spot struct {
 	Username  string `json:"username"`
 
 	bgid string // unexported but need this to look for dupes
+}
+
+// Handler is the handler for the leaderboard
+func Handler(w http.ResponseWriter, r *http.Request) {
+	// the user doesnt have to be logged in to see the leaderboard scores
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "POST,OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "*")
+	w.Header().Set("Content-Type", "application/json")
+	if r.Method == http.MethodOptions {
+		// this is for cors
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
+	// method can only be get
+	if r.Method != http.MethodGet {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+
+	hole := r.URL.Query().Get("hole")
+	if hole == "" {
+		log.Warnf("Request to list leaderboard spots but 'hole' query string was missing")
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	// get the amount of leaderboard spots to get, but default to 3 if not given
+	var max = 3
+	if m := r.URL.Query().Get("max"); m != "" {
+		// the amount was given so try to overwrite max
+		am, err := strconv.Atoi(m)
+		if err != nil {
+			log.Warnf("Request to list %s lb spots was an invalid int", m)
+		} else {
+			max = am
+		}
+	}
+
+	// TODO: maybe check if the hole even exists here to return a 404 otherwise, but
+	// that doesnt ~really~ matter
+	spots, err := selectTopScores(hole, max)
+	if err != nil {
+		log.Errorf("Error getting top scores for hole %s: %v", hole, err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	if len(spots) == 0 {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("[]"))
+		return
+	}
+
+	bs, err := json.Marshal(spots)
+	if err != nil {
+		log.Errorf("Error marshalling %v leaderboard spots for hole %s: %v", max, hole, err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusInternalServerError)
+	w.Write(bs)
 }
 
 func selectTopScores(hole string, max int) ([]Spot, error) {
@@ -106,6 +172,6 @@ func selectTopScores(hole string, max int) ([]Spot, error) {
 		spots[i].Username = user.Username
 	}
 
-	log.Infof("Request to get leaders for hole %s returned %s lb spots", hole, len(spots))
+	log.Infof("Request to get leaders for hole %s returned %v lb spots", hole, len(spots))
 	return spots, nil
 }

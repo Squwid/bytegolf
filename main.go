@@ -10,6 +10,7 @@ import (
 	"github.com/Squwid/bytegolf/compiler"
 	_ "github.com/Squwid/bytegolf/firestore"
 	"github.com/Squwid/bytegolf/github"
+	"github.com/Squwid/bytegolf/leaderboard"
 	question "github.com/Squwid/bytegolf/questions"
 )
 
@@ -40,6 +41,7 @@ func main() {
 	http.HandleFunc("/api/user", isLoggedIn)                     // checks if a user is logged in
 	http.HandleFunc("/compile", compiler.Handler)
 	http.HandleFunc("/api/submissions", compiler.SubmissionsHandler)
+	http.HandleFunc("/api/leaderboard", leaderboard.Handler)
 	http.ListenAndServe(":8080", nil)
 }
 

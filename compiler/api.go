@@ -4,17 +4,14 @@
 package compiler
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 
-	"github.com/Squwid/bytegolf/firestore"
+	"github.com/Squwid/bytegolf/question"
 	"github.com/Squwid/bytegolf/sess"
-	"github.com/mitchellh/mapstructure"
 	log "github.com/sirupsen/logrus"
-	"google.golang.org/api/iterator"
 )
 
 const maxReturns = 100
@@ -52,42 +49,56 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 
 	// only accept post methods
 	if r.Method != http.MethodPost {
-		w.WriteHeader(http.StatusBadRequest)
+		w.WriteHeader(http.StatusForbidden)
 		return
 	}
 
 	bs, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		log.Errorf("Error reading all of code from compile post request: %v", err)
-		// since this probably happened because some a-hole submitted super long code so send a
-		// bad request back.
+		// since this probably happened because some a-hole submitted super long code so send a bad request back.
 		// TODO: should i check the length here and see if it is too much memory for my little container
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 	defer r.Body.Close()
 
+	// get the users execute code and make sure the hole exists, then send the test to the compiler
 	var exe Execute
 	err = json.Unmarshal(bs, &exe)
 	if err != nil {
 		log.Errorf("Error unmarshalling code from compile post request: %v", err)
-		// this is probably a json formatting thing but im not even sure if that errors out and im not going
-		// to send myself bad json so just return a bad error
 		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(`{"error": "request body too long"}`))
 		return
 	}
 
-	// TODO: validate incoming execute requests
-
-	resp, err := exe.Post(s)
+	// check that the hole exists
+	q, err := question.GetQuestion(exe.HoleID)
 	if err != nil {
-		log.Errorf("Error compiling code from post request %v: %v", exe.HoleID, err)
+		log.Errorf("Error getting question from execute on id %v: %v", exe.HoleID, err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	if q == nil {
+		log.Errorf("Execution for question %s does not exist", exe.HoleID)
+		w.WriteHeader(http.StatusNotFound)
+		w.Write([]byte(`{"error": "hole not found"}`))
+		return
+	}
+
+	// send the question to the compiler if the question exists and is not null
+	fullSub, err := exe.RunTests(*q, s.BGID)
+	if err != nil {
+		log.Errorf("Error compiling hole %s for player %s", q.ID, s.BGID)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
+	shortSub := fullSub.TransformToShort()
+
 	// once we get the response, write it to the api
-	bs, err = json.Marshal(resp)
+	bs, err = json.Marshal(shortSub)
 	if err != nil {
 		log.Errorf("Error marshalling compile request for hole %v: %v", exe.HoleID, err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -96,28 +107,4 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	w.Write(bs)
-}
-
-// getQuestions returns a list of executes using a BGID. Currently gets all but should
-// max out at some point
-func getQuestions(BGID, holeID string, max int) ([]TotalStore, error) {
-	ctx := context.Background()
-	iter := firestore.Client.Collection("executes").Where("BGID", "==", BGID).Where("HoleID", "==", holeID).Limit(max).Documents(ctx)
-	var exes = []TotalStore{}
-	for {
-		doc, err := iter.Next()
-		if err == iterator.Done {
-			break
-		}
-		if err != nil {
-			return nil, err
-		}
-		var exe TotalStore
-		err = mapstructure.Decode(doc.Data(), &exe)
-		if err != nil {
-			return nil, err
-		}
-		exes = append(exes, exe)
-	}
-	return exes, nil
 }

@@ -1,18 +1,13 @@
 package leaderboard
 
 import (
-	"context"
 	"encoding/json"
 	"net/http"
-	"strconv"
 
-	"cloud.google.com/go/firestore"
 	"github.com/Squwid/bytegolf/compiler"
-	fs "github.com/Squwid/bytegolf/firestore"
 	"github.com/Squwid/bytegolf/github"
-	"github.com/mitchellh/mapstructure"
+	"github.com/Squwid/bytegolf/question"
 	log "github.com/sirupsen/logrus"
-	"google.golang.org/api/iterator"
 )
 
 // Spot represents a single leaderboard spot
@@ -21,8 +16,6 @@ type Spot struct {
 
 	GithubURI string `json:"github_uri"`
 	Username  string `json:"username"`
-
-	bgid string // unexported but need this to look for dupes
 }
 
 // Handler is the handler for the leaderboard
@@ -51,30 +44,64 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// get the amount of leaderboard spots to get, but default to 3 if not given
-	var max = 3
-	if m := r.URL.Query().Get("max"); m != "" {
-		// the amount was given so try to overwrite max
-		am, err := strconv.Atoi(m)
-		if err != nil {
-			log.Warnf("Request to list %s lb spots was an invalid int", m)
-		} else {
-			max = am
-		}
-	}
+	// i only allow for 3 because i get charged per read and if the user lists -1 or something
+	// stupid i would not be happy
+	const max = 3
 
-	// TODO: maybe check if the hole even exists here to return a 404 otherwise, but
-	// that doesnt ~really~ matter
-	spots, err := selectTopScores(hole, max)
+	q, err := question.GetQuestion(hole)
 	if err != nil {
-		log.Errorf("Error getting top scores for hole %s: %v", hole, err)
+		log.Errorf("Error checking if question %s exists: %v", hole, err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	if len(spots) == 0 {
+	if q == nil {
+		// question was not found so return a 404 with a desc that says youre lost (uzi)
+		w.WriteHeader(http.StatusNotFound)
+		w.Write([]byte(`{"error": "hole not found"}`))
+		return
+	}
+
+	// the hole was found so lets get the leaders!
+	fullSubs, err := compiler.GetBestSubmissionsOnHole(q.ID, max)
+	if err != nil {
+		log.Errorf("Error getting best submissions on %s: %v", hole, err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// this makes it way easier than marshalling
+	if len(fullSubs) == 0 {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("[]"))
 		return
+	}
+
+	// we have full submissions but they need to get changed to the leaderboard `Spot` struct
+	var spots = []Spot{}
+
+	for _, sub := range fullSubs {
+		var spot = Spot{
+			ShortSubmission: compiler.ShortSubmission{
+				ID:            sub.UUID,
+				Correct:       sub.Correct,
+				Language:      sub.Exe.Language,
+				Score:         sub.Length,
+				SubmittedTime: sub.SubmittedTime,
+			},
+		}
+
+		user, err := github.RetreiveUser(sub.BGID)
+		if err != nil || user == nil {
+			// the user was not found somehow (this should honestly never happen) OR
+			// there was an unexpected error
+			// so put my github url in there
+			spot.GithubURI = "https://github.com/Squwid"
+			spot.Username = "Not Found"
+		} else {
+			spot.GithubURI = user.GithubURI
+			spot.Username = user.Username
+		}
+		spots = append(spots, spot)
 	}
 
 	bs, err := json.Marshal(spots)
@@ -84,94 +111,6 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusInternalServerError)
+	w.WriteHeader(http.StatusOK)
 	w.Write(bs)
-}
-
-func selectTopScores(hole string, max int) ([]Spot, error) {
-	/*
-		select top scores returns the top scorers for a specific hole.
-		1. It needs to make sure that the BGID for each response is unique
-		2. after getting the max amount of spots, map each bgid to player Username + github url
-	*/
-
-	ctx := context.Background()
-	iter := fs.Client.Collection("executes").Where("HoleID", "==", hole).Where("Correct", "==", true).
-		OrderBy("Length", firestore.Asc).Documents(ctx)
-
-	var spots = []Spot{}
-
-	contains := func(ss []Spot, bgid string) bool {
-		for _, s := range ss {
-			if s.bgid == bgid {
-				return true
-			}
-		}
-		return false
-	}
-
-	for {
-		// if the length of spots is already maxed out, return
-		if len(spots) >= max {
-			break
-		}
-
-		doc, err := iter.Next()
-		if err == iterator.Done {
-			break
-		}
-		if err != nil {
-			log.Errorf("Error listing leaders for hole (%s): %v", hole, err)
-			return nil, err
-		}
-
-		var ts compiler.TotalStore
-		err = mapstructure.Decode(doc.Data(), &ts)
-		if err != nil {
-			log.Errorf("Error decoding leaderboard submission for hole (%s): %v", hole, err)
-			return nil, err
-		}
-
-		// only append to the slice if the user's bgid is not already there
-		if !contains(spots, ts.BGID) {
-			spots = append(spots, Spot{
-				ShortSubmission: compiler.ShortSubmission{
-					ID:            ts.UUID,
-					Correct:       ts.Correct,
-					Language:      ts.Exe.Language,
-					Score:         ts.Length,
-					SubmittedTime: ts.SubmittedTime,
-				},
-				bgid: ts.BGID,
-			})
-		}
-
-	}
-
-	// now we have the submissions, ,map the users bgid to an actual user
-	// i could do some fancy stuff with go routines, but is it really worth it? maybe sometime down the road
-	for i := range spots {
-		user, err := github.RetreiveUser(spots[i].bgid)
-		if err != nil && err == github.ErrNotFound {
-			// if the user doesnt exist for some very odd reason, im going to make the name not found and link
-			// to my own github
-			log.Warnf("Submission %s could not find a matching user %s", spots[i].ID)
-			spots[i].GithubURI = "https://github.com/Squwid"
-			spots[i].Username = "Not Found"
-			continue
-		}
-		if err != nil || user == nil {
-			// make sure the user isnt null? i dont think this would ever happen but just incase
-			log.Errorf("Error getting user %s from users table: %v", spots[i].bgid, err)
-			spots[i].GithubURI = "https://github.com/Squwid"
-			spots[i].Username = "Not Found"
-			continue
-		}
-
-		spots[i].GithubURI = user.GithubURI
-		spots[i].Username = user.Username
-	}
-
-	log.Infof("Request to get leaders for hole %s returned %v lb spots", hole, len(spots))
-	return spots, nil
 }

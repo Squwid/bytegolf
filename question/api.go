@@ -3,18 +3,13 @@
 package question
 
 import (
-	"context"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
 
-	"cloud.google.com/go/firestore"
-	fs "github.com/Squwid/bytegolf/firestore"
 	"github.com/Squwid/bytegolf/sess"
 	"github.com/Squwid/bytegolf/util"
-	"github.com/mitchellh/mapstructure"
 	log "github.com/sirupsen/logrus"
-	"google.golang.org/api/iterator"
 )
 
 // ListQuestionsHandler is the questions handler which takes care of all question related endpoint tasks
@@ -32,9 +27,12 @@ func ListQuestionsHandler(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method == http.MethodGet {
 		var onlyLive = true
-		if r.URL.Query().Get("allQs") == "true" {
-			onlyLive = false
-		}
+		// i dont want this live part yet because that would be a lot more db reads
+		// if someone figured it out
+
+		// if r.URL.Query().Get("allQs") == "true" {
+		// 	onlyLive = false
+		// }
 
 		lightQs, err := listQuestions(onlyLive)
 		if err != nil {
@@ -82,39 +80,21 @@ func SingleHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		var qs = []Light{}
-		ctx := context.Background()
-		iter := fs.Client.Collection(collection).Where("ID", "==", qID).Documents(ctx)
-		for {
-			doc, err := iter.Next()
-			if err == iterator.Done {
-				break
-			}
-			if err != nil {
-				log.Errorf("error getting hole with id %s: %v", qID, err)
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
-			var q Light
-			err = mapstructure.Decode(doc.Data(), &q)
-			if err != nil {
-				log.Errorf("error decoding hole with id %s: %v", qID, err)
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
-			qs = append(qs, q)
-		}
-		log.Debugf("expected 1 or 0 questions got %v", len(qs))
-
-		if len(qs) == 0 {
-			w.WriteHeader(http.StatusNotFound)
+		fullQ, err := GetQuestion(qID)
+		if err != nil {
+			log.Errorf("Error getting question %s: %v", qID, err)
+			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-		if len(qs) > 1 {
-			log.Warnf("did not expect more than one question but got %v. Returning the first one", len(qs))
+		if fullQ == nil {
+			w.WriteHeader(http.StatusNotFound)
+			w.Write([]byte(`{"error": "hole not found"}`))
+			return
 		}
 
-		bs, err := json.Marshal(qs[0])
+		q := fullQ.TransformToLight()
+
+		bs, err := json.Marshal(q)
 		if err != nil {
 			log.Errorf("error marshalling hole %s: %v", qID, err)
 			w.WriteHeader(http.StatusInternalServerError)
@@ -178,39 +158,4 @@ func CreateHole(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(`{"success": "success"}`))
-}
-
-// listQuestions gets a list of questions that have the Live bool
-func listQuestions(onlyLive bool) ([]Light, error) {
-	var qs = []Light{}
-	ctx := context.Background()
-
-	// if onlyLive return only live questions, if not return every question
-	var iter *firestore.DocumentIterator
-	if onlyLive {
-		// only live questions
-		iter = fs.Client.Collection(collection).Where("Live", "==", true).Documents(ctx)
-	} else {
-		// all questions
-		iter = fs.Client.Collection(collection).Documents(ctx)
-	}
-
-	for {
-		doc, err := iter.Next()
-		if err == iterator.Done {
-			break
-		}
-		if err != nil {
-			return nil, err
-		}
-		var q Light
-		err = mapstructure.Decode(doc.Data(), &q)
-		if err != nil {
-			log.Errorf("error decoding object: %v", err)
-		} else {
-			log.Debugf("got data back, parsing: %s", doc.Data())
-			qs = append(qs, q)
-		}
-	}
-	return qs, nil
 }

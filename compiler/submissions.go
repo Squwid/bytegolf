@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
-	"time"
 
 	"cloud.google.com/go/firestore"
 	fs "github.com/Squwid/bytegolf/firestore"
@@ -13,26 +12,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/api/iterator"
 )
-
-/*
-	type submission struct {
-		ID            string    `json:"id"`
-		Correct       bool      `json:"correct"`
-		Language      string    `json:"language"`
-		Score         int       `json:"score"`
-		Script        string    `json:"script"`
-		SubmittedTime time.Time `json:"submitted_time"`
-	}
-*/
-
-// ShortSubmission is a submission with no script
-type ShortSubmission struct {
-	ID            string    `json:"id"`
-	Correct       bool      `json:"correct"`
-	Language      string    `json:"language"`
-	Score         int       `json:"score"`
-	SubmittedTime time.Time `json:"submitted_time"`
-}
 
 // Submission is the type that is returned by the submission
 type Submission struct {
@@ -79,179 +58,219 @@ func SubmissionsHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Only accept get methods
 	if r.Method != http.MethodGet {
-		w.WriteHeader(http.StatusInternalServerError)
+		w.WriteHeader(http.StatusForbidden)
 		return
 	}
 
 	// if the query string best is true, return the users best score
 	if r.URL.Query().Get("best") == "true" {
-		getBestSubmission(w, s, hole)
+		bestLong, err := GetBestSubmission(s.BGID, hole)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		if bestLong == nil {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+		best := bestLong.TransformToShort()
+
+		bs, err := json.Marshal(best)
+		if err != nil {
+			log.Errorf("Error marshalling best sub %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+		w.Write(bs)
 		return
 	}
 
+	// if subid is not none, then get a short submi
 	subID := r.URL.Query().Get("id")
 	if subID != "" {
-		getSingleSubmission(w, s, subID, hole)
+		sub, err := GetSingleSubmission(subID)
+		if err != nil {
+			log.Errorf("Error getting single submission: %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		if sub == nil {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+
+		// the sub is good so transform it to return a short submission + the
+		ss := sub.TransformToShort()
+		bs, err := json.Marshal(struct {
+			ShortSubmission
+			Script string `json:"script"`
+		}{
+			ShortSubmission: ss,
+			Script:          sub.Exe.Script,
+		})
+		if err != nil {
+			log.Errorf("Error getting a submission for %s with id %s", s.BGID, subID)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+		w.Write(bs)
 		return
 	}
 
 	// get request so get all of the requests for that user
-	listSubmissions(w, s, hole)
-}
-
-func getSingleSubmission(w http.ResponseWriter, s *sess.Session, subID, hole string) {
-	ctx := context.Background()
-	iter := fs.Client.Collection("executes").Where("BGID", "==", s.BGID).Where("HoleID", "==", hole).
-		Where("UUID", "==", subID).Limit(1).Documents(ctx)
-
-	var sub *Submission
-	for {
-		doc, err := iter.Next()
-		if err == iterator.Done {
-			break
-		}
-		if err != nil {
-			log.Errorf("Error getting single submission %s for %s on %s: %v", subID, s.BGID, hole, err)
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
-		var ts TotalStore
-		err = mapstructure.Decode(doc.Data(), &ts)
-		if err != nil {
-			log.Errorf("Error decoding single submission %s for %s on %s: %v", subID, s.BGID, hole, err)
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
-		sub = &Submission{
-			Script: ts.Exe.Script,
-			ShortSubmission: ShortSubmission{
-				ID:            ts.UUID,
-				Correct:       ts.Correct,
-				Language:      ts.Exe.Language,
-				Score:         ts.Length,
-				SubmittedTime: ts.SubmittedTime,
-			},
-		}
-	}
-
-	if sub == nil {
-		w.WriteHeader(http.StatusNotFound)
-		log.Warnf("Request to single submission but it wasnt found %s for %s on %s", subID, s.BGID, hole)
-		return
-	}
-
-	bs, err := json.Marshal(sub)
+	subs, err := ListShortSubmissions(s.BGID, hole, maxReturns)
 	if err != nil {
-		log.Errorf("Error marshalling non nil best sub for %s on %s: %v", s.BGID, hole, err)
+		log.Errorf("Error listing short submissions: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-
-	// WE DID IT
-	w.WriteHeader(http.StatusOK)
-	w.Write(bs)
-}
-
-func getBestSubmission(w http.ResponseWriter, s *sess.Session, hole string) {
-	ctx := context.Background()
-	iter := fs.Client.Collection("executes").Where("BGID", "==", s.BGID).Where("HoleID", "==", hole).
-		Where("Correct", "==", true).
-		Limit(1).OrderBy("Length", firestore.Asc).Documents(ctx)
-
-	var sub *Submission
-	for {
-		doc, err := iter.Next()
-		if err == iterator.Done {
-			break
-		}
-		if err != nil {
-			log.Errorf("Error getting best submission for %s on %s: %v", s.BGID, hole, err)
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
-		var ts TotalStore
-		err = mapstructure.Decode(doc.Data(), &ts)
-		if err != nil {
-			log.Errorf("Error decoding best submission for %s on %s: %v", s.BGID, hole, err)
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-		sub = &Submission{
-			Script: ts.Exe.Script,
-			ShortSubmission: ShortSubmission{
-				ID:            ts.UUID,
-				Correct:       ts.Correct,
-				Language:      ts.Exe.Language,
-				Score:         ts.Length,
-				SubmittedTime: ts.SubmittedTime,
-			},
-		}
-	}
-
-	// check if the submission is nil, if so return a 404 so i can handle it on the frontend
-	if sub == nil {
-		w.WriteHeader(http.StatusNotFound)
-		log.Warnf("Request to find best score for %s on %s but not found", s.BGID, hole)
-		return
-	}
-
-	// the sub is NOT nil so marshal it and return it to the user
-	bs, err := json.Marshal(sub)
-	if err != nil {
-		log.Errorf("Error marshalling non nil best sub for %s on %s: %v", s.BGID, hole, err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	// WE DID IT
-	w.WriteHeader(http.StatusOK)
-	w.Write(bs)
-}
-
-// listSubmissions runs each time a hole is loaded to grab all of the responses, if none exist then a blank list
-// will be returned meaning that the user has never submited a successful
-func listSubmissions(w http.ResponseWriter, s *sess.Session, hole string) {
-	qs, err := getQuestions(s.BGID, hole, maxReturns)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(err.Error()))
-		return
-	}
-
-	if len(qs) == 0 {
+	if len(subs) == 0 {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("[]"))
+		w.Write([]byte(`[]`))
 		return
 	}
-
-	// Getting all past submissions will then be parsed to a new structure to make sure that
-	// the user doesnt see anything that they shouldnt
-	var submissions = []ShortSubmission{}
-
-	for _, q := range qs {
-		// no script here because no need to pass that much data back and forth if
-		// its not going to be used that often
-		submissions = append(submissions, ShortSubmission{
-			ID:            q.UUID,
-			Correct:       q.Correct,
-			Language:      q.Exe.Language,
-			Score:         len(q.Exe.Script),
-			SubmittedTime: q.SubmittedTime,
-		})
-	}
-
-	bs, err := json.Marshal(submissions)
+	bs, err := json.Marshal(subs)
 	if err != nil {
-		log.Errorf("Error unmarshalling new short submissions: %v", err)
+		log.Errorf("Error marshalling submission list: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	log.Infof("Got %v responses for %v hole %v", len(submissions), s.BGID, hole)
 	w.WriteHeader(http.StatusOK)
 	w.Write(bs)
-	return
+}
+
+// GetSingleSubmission gets a single submission by using an id
+func GetSingleSubmission(id string) (*FullSubmission, error) {
+	ctx := context.Background()
+	iter := fs.Client.Collection("executes").Where("UUID", "==", id).Limit(1).Documents(ctx)
+
+	var sub FullSubmission
+
+	doc, err := iter.Next()
+	if err == iterator.Done {
+		// no result was found for that execution
+		log.Warnf("Request to get single submission %s was not found", id)
+		return nil, nil
+	}
+	if err != nil {
+		log.Errorf("Error getting single submission %s: %v", id, err)
+		return nil, err
+	}
+
+	err = mapstructure.Decode(doc.Data(), &sub)
+	if err != nil {
+		log.Errorf("Error decoding single submission %s: %v", id, err)
+		return nil, err
+	}
+
+	return &sub, nil
+}
+
+// ListShortSubmissions lists a users short submissions
+func ListShortSubmissions(bgid, hole string, max int) ([]ShortSubmission, error) {
+	ctx := context.Background()
+	iter := fs.Client.Collection("executes").Where("BGID", "==", bgid).
+		Where("HoleID", "==", hole).Limit(max).Documents(ctx)
+
+	var ss = []ShortSubmission{}
+	for {
+		doc, err := iter.Next()
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			log.Errorf("Error listing short submissions %s %v: %v", bgid, hole, err)
+			return nil, err
+		}
+
+		var sub FullSubmission
+		err = mapstructure.Decode(doc.Data(), &sub)
+		if err != nil {
+			log.Errorf("Error decoding short submission: %s %v: %v", bgid, hole, err)
+			return nil, err
+		}
+
+		short := sub.TransformToShort()
+		ss = append(ss, short)
+	}
+	return ss, nil
+}
+
+// GetBestSubmission gets the best submission for a specific user
+func GetBestSubmission(bgid, hole string) (*FullSubmission, error) {
+	ctx := context.Background()
+	iter := fs.Client.Collection("executes").Where("BGID", "==", bgid).
+		Where("HoleID", "==", hole).Where("Correct", "==", true).Limit(1).
+		OrderBy("Length", firestore.Asc).Documents(ctx)
+
+	var sub FullSubmission
+	doc, err := iter.Next()
+	if err == iterator.Done {
+		log.Warnf("Request to get best submission %s (%s) was not found", bgid, hole)
+		return nil, nil
+	}
+	if err != nil {
+		log.Errorf("Error getting best submission %s (%s): %v", bgid, hole, err)
+		return nil, err
+	}
+
+	err = mapstructure.Decode(doc.Data(), &sub)
+	if err != nil {
+		log.Errorf("Error decoding best submission %s (%s): %v", bgid, hole, err)
+		return nil, err
+	}
+
+	return &sub, nil
+}
+
+// GetBestSubmissionsOnHole gets the best submissions on a hole, this function is used for leaderboards
+func GetBestSubmissionsOnHole(hole string, max int) ([]FullSubmission, error) {
+	log.Infof("Request to list %v leaders on hole %s", max, hole)
+	ctx := context.Background()
+	iter := fs.Client.Collection("executes").Where("HoleID", "==", hole).Where("Correct", "==", true).
+		OrderBy("Length", firestore.Asc).Documents(ctx)
+
+	// contains is a function to see if the bgid is already in the slice
+	contains := func(ss []FullSubmission, bgid string) bool {
+		for _, s := range ss {
+			if s.BGID == bgid {
+				return true
+			}
+		}
+		return false
+	}
+
+	var subs = []FullSubmission{}
+	for {
+		// since this is dynamic and it keeps reading,
+		if len(subs) >= max {
+			break
+		}
+
+		doc, err := iter.Next()
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			log.Errorf("Error listing leaders for hole (%s): %v", hole, err)
+			return nil, err
+		}
+
+		var sub FullSubmission
+		err = mapstructure.Decode(doc.Data(), &sub)
+		if err != nil {
+			log.Errorf("Error decoding leaderboard submission for hole (%s): %v", hole, err)
+			return nil, err
+		}
+
+		// only append to the slice if the user's bgid is not already there
+		if !contains(subs, sub.BGID) {
+			subs = append(subs, sub)
+		}
+	}
+	log.Infof("Request to list %v best players on hole %s was successful and returned %v leaders", max, hole, len(subs))
+	return subs, nil
 }

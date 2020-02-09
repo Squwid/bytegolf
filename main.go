@@ -11,7 +11,8 @@ import (
 	_ "github.com/Squwid/bytegolf/firestore"
 	"github.com/Squwid/bytegolf/github"
 	"github.com/Squwid/bytegolf/leaderboard"
-	question "github.com/Squwid/bytegolf/questions"
+	question "github.com/Squwid/bytegolf/question"
+	log "github.com/sirupsen/logrus"
 )
 
 var siteAddr = "https://bytegolf.io"
@@ -39,10 +40,11 @@ func main() {
 	http.HandleFunc("/api/holes", question.ListQuestionsHandler) // list all of the holes
 	http.HandleFunc("/api/hole", question.SingleHandler)         // list a single hole
 	http.HandleFunc("/api/user", isLoggedIn)                     // checks if a user is logged in
-	http.HandleFunc("/compile", compiler.Handler)
+	http.HandleFunc("/api/compile", compiler.Handler)
 	http.HandleFunc("/api/submissions", compiler.SubmissionsHandler)
 	http.HandleFunc("/api/leaderboard", leaderboard.Handler)
-	http.ListenAndServe(":8080", nil)
+	log.Infof("Starting container on port :%s", port)
+	http.ListenAndServe(":"+port, nil)
 }
 
 func frontend(dir string) http.Handler {

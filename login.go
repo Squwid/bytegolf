@@ -10,6 +10,9 @@ import (
 
 // isLoggedIn is the api call that the front end makes to see if a user is signed in
 func isLoggedIn(w http.ResponseWriter, req *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "OPTIONS,GET")
+	w.Header().Set("Access-Control-Allow-Headers", "*")
 	w.Header().Set("Content-Type", "application/json")
 	loggedIn, s, err := sess.LoggedIn(req)
 	if err != nil {

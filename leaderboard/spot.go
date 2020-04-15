@@ -7,6 +7,7 @@ import (
 	"github.com/Squwid/bytegolf/compiler"
 	"github.com/Squwid/bytegolf/github"
 	"github.com/Squwid/bytegolf/question"
+	"github.com/Squwid/bytegolf/sess"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -58,6 +59,53 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		// question was not found so return a 404 with a desc that says youre lost (uzi)
 		w.WriteHeader(http.StatusNotFound)
 		w.Write([]byte(`{"error": "hole not found"}`))
+		return
+	}
+
+	// get the best score for a user with their github + stuff
+	best := r.URL.Query().Get("best")
+	if best != "" {
+		loggedIn, s, err := sess.LoggedIn(r)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		if !loggedIn || s == nil {
+			w.WriteHeader(http.StatusForbidden)
+			return
+		}
+
+		sub, err := compiler.GetBestSubmission(s.BGID, hole)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		if sub == nil {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+
+		ss := sub.TransformToShort()
+		user, err := github.RetreiveUser(sub.BGID)
+		if err != nil || user == nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		spot := Spot{
+			ShortSubmission: ss,
+			GithubURI:       user.GithubURI,
+			Username:        user.Username,
+		}
+		bs, err := json.Marshal(spot)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+		w.Write(bs)
 		return
 	}
 

@@ -17,3 +17,6 @@ creds.json
 todo.txt
 node_modules/
 Bytegolf.md
+
+dist/
+frontend/dist/

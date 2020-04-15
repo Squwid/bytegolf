@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -108,6 +109,17 @@ func Login(bgID string) (*Session, error) {
 // LoggedIn checks if a user is logged in using the incoming request
 // ONLY use the session here if they are logged in AND there are no errors
 func LoggedIn(req *http.Request) (bool, *Session, error) {
+
+	// if the environmental variable is prod then
+	if os.Getenv("prod") != "true" {
+		log.Infof("Cant check if user is logged in since local")
+		return true, &Session{
+			ID:      "100",
+			Timeout: time.Now().Add(time.Hour * 24).Unix(),
+			BGID:    os.Getenv("BGID"),
+		}, nil
+	}
+
 	cookie, err := req.Cookie(sessionID)
 	if err != nil {
 		return false, nil, nil

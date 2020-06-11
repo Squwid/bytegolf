@@ -1,27 +1,19 @@
 package main
 
 import (
-	"html/template"
 	"net/http"
 	"os"
-	"path"
-	"strings"
 
 	"github.com/Squwid/bytegolf/compiler"
 	_ "github.com/Squwid/bytegolf/firestore"
 	"github.com/Squwid/bytegolf/github"
-	"github.com/Squwid/bytegolf/leaderboard"
 	question "github.com/Squwid/bytegolf/question"
+	"github.com/Squwid/bytegolf/submissions"
+	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 )
 
 var siteAddr = "https://bytegolf.io"
-
-var tpl *template.Template
-
-func init() {
-	tpl = template.Must(template.ParseFiles("dist/frontend/index.html"))
-}
 
 func main() {
 	// getting the port here is essential when using google cloud run
@@ -30,31 +22,27 @@ func main() {
 		port = "80"
 	}
 
-	// host file server for frontend assets
-	http.Handle("/dist/frontend/", http.StripPrefix("/dist/frontend", http.FileServer(http.Dir("./dist/frontend"))))
+	r := mux.NewRouter()
 
 	// handlers
-	http.Handle("/", frontend("dist/frontend"))
-	http.HandleFunc("/login/check", github.Oauth)
-	http.HandleFunc("/login", github.Login)
-	http.HandleFunc("/api/holes", question.ListQuestionsHandler) // list all of the holes
-	http.HandleFunc("/api/hole", question.SingleHandler)         // list a single hole
-	http.HandleFunc("/api/user", isLoggedIn)                     // checks if a user is logged in
-	http.HandleFunc("/api/compile", compiler.Handler)
-	http.HandleFunc("/api/submissions", compiler.SubmissionsHandler)
-	http.HandleFunc("/api/leaderboard", leaderboard.Handler)
-	log.Infof("Starting container on port :%s", port)
-	http.ListenAndServe(":"+port, nil)
-}
+	r.HandleFunc("/login/check", github.Oauth)
+	r.HandleFunc("/login", github.Login)
 
-func frontend(dir string) http.Handler {
-	handler := http.FileServer(http.Dir(dir))
-	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		p := req.URL.Path
-		if strings.Contains(p, ".") || p == "/" {
-			handler.ServeHTTP(w, req)
-			return
-		}
-		http.ServeFile(w, req, path.Join(dir, "/index.html"))
-	})
+	r.HandleFunc("/api/holes", question.ListQuestionsHandler) // list all of the holes
+	r.HandleFunc("/api/hole", question.SingleHandler)         // list a single hole
+
+	// Check if a user is logged in for frontend purposes
+	r.HandleFunc("/api/user", isLoggedIn).Methods("GET") // checks if a user is logged in
+
+	// Compile request
+	r.HandleFunc("/api/compile", compiler.Handler)
+	// r.HandleFunc("/api/submissions", compiler.SubmissionsHandler)
+
+	/* SUBMISSION HANDLERS */
+	r.HandleFunc("/api/submissions/best/{hole}", submissions.GetPlayersBestSubmission).Methods("GET")
+	r.HandleFunc("/api/submissions/{hole}", submissions.GetLeaderboardForHole).Methods("GET")
+	r.HandleFunc("/api/submission/{id}", submissions.GetSingleSubmission).Methods("GET")
+
+	log.Infof("Starting container on port :%s", port)
+	http.ListenAndServe(":"+port, r)
 }

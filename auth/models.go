@@ -3,8 +3,8 @@ package auth
 import (
 	"time"
 
+	"github.com/Squwid/bytegolf/models"
 	"github.com/Squwid/bytegolf/secrets"
-	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/google/uuid"
 )
 
@@ -17,41 +17,15 @@ var client *secrets.Client
 var jwtKey []byte
 
 func init() {
-	client = secrets.Must(secrets.GetClient("BGGH")).(*secrets.Client)
+	client = secrets.Must(secrets.GetClient("Github")).(*secrets.Client)
 
 	jwtKey = []byte(secrets.Must(secrets.GetClient("JWT-KEY")).(*secrets.Client).Secret)
-	state = secrets.Must(secrets.GetClient("JWT-KEY")).(*secrets.Client).Secret
-}
-
-// GithubUser is the object that comes back from github on a user lookup
-type GithubUser struct {
-	ID        int64     `json:"id"`
-	Login     string    `json:"login"`
-	URL       string    `json:"html_url"`
-	AvatarURL string    `json:"avatar_url"`
-	UpdatedAt time.Time `json:"updated_at"`
-}
-
-// BytegolfUser is the structure of how bytegolf user's are stored in Github
-type BytegolfUser struct {
-	BGID            string
-	LastUpdatedTime time.Time
-	CreatedTime     time.Time
-
-	GithubUser GithubUser
-}
-
-// Claims is what gets stored in the JWT
-type Claims struct {
-	BGID string
-	// BytegolfUser BytegolfUser // For debugging
-
-	jwt.StandardClaims
+	state = secrets.Must(secrets.GetClient("State")).(*secrets.Client).Secret
 }
 
 // NewBytegolfUser returns a new bytegolf user
-func NewBytegolfUser(ghu GithubUser) *BytegolfUser {
-	return &BytegolfUser{
+func NewBytegolfUser(ghu models.GithubUser) *models.BytegolfUser {
+	return &models.BytegolfUser{
 		BGID:        uuid.New().String(),
 		GithubUser:  ghu,
 		CreatedTime: time.Now().UTC(),

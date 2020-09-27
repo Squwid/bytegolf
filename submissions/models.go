@@ -2,8 +2,7 @@ package submissions
 
 import (
 	"time"
-
-	"github.com/Squwid/bytegolf/question"
+	// "github.com/Squwid/bytegolf/question"
 )
 
 /* FULL SUBMISSION MODELS */
@@ -21,7 +20,7 @@ type FullSubmission struct {
 
 // TestOutput is the output of the tests that were run,
 type TestOutput struct {
-	question.Test
+	// question.Test
 	// ExecuteResponse
 	Correct bool
 }

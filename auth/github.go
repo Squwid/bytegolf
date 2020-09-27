@@ -6,6 +6,9 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/Squwid/bytegolf/models"
+	"github.com/gorilla/mux"
+	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -13,7 +16,7 @@ import (
 var ErrBadGithubStatus = errors.New("bad status code from github")
 
 // GetGithubUser gets a github user using their access token
-func GetGithubUser(token string) (*GithubUser, error) {
+func GetGithubUser(token string) (*models.GithubUser, error) {
 	// Create request
 	r, err := http.NewRequest("GET", "https://api.github.com/user", nil)
 	if err != nil {
@@ -36,7 +39,7 @@ func GetGithubUser(token string) (*GithubUser, error) {
 	}
 
 	// Parse to github object
-	var ghu GithubUser
+	var ghu models.GithubUser
 	if err := json.NewDecoder(resp.Body).Decode(&ghu); err != nil {
 		return nil, err
 	}
@@ -44,8 +47,8 @@ func GetGithubUser(token string) (*GithubUser, error) {
 	return &ghu, nil
 }
 
-// ProfileHandler is the handler to display a user's profile
-func ProfileHandler(w http.ResponseWriter, r *http.Request) {
+// ShowClaims shows the claims in the users cookie for the frontend
+func ShowClaims(w http.ResponseWriter, r *http.Request) {
 	loggedIn, claims := LoggedIn(r)
 	if !loggedIn {
 		w.Header().Set("Content-Type", "application/json")
@@ -53,27 +56,56 @@ func ProfileHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Get user from BGID
-	user, err := bytegolfUserFromBGID(claims.BGID)
-	if err != nil {
-		log.WithField("BGID", claims.BGID).WithError(err).Errorf("Got error getting users profile")
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-		return
-	}
-
-	if user == nil {
-		log.WithField("BGID", claims.BGID).Warnf("Expected user, but was not found")
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-		return
-	}
-
-	// Got User, Parse & Show
-	bs, err := json.Marshal(user)
+	// Marshal claims and return
+	bs, err := json.Marshal(claims)
 	if err != nil {
 		log.WithError(err).Errorf("Error marshalling claims")
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 
+	log.WithField("BGID", claims.BGID).WithField("IP", r.RemoteAddr).Infof("Retreived Claims")
+	w.Write(bs)
+}
+
+// ShowProfile shows the target user's profile
+func ShowProfile(w http.ResponseWriter, r *http.Request) {
+	bgid := mux.Vars(r)["bgid"]
+
+	log := logrus.WithFields(logrus.Fields{
+		"Action": "ShowProfile",
+		"BGID":   bgid,
+		"IP":     r.RemoteAddr,
+	})
+	log.Infof("Request to show profile")
+
+	// Get user by BGID
+	user, err := bytegolfUserFromBGID(bgid)
+	if err != nil {
+		log.WithError(err).Errorf("Error getting profile")
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	// User doesnt exist, return a 404
+	if user == nil {
+		log.Warnf("Profile not found")
+		http.Error(w, "Profile not found", http.StatusNotFound)
+		return
+	}
+
+	// Got user, translate to profile and send to user
+	profile := user.ToProfile()
+
+	bs, err := json.Marshal(profile)
+	if err != nil {
+		log.WithError(err).Errorf("Error marshalling profile")
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	log.Infof("Found profile")
+
+	w.Header().Set("Content-Type", "application/json")
 	w.Write(bs)
 }

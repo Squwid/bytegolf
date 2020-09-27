@@ -27,3 +27,7 @@ func ENV() string {
 		return EnvDev
 	}
 }
+
+func Addr() string {
+	return "http://192.168.1.158"
+}

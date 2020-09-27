@@ -27,7 +27,9 @@ func main() {
 	// r.HandleFunc("/api/hole", question.SingleHandler)         // list a single hole
 
 	// Check if a user is logged in for frontend purposes
-	r.HandleFunc("/api/profile/", auth.ProfileHandler).Methods("GET") // checks if a user is logged in
+
+	r.HandleFunc("/api/profile/{bgid}", auth.ShowProfile).Methods("GET") // checks if a user is logged in
+	r.HandleFunc("/api/claims", auth.ShowClaims).Methods("GET")          // Returns a user's claims
 
 	// Compile request
 	// r.HandleFunc("/api/compile", compiler.Handler)

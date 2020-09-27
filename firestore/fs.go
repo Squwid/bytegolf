@@ -14,7 +14,7 @@ var projectID = os.Getenv("PROJECT_ID")
 var Client *firestore.Client
 
 func init() {
-	fmt.Println("env: " + os.Getenv("GOOGLE_APPLICATION_CREDENTIALS"))
+	fmt.Println("creds: " + os.Getenv("GOOGLE_APPLICATION_CREDENTIALS"))
 	ctx := context.Background()
 	c, err := firestore.NewClient(ctx, projectID)
 	if err != nil {

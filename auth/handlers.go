@@ -3,10 +3,12 @@ package auth
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 
 	"github.com/Squwid/bytegolf/globals"
+	"github.com/Squwid/bytegolf/models"
 	jwt "github.com/dgrijalva/jwt-go"
 	log "github.com/sirupsen/logrus"
 )
@@ -39,7 +41,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	q.Add("allow_signup", "true")
 	if globals.ENV() == globals.EnvDev {
 		// Add redirect to localhost if dev stage
-		q.Add("redirect_uri", "http://localhost:"+globals.Port()+"/login/check")
+		q.Add("redirect_uri", fmt.Sprintf("%s:%s/login/check", globals.Addr(), globals.Port()))
 	}
 
 	ghReq.URL.RawQuery = q.Encode()
@@ -139,7 +141,7 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get Bytegolf User from GithubUser
-	bgUser, err := githubUser.Bytegolf()
+	bgUser, err := Bytegolf(githubUser)
 	if err != nil {
 		l.WithError(err).Errorf("Error swapping Github User -> Bytegolf User")
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
@@ -151,7 +153,7 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	expires := time.Now().Add(timeoutDur)
 
 	// Claims
-	claims := Claims{
+	claims := models.Claims{
 		BGID: bgUser.BGID,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: expires.Unix(),
@@ -184,7 +186,7 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // LoggedIn Checks if a user is logged in, if they are it returns their claims
-func LoggedIn(r *http.Request) (bool, *Claims) {
+func LoggedIn(r *http.Request) (bool, *models.Claims) {
 	// Get the cookie
 	cookie, err := r.Cookie(cookieName)
 	if err != nil {
@@ -195,7 +197,7 @@ func LoggedIn(r *http.Request) (bool, *Claims) {
 	signedToken := cookie.Value
 
 	// Claims var
-	var claims Claims
+	var claims models.Claims
 	token, err := jwt.ParseWithClaims(signedToken, &claims, func(token *jwt.Token) (interface{}, error) {
 		// TODO: Function to get the key
 		return jwtKey, nil

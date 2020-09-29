@@ -6,6 +6,7 @@ import (
 	"github.com/Squwid/bytegolf/auth"
 	_ "github.com/Squwid/bytegolf/firestore"
 	"github.com/Squwid/bytegolf/globals"
+	"github.com/Squwid/bytegolf/holes"
 	"github.com/Squwid/bytegolf/submissions"
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
@@ -23,8 +24,10 @@ func main() {
 	r.HandleFunc("/login/check", auth.CallbackHandler)
 	r.HandleFunc("/login", auth.LoginHandler)
 
-	// r.HandleFunc("/api/holes", question.ListQuestionsHandler) // list all of the holes
-	// r.HandleFunc("/api/hole", question.SingleHandler)         // list a single hole
+	/* HOLE ENDPOINTS */
+	r.HandleFunc("/api/holes", holes.ListHolesHandler).Methods("GET")   // Get all active holes
+	r.HandleFunc("/api/hole/{id}", holes.GetHoleHandler).Methods("GET") // Get single hole
+	r.HandleFunc("/api/holes", holes.StoreHoleHandler).Methods("POST")  // Store a hole
 
 	// Check if a user is logged in for frontend purposes
 

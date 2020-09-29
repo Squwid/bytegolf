@@ -27,6 +27,7 @@ func init() {
 func NewBytegolfUser(ghu models.GithubUser) *models.BytegolfUser {
 	return &models.BytegolfUser{
 		BGID:        uuid.New().String(),
+		Role:        "user",
 		GithubUser:  ghu,
 		CreatedTime: time.Now().UTC(),
 	}

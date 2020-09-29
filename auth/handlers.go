@@ -149,12 +149,13 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// TODO: Move JWT logic somewhere else
-	timeoutDur := time.Minute * 2
+	timeoutDur := time.Hour * 8
 	expires := time.Now().Add(timeoutDur)
 
 	// Claims
 	claims := models.Claims{
 		BGID: bgUser.BGID,
+		Role: bgUser.Role,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: expires.Unix(),
 			IssuedAt:  time.Now().Unix(),

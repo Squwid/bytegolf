@@ -65,6 +65,7 @@ func ShowClaims(w http.ResponseWriter, r *http.Request) {
 	}
 
 	log.WithField("BGID", claims.BGID).WithField("IP", r.RemoteAddr).Infof("Retreived Claims")
+	w.Header().Set("Content-Type", "application/json")
 	w.Write(bs)
 }
 

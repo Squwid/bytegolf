@@ -3,6 +3,7 @@ package models
 import (
 	"time"
 
+	"github.com/Squwid/bytegolf/roles"
 	"github.com/dgrijalva/jwt-go"
 )
 
@@ -19,21 +20,24 @@ type GithubUser struct {
 // DONT RETURN THIS TO USER
 type BytegolfUser struct {
 	BGID            string
+	Role            roles.Role
 	LastUpdatedTime time.Time
 	CreatedTime     time.Time
 
 	GithubUser GithubUser
 }
 
-type Profile struct {
+// BytegolfUserProfile is the BytegolfUser struct but with no sensitive fields
+type BytegolfUserProfile struct {
 	BGID        string `json:"BGID"`
 	DisplayName string `json:"DisplayName"`
 	GithubURL   string `json:"GithubUrl"`
 	AvatarURL   string `json:"AvatarUrl"`
 }
 
-func (bgu BytegolfUser) ToProfile() Profile {
-	return Profile{
+// ToProfile takes the BytegolfUser (Database object) and mutates it to a Profile (Frontend object)
+func (bgu BytegolfUser) ToProfile() BytegolfUserProfile {
+	return BytegolfUserProfile{
 		BGID:        bgu.BGID,
 		DisplayName: bgu.GithubUser.Login,
 		GithubURL:   bgu.GithubUser.URL,
@@ -43,7 +47,8 @@ func (bgu BytegolfUser) ToProfile() Profile {
 
 // Claims is what gets stored in the JWT
 type Claims struct {
-	BGID string `json:"BGID"`
+	BGID string     `json:"BGID"`
+	Role roles.Role `json:"Role"`
 
 	jwt.StandardClaims
 }

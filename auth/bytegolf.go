@@ -2,13 +2,14 @@ package auth
 
 import (
 	"context"
-	"strings"
 	"time"
 
 	fs "github.com/Squwid/bytegolf/firestore"
 	"github.com/Squwid/bytegolf/models"
 	"github.com/mitchellh/mapstructure"
 	log "github.com/sirupsen/logrus"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 // Store stores a bytegolf user into the table, rewriting the entire old object
@@ -71,9 +72,11 @@ func bytegolfUserFromGitID(gitID int64) (*models.BytegolfUser, error) {
 func bytegolfUserFromBGID(bgid string) (*models.BytegolfUser, error) {
 	ctx := context.Background()
 	doc, err := fs.Client.Collection(profileCollection).Doc(bgid).Get(ctx)
-	if err != nil && strings.Contains(err.Error(), "NotFound") {
+	if status.Code(err) == codes.NotFound {
+		// User not found
 		return nil, nil
 	}
+
 	if err != nil {
 		return nil, err
 	}

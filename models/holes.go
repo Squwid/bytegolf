@@ -10,20 +10,20 @@ import (
 // Hole is frontend hole structure
 type Hole struct {
 	// ID has to be no spaces, alphanumeric only
-	ID         string
-	Name       string
-	Difficulty string
-	Question   string
+	ID         string `json:"ID"`
+	Name       string `json:"Name"`
+	Difficulty string `json:"Difficulty"`
+	Question   string `json:"Question"`
 }
 
 // HoleDB inherits Hole with extra database fields. Dont export this to the user
 type HoleDB struct {
-	Hole Hole
+	Hole Hole `json:"Hole"`
 
-	CreatedAt     time.Time
-	CreatedBy     string
-	LastUpdatedAt time.Time
-	Active        bool
+	CreatedAt     time.Time `json:"CreatedAt"`
+	CreatedBy     string    `json:"CreatedBy"`
+	LastUpdatedAt time.Time `json:"LastUpdatedAt"`
+	Active        bool      `json:"Active"`
 }
 
 // NewHoleDB creates a new hole object for the database. If id is provided, it will be used.

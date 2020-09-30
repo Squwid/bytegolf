@@ -153,6 +153,7 @@ func StoreHoleHandler(w http.ResponseWriter, r *http.Request) {
 		hole.ID = uuid.New().String()
 	}
 
+	// Create the database hole object
 	dbHole := models.HoleDB{
 		Hole: hole,
 

@@ -39,9 +39,13 @@ func main() {
 	// r.HandleFunc("/api/submissions", compiler.SubmissionsHandler)
 
 	/* SUBMISSION HANDLERS */
-	r.HandleFunc("/api/submissions/best/{hole}", submissions.GetPlayersBestSubmission).Methods("GET")
-	r.HandleFunc("/api/submissions/{hole}", submissions.GetLeaderboardForHole).Methods("GET")
-	r.HandleFunc("/api/submission/{id}", submissions.GetSingleSubmission).Methods("GET")
+	r.HandleFunc("/api/submissions/{hole}", submissions.NewSubmissionHandler).Methods("POST")
+	// r.HandleFunc("/api/submissions/best/{hole}", submissions.GetPlayersBestSubmission).Methods("GET")
+	// r.HandleFunc("/api/submissions/{hole}", submissions.GetLeaderboardForHole).Methods("GET")
+	// r.HandleFunc("/api/submission/{id}", submissions.GetSingleSubmission).Methods("GET")
+
+	/* ADMIN HANDLERS */
+	r.HandleFunc("/api/admin/holes", holes.AdminListHolesDB).Methods("GET")
 
 	log.Infof("Starting container on port :%s", port)
 	http.ListenAndServe(":"+port, r)

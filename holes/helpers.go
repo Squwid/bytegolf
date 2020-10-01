@@ -32,6 +32,11 @@ func getDBHole(id string) (*models.HoleDB, error) {
 	return &hole, nil
 }
 
+// GetDBHole gets a DB hole, which contains tests and things
+func GetDBHole(id string) (*models.HoleDB, error) {
+	return getDBHole(id)
+}
+
 func storeDBHole(hole *models.HoleDB) error {
 	hole.LastUpdatedAt = time.Now()
 	_, err := fs.Client.Collection(HolesCollection).Doc(hole.Hole.ID).Set(context.Background(), *hole)
@@ -105,3 +110,19 @@ func GetHoles(onlyActive bool) ([]models.Hole, error) {
 
 	return holes, nil
 }
+
+// ErrHoleDoesntExist gets returned when trying to modify a hole that doesnt exist
+// var ErrHoleDoesntExist = errors.New("Hole doesnt exist")
+
+// func addTestToHole(holeID string) error {
+// 	// Check if hole exists
+
+// 	hole, err := getDBHole(holeID)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	if hole == nil {
+// 		return ErrHoleDoesntExist
+// 	}
+
+// }

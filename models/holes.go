@@ -3,8 +3,6 @@ package models
 import (
 	"strings"
 	"time"
-
-	"github.com/google/uuid"
 )
 
 // Hole is frontend hole structure
@@ -24,30 +22,23 @@ type HoleDB struct {
 	CreatedBy     string    `json:"CreatedBy"`
 	LastUpdatedAt time.Time `json:"LastUpdatedAt"`
 	Active        bool      `json:"Active"`
+
+	// Test Cases
+	Tests []TestCaseInput `json:"Tests"`
 }
 
-// NewHoleDB creates a new hole object for the database. If id is provided, it will be used.
-// otherwise a new id will be generated
-func NewHoleDB(id, name, difficulty, question string) *HoleDB {
-	// if id is not provided, generate a new one
-	if id == "" {
-		id = uuid.New().String()
-	} else {
-		// strip spaces and move to lowercase
-		id = strings.ToLower(id)
-		id = strings.ReplaceAll(id, " ", "-")
-	}
-	return &HoleDB{
-		Hole: Hole{
-			ID:         id,
-			Name:       name,
-			Difficulty: difficulty,
-			Question:   question,
-		},
-		CreatedAt:     time.Now(),
-		LastUpdatedAt: time.Now(),
-		Active:        true,
-	}
+// TestCaseInput is the struct for each of the test cases
+type TestCaseInput struct {
+	ID    string `json:"ID"`
+	Input string `json:"Input"`
+	// Solution is the test case solution, in Regex
+	Solution string `json:"Solution"`
+}
+
+type TestCaseOutput struct {
+	ID      string `json:"ID"` // Matches the TestCaseInputID
+	Output  string `json:"Output"`
+	Correct bool   `json:"Correct"`
 }
 
 // HoleTitle sets the hole title to an id using string lower

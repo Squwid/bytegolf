@@ -18,8 +18,7 @@ var jdoodleClientSecret string
 
 // Errors
 var (
-	ErrOutOfCredits         = errors.New("Out of credits error")
-	ErrUnexpectedStatusCode = errors.New("Unexpected status code")
+	ErrOutOfCredits = errors.New("Out of credits error")
 )
 
 func init() {
@@ -27,7 +26,7 @@ func init() {
 	jdoodleClientSecret = os.Getenv("JDOODLE_SECRET")
 }
 
-// SendJdoodle takes a CompileInput and sends it through
+// SendJdoodle takes a CompileInput and sends it through the jdoodle online compiler
 func SendJdoodle(input models.CompileInput) (*models.CompileOutput, error) {
 	// Body with the clientid and secret
 	body := struct {

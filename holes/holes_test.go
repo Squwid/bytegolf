@@ -4,13 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"strings"
 	"testing"
 	"time"
 
 	fs "github.com/Squwid/bytegolf/firestore"
 	"github.com/Squwid/bytegolf/models"
-	randomwords "github.com/Squwid/go-randomwords"
 	"github.com/google/uuid"
 	"github.com/mitchellh/mapstructure"
 )
@@ -42,33 +40,36 @@ func TestStoreHoleDB(t *testing.T) {
 	t.Logf("Stored %s\n", holedb.Hole.ID)
 }
 
-func TestMassStoreDB(t *testing.T) {
-	var max, count = 10, 0
+// func TestMassStoreDB(t *testing.T) {
+// 	var max, count = 10, 0
 
-	for {
-		if count >= max {
-			break
-		}
-		count++
+// 	for {
+// 		if count >= max {
+// 			break
+// 		}
+// 		count++
 
-		randomwords.NewRandSource()
+// 		randomwords.NewRandSource()
 
-		name := fmt.Sprintf("%s %s", randomwords.RandomAdjective(), randomwords.RandomNoun())
-		hole := models.NewHoleDB(name, name, "easy", "This is a question field here")
+// 		name := fmt.Sprintf("%s %s", randomwords.RandomAdjective(), randomwords.RandomNoun())
+// 		hole := models.HoleDB{
+// 			Hole: holem
+// 		}
+// 			// (name, name, "easy", "This is a question field here")
 
-		if strings.Contains(hole.Hole.ID, "a") {
-			hole.Active = false
-		}
+// 		if strings.Contains(hole.Hole.ID, "a") {
+// 			hole.Active = false
+// 		}
 
-		if err := storeDBHole(hole); err != nil {
-			t.Logf("Error storing DB Hole: %v\n", err)
-			t.FailNow()
-		}
+// 		if err := storeDBHole(hole); err != nil {
+// 			t.Logf("Error storing DB Hole: %v\n", err)
+// 			t.FailNow()
+// 		}
 
-		t.Logf("Stored %s in database\n", hole.Hole.ID)
-		time.Sleep(1 * time.Second)
-	}
-}
+// 		t.Logf("Stored %s in database\n", hole.Hole.ID)
+// 		time.Sleep(1 * time.Second)
+// 	}
+// }
 
 func TestListAllDBHoles(t *testing.T) {
 	var onlyActive = false

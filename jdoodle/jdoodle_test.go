@@ -28,6 +28,12 @@ func TestSendJdoodle(t *testing.T) {
 		t.FailNow()
 	}
 
+	// Test store as well
+	if err := store(in, *out, "abc-123"); err != nil {
+		t.Logf("Error storing: %v\n", err)
+		t.FailNow()
+	}
+
 	t.Logf("OUTPUT\n")
 	t.Logf("%v\n", string(bs))
 }

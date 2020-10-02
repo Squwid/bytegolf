@@ -42,12 +42,19 @@ type SubmissionDB struct {
 	HoleID string
 	BGID   string
 
+	// Holds all the compile inputs and outputs
 	Jdoodles []Jdoodle
 
-	Tests       []TestCaseInput
-	TestOutputs []TestCaseOutput
+	// Test Inputs and Outputs
+	Tests []SubmissionDBTest
 
 	MetaData SubmissionMetaData
+}
+
+// SubmissionDBTest is the embedded struct of TestInputs and TestOutputs
+type SubmissionDBTest struct {
+	TestInput  TestCaseInput
+	TestOutput TestCaseOutput
 }
 
 type Jdoodle struct {

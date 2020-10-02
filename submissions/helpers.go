@@ -144,13 +144,16 @@ func NewSubmissionHandler(w http.ResponseWriter, r *http.Request) {
 	close(compileChan)
 
 	var submissionDB = models.SubmissionDB{
-		ID:          uuid.New().String(),
-		HoleID:      hole,
-		BGID:        claims.BGID,
-		Jdoodles:    []models.Jdoodle{},
-		Tests:       []models.TestCaseInput{},
-		TestOutputs: []models.TestCaseOutput{},
-		MetaData:    models.SubmissionMetaData{},
+		ID:       uuid.New().String(),
+		HoleID:   hole,
+		BGID:     claims.BGID,
+		Jdoodles: []models.Jdoodle{},
+		// Tests: models.SubmissionDBTest{
+		// 	TestInputs:  []models.TestCaseInput{},
+		// 	TestOutputs: []models.TestCaseOutput{},
+		// },
+		Tests:    []models.SubmissionDBTest{},
+		MetaData: models.SubmissionMetaData{},
 	}
 
 	// Iterate over each test case
@@ -169,8 +172,14 @@ func NewSubmissionHandler(w http.ResponseWriter, r *http.Request) {
 			CompileInput:  compile.CompileIn,
 			CompileOutput: compile.CompileOut,
 		})
-		submissionDB.Tests = append(submissionDB.Tests, compile.TestIn)
-		submissionDB.TestOutputs = append(submissionDB.TestOutputs, compile.TestOut)
+
+		// Create a test object with TestIn and TestOut
+		fullTest := models.SubmissionDBTest{
+			TestInput:  compile.TestIn,
+			TestOutput: compile.TestOut,
+		}
+
+		submissionDB.Tests = append(submissionDB.Tests, fullTest)
 	}
 
 	// Add metadata
@@ -179,8 +188,8 @@ func NewSubmissionHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Check if all tests pass
 	var passedAll = true
-	for _, testOutput := range submissionDB.TestOutputs {
-		if !testOutput.Correct {
+	for _, test := range submissionDB.Tests {
+		if !test.TestOutput.Correct {
 			passedAll = false
 		}
 	}

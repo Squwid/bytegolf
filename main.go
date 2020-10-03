@@ -34,15 +34,10 @@ func main() {
 	r.HandleFunc("/api/profile/{bgid}", auth.ShowProfile).Methods("GET") // checks if a user is logged in
 	r.HandleFunc("/api/claims", auth.ShowClaims).Methods("GET")          // Returns a user's claims
 
-	// Compile request
-	// r.HandleFunc("/api/compile", compiler.Handler)
-	// r.HandleFunc("/api/submissions", compiler.SubmissionsHandler)
-
 	/* SUBMISSION HANDLERS */
+	r.HandleFunc("/api/submissions/me", submissions.GetMySubmissionsHandler).Methods("GET") // Possible `?hole={holeID}` query string
 	r.HandleFunc("/api/submissions/{hole}", submissions.NewSubmissionHandler).Methods("POST")
-	// r.HandleFunc("/api/submissions/best/{hole}", submissions.GetPlayersBestSubmission).Methods("GET")
-	// r.HandleFunc("/api/submissions/{hole}", submissions.GetLeaderboardForHole).Methods("GET")
-	// r.HandleFunc("/api/submission/{id}", submissions.GetSingleSubmission).Methods("GET")
+	r.HandleFunc("/api/submissions/{hole}", submissions.GetBestHoleSubmissionsHandler).Methods("GET")
 
 	/* ADMIN HANDLERS */
 	r.HandleFunc("/api/admin/holes", holes.AdminListHolesDB).Methods("GET")

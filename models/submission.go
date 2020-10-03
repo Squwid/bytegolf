@@ -38,9 +38,10 @@ type CompileDB struct {
 
 // SubmissionDB is the struct for submissions in the database. This is NOT passed to the user
 type SubmissionDB struct {
-	ID     string
-	HoleID string
-	BGID   string
+	ID        string
+	HoleID    string
+	BGID      string
+	CreatedAt time.Time
 
 	// Holds all the compile inputs and outputs
 	Jdoodles []Jdoodle
@@ -57,6 +58,40 @@ type SubmissionDBTest struct {
 	TestOutput TestCaseOutput
 }
 
+// SubmissionFrontend is what gets displayed to users
+type SubmissionFrontend struct {
+	ID        string
+	HoleID    string
+	BGID      string
+	CreatedAt time.Time
+	Correct   bool
+	Length    int
+	Language  string
+}
+
+// Frontend allows for a database object to be changed into a frontend object
+func (sdb SubmissionDB) Frontend() SubmissionFrontend {
+	// TODO: Somehow get github user information into this object
+	return SubmissionFrontend{
+		ID:        sdb.ID,
+		HoleID:    sdb.HoleID,
+		BGID:      sdb.BGID,
+		CreatedAt: sdb.CreatedAt,
+		Correct:   sdb.MetaData.Correct,
+		Length:    sdb.MetaData.Length,
+		Language:  sdb.MetaData.Language,
+	}
+}
+
+// SubmissionTransform transforms a list of database objects to frontend objects
+func SubmissionTransform(subs []SubmissionDB) []SubmissionFrontend {
+	var frontends = []SubmissionFrontend{}
+	for _, sub := range subs {
+		frontends = append(frontends, sub.Frontend())
+	}
+	return frontends
+}
+
 type Jdoodle struct {
 	CompileInput  CompileInput
 	CompileOutput CompileOutput
@@ -64,9 +99,10 @@ type Jdoodle struct {
 
 // SubmissionMetaData is submission meta data is the data like answer being correct, and length and user
 type SubmissionMetaData struct {
-	Code    string // The code input of each of the tests
-	Correct bool   // If the entire submission is correct or not
-	Length  int    // Length without comments
+	Code     string // The code input of each of the tests
+	Correct  bool   // If the entire submission is correct or not
+	Length   int    // Length without comments
+	Language string
 }
 
 // ErrLanguageNotFound is the error where a language isnt found

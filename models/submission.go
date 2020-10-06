@@ -7,8 +7,8 @@ import (
 
 // IncomingSubmission is the submission coming in from the logged in user
 type IncomingSubmission struct {
-	Code     string `json:"code"`
-	Language string `json:"language"`
+	Code     string `json:"Code"`
+	Language string `json:"Language"`
 }
 
 // CompileInput is the input of Jdoodle minus the ClientID and ClientSecret

@@ -36,6 +36,7 @@ func main() {
 
 	/* SUBMISSION HANDLERS */
 	r.HandleFunc("/api/submissions/me", submissions.GetMySubmissionsHandler).Methods("GET") // Possible `?hole={holeID}` query string
+	r.HandleFunc("/api/submissions/best/{hole}", submissions.GetBestSubmissionOnHoleHandler).Methods("GET")
 	r.HandleFunc("/api/submissions/{hole}", submissions.NewSubmissionHandler).Methods("POST")
 	r.HandleFunc("/api/submissions/{hole}", submissions.GetBestHoleSubmissionsHandler).Methods("GET")
 

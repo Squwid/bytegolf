@@ -16,6 +16,53 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// GetBestSubmissionOnHoleHandler gets the best submission on a hole
+func GetBestSubmissionOnHoleHandler(w http.ResponseWriter, r *http.Request) {
+	hole := mux.Vars(r)["hole"]
+
+	log := logrus.WithFields(logrus.Fields{
+		"Action": "BestSubmissionOnHole",
+		"IP":     r.RemoteAddr,
+		"Hole":   hole,
+	})
+
+	loggedIn, claims := auth.LoggedIn(r)
+	if !loggedIn {
+		log.Warnf("User not logged in")
+		http.Error(w, "Forbidden", http.StatusForbidden)
+		return
+	}
+
+	log = log.WithField("BGID", claims.BGID)
+
+	dbSub, err := getSingleBestSubmissionOnHole(hole, claims.BGID)
+	if err != nil {
+		log.WithError(err).Errorf("Error getting best submission for hole")
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+	if dbSub == nil {
+		http.Error(w, "not found", http.StatusNotFound)
+		log.Warnf("No best submission")
+		return
+	}
+
+	sub := dbSub.Frontend()
+
+	bs, err := json.Marshal(sub)
+	if err != nil {
+		log.WithError(err).Errorf("Error marshalling submission")
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+
+	log.Infof("Got best submission")
+
+	w.Write(bs)
+}
+
 // GetBestHoleSubmissionsHandler gets the best correct submissions for a specific hole
 func GetBestHoleSubmissionsHandler(w http.ResponseWriter, r *http.Request) {
 	const maxSubs = 5

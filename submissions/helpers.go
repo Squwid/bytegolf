@@ -36,6 +36,31 @@ func getDBSubmission(id string) (*models.SubmissionDB, error) {
 	return &sub, nil
 }
 
+func getSingleBestSubmissionOnHole(holeID, bgid string) (*models.SubmissionDB, error) {
+	ctx := context.Background()
+
+	// Get players best score
+	iter := fs.Client.Collection(submissionCollection).Where("MetaData.Correct", "==", true).
+		Where("HoleID", "==", holeID).Where("BGID", "==", bgid).OrderBy("MetaData.Length", firestore.Asc).
+		Limit(1).Documents(ctx)
+
+	docs, err := iter.GetAll()
+	if err != nil {
+		return nil, err
+	}
+
+	if len(docs) == 0 {
+		return nil, nil
+	}
+
+	var sub models.SubmissionDB
+	if err := docs[0].DataTo(&sub); err != nil {
+		return nil, err
+	}
+
+	return &sub, nil
+}
+
 // getBestSubmissionsOnHole gets the best submissions on a hole, but one per bgid
 func getBestSubmissionsOnHole(holeID string, max int) ([]models.SubmissionDB, error) {
 	ctx := context.Background()

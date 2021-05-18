@@ -8,7 +8,6 @@ import (
 
 	"github.com/Squwid/bytegolf/models"
 	"github.com/gorilla/mux"
-	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -34,8 +33,7 @@ func GetGithubUser(token string) (*models.GithubUser, error) {
 
 	// Check status code
 	if resp.StatusCode != http.StatusOK {
-		log.Warnf("Expected 200 from github but got %s (%v)", resp.Status, resp.StatusCode)
-		return nil, ErrBadGithubStatus
+		return nil, fmt.Errorf("got bad status code %v", resp.StatusCode)
 	}
 
 	// Parse to github object
@@ -64,7 +62,10 @@ func ShowClaims(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.WithField("BGID", claims.BGID).WithField("IP", r.RemoteAddr).Infof("Retreived Claims")
+	log.WithFields(log.Fields{
+		"BGID": claims.BGID,
+		"IP":   r.RemoteAddr,
+	}).Infof("Retreived Claims")
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(bs)
 }
@@ -73,7 +74,7 @@ func ShowClaims(w http.ResponseWriter, r *http.Request) {
 func ShowProfile(w http.ResponseWriter, r *http.Request) {
 	bgid := mux.Vars(r)["bgid"]
 
-	log := logrus.WithFields(logrus.Fields{
+	l := log.WithFields(log.Fields{
 		"Action": "ShowProfile",
 		"BGID":   bgid,
 		"IP":     r.RemoteAddr,
@@ -83,14 +84,14 @@ func ShowProfile(w http.ResponseWriter, r *http.Request) {
 	// Get user by BGID
 	user, err := bytegolfUserFromBGID(bgid)
 	if err != nil {
-		log.WithError(err).Errorf("Error getting profile")
+		l.WithError(err).Errorf("Error getting profile")
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 
 	// User doesnt exist, return a 404
 	if user == nil {
-		log.Warnf("Profile not found")
+		l.Warnf("Profile not found")
 		http.Error(w, "Profile not found", http.StatusNotFound)
 		return
 	}
@@ -100,12 +101,12 @@ func ShowProfile(w http.ResponseWriter, r *http.Request) {
 
 	bs, err := json.Marshal(profile)
 	if err != nil {
-		log.WithError(err).Errorf("Error marshalling profile")
+		l.WithError(err).Errorf("Error marshalling profile")
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 
-	log.Infof("Found profile")
+	l.Infof("Found profile")
 
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(bs)

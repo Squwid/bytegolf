@@ -1,33 +1,34 @@
 package auth
 
 import (
+	"os"
 	"time"
 
 	"github.com/Squwid/bytegolf/models"
-	"github.com/Squwid/bytegolf/secrets"
 	"github.com/google/uuid"
 )
 
-const profileCollection = "profile"
 const cookieName = "bg-token"
-const loginRedirect = "/api/profile/"
+const loginRedirect = "/" // Where to go post login
 
-var state string
-var client *secrets.Client
+var githubClient, githubSecret, githubState string
 var jwtKey []byte
 
 func init() {
-	client = secrets.Must(secrets.GetClient("Github")).(*secrets.Client)
+	githubClient = os.Getenv("GITHUB_CLIENT")
+	githubSecret = os.Getenv("GITHUB_SECRET")
+	githubState = os.Getenv("GITHUB_STATE")
+	jwtKey = []byte(os.Getenv("JWT_SECRET"))
 
-	jwtKey = []byte(secrets.Must(secrets.GetClient("JWT-KEY")).(*secrets.Client).Secret)
-	state = secrets.Must(secrets.GetClient("State")).(*secrets.Client).Secret
+	if githubClient == "" || githubSecret == "" || githubState == "" || len(jwtKey) == 0 {
+		panic("missing github env variables")
+	}
 }
 
 // NewBytegolfUser returns a new bytegolf user
 func NewBytegolfUser(ghu models.GithubUser) *models.BytegolfUser {
 	return &models.BytegolfUser{
 		BGID:        uuid.New().String(),
-		Role:        "user",
 		GithubUser:  ghu,
 		CreatedTime: time.Now().UTC(),
 	}

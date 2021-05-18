@@ -8,15 +8,17 @@ import (
 	"cloud.google.com/go/firestore"
 )
 
-var projectID = os.Getenv("PROJECT_ID")
+var projectID string
 
 // Client holds teh firestore client that is used in this api
 var Client *firestore.Client
 
 func init() {
 	fmt.Println("creds: " + os.Getenv("GOOGLE_APPLICATION_CREDENTIALS"))
-	ctx := context.Background()
-	c, err := firestore.NewClient(ctx, projectID)
+
+	projectID = os.Getenv("GCP_PROJECT_ID")
+
+	c, err := firestore.NewClient(context.Background(), projectID)
 	if err != nil {
 		panic(err)
 	}

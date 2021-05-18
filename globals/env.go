@@ -1,12 +1,21 @@
 package globals
 
-import "os"
-
-// Environment Constants
-const (
-	EnvDev  = "DEV"
-	EnvProd = "PROD"
+import (
+	"os"
+	"strings"
 )
+
+// Possible environments
+const (
+	EnvDev  = "dev"
+	EnvProd = "prod"
+)
+
+var ENV string
+
+func init() {
+	ENV = Env()
+}
 
 // Port gets the port for the application
 func Port() string {
@@ -17,17 +26,16 @@ func Port() string {
 	return port
 }
 
-// ENV Gets the current environment
-func ENV() string {
-	env := os.Getenv("BG_ENV")
+func Addr() string {
+	return "http://10.218.67.120"
+}
+
+func Env() string {
+	env := strings.ToLower(os.Getenv("BG_ENV"))
 	switch env {
-	case EnvDev, EnvProd:
+	case EnvProd:
 		return env
 	default:
 		return EnvDev
 	}
-}
-
-func Addr() string {
-	return "http://192.168.1.158"
 }

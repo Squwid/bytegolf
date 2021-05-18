@@ -3,7 +3,6 @@ package models
 import (
 	"time"
 
-	"github.com/Squwid/bytegolf/roles"
 	"github.com/dgrijalva/jwt-go"
 )
 
@@ -17,10 +16,8 @@ type GithubUser struct {
 }
 
 // BytegolfUser is the structure of how bytegolf user's are stored in the database
-// DONT RETURN THIS TO USER
 type BytegolfUser struct {
 	BGID            string
-	Role            roles.Role
 	LastUpdatedTime time.Time
 	CreatedTime     time.Time
 
@@ -47,8 +44,7 @@ func (bgu BytegolfUser) ToProfile() BytegolfUserProfile {
 
 // Claims is what gets stored in the JWT
 type Claims struct {
-	BGID string     `json:"BGID"`
-	Role roles.Role `json:"Role"`
+	BGID string `json:"BGID"`
 
 	jwt.StandardClaims
 }

@@ -16,7 +16,7 @@ import (
 // LoginHandler will send the request to Github to make sure that the user is logged in
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	l := log.WithField("Action", "LoginRequest")
-	l.Infof("Login Request")
+	l.Infof("New login request")
 
 	// Check if user is already logged in
 	loggedIn, _ := LoggedIn(r)
@@ -36,11 +36,11 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Query Strings
 	q := ghReq.URL.Query()
-	q.Add("client_id", client.Client)
-	q.Add("state", state)
+	q.Add("client_id", githubClient)
+	q.Add("state", githubState)
 	q.Add("allow_signup", "true")
-	if globals.ENV() == globals.EnvDev {
-		// Add redirect to localhost if dev stage
+	if globals.ENV == globals.EnvDev {
+		// TODO: Why doesnt the redirect_uri work
 		q.Add("redirect_uri", fmt.Sprintf("%s:%s/login/check", globals.Addr(), globals.Port()))
 	}
 
@@ -61,11 +61,11 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	l.WithFields(log.Fields{
 		"Code":  codeResp,
 		"State": stateResp,
-	}).Infof("Github Callback")
+	}).Infof("Github callback")
 
 	// Check state
-	if stateResp != state {
-		l.Warnf("State %s does not match expected state")
+	if stateResp != githubState {
+		l.Warnf("State %s does not match expected state", stateResp)
 		http.Error(w, "Bad request", http.StatusBadRequest)
 		return
 	}
@@ -77,8 +77,8 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 		Code         string `json:"code"`
 		State        string `json:"state"`
 	}{
-		ClientID:     client.Client,
-		ClientSecret: client.Secret,
+		ClientID:     githubClient,
+		ClientSecret: githubSecret,
 		Code:         codeResp,
 		State:        stateResp,
 	})
@@ -155,7 +155,6 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	// Claims
 	claims := models.Claims{
 		BGID: bgUser.BGID,
-		Role: bgUser.Role,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: expires.Unix(),
 			IssuedAt:  time.Now().Unix(),

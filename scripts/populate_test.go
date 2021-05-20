@@ -1,13 +1,13 @@
 package scripts
 
 import (
-	"encoding/json"
 	"fmt"
 	"strings"
 	"testing"
 	"time"
 
-	"github.com/Squwid/bytegolf/models"
+	"github.com/Squwid/bytegolf/db"
+	"github.com/Squwid/bytegolf/holes"
 	"github.com/Squwid/go-randomwords"
 )
 
@@ -40,8 +40,8 @@ func randomDate() time.Time {
 	return randomwords.Date(begin, end)
 }
 
-func randomHole() models.Hole {
-	return models.Hole{
+func randomHole() holes.Hole {
+	return holes.Hole{
 		ID:            randomID(),
 		Name:          strings.Title(randomParagraph(3, 10)),
 		Difficulty:    randomDifficulty(),
@@ -53,8 +53,8 @@ func randomHole() models.Hole {
 	}
 }
 
-func randomHoles(num int) models.Holes {
-	var holes = make(models.Holes, num)
+func randomHoles(num int) holes.Holes {
+	var holes = make(holes.Holes, num)
 	for i := 0; i < num; i++ {
 		holes[i] = randomHole()
 	}
@@ -63,13 +63,13 @@ func randomHoles(num int) models.Holes {
 
 // Test-prefixed just for vscode to be happy
 func TestPopulateHoles(t *testing.T) {
-	const holeCount = 10
+	const holeCount = 30
 	holes := randomHoles(holeCount)
 
-	bs, err := json.Marshal(holes)
-	if err != nil {
-		t.FailNow()
+	for _, hole := range holes {
+		if err := db.Store(hole); err != nil {
+			t.Logf("Error storing hole: %v\n", err)
+			t.FailNow()
+		}
 	}
-
-	fmt.Println(string(bs))
 }

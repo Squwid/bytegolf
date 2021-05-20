@@ -8,11 +8,11 @@ import (
 )
 
 func ProfileCollection() *firestore.CollectionRef {
-	return Client.Collection(prefix("Profile"))
+	return client.Collection(prefix("Profile"))
 }
 
 func HoleCollection() *firestore.CollectionRef {
-	return Client.Collection(prefix("Hole"))
+	return client.Collection(prefix("Hole"))
 }
 
 func prefix(collection string) string {

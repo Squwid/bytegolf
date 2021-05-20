@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	fs "github.com/Squwid/bytegolf/firestore"
+	"github.com/Squwid/bytegolf/db"
 	"github.com/Squwid/bytegolf/models"
 	"github.com/mitchellh/mapstructure"
 	log "github.com/sirupsen/logrus"
@@ -16,7 +16,7 @@ import (
 func Store(bgu *models.BytegolfUser) error {
 	bgu.LastUpdatedTime = time.Now().UTC() // set last updated time
 
-	_, err := fs.Client.Collection(fs.ProfileCollection()).Doc(bgu.BGID).Set(context.Background(), *bgu)
+	_, err := db.ProfileCollection().Doc(bgu.BGID).Set(context.Background(), *bgu)
 	return err
 }
 
@@ -45,7 +45,7 @@ func Bytegolf(ghu *models.GithubUser) (*models.BytegolfUser, error) {
 // does not exist
 func bytegolfUserFromGitID(gitID int64) (*models.BytegolfUser, error) {
 	ctx := context.Background()
-	docs, err := fs.Client.Collection(fs.ProfileCollection()).Where("GithubUser.ID", "==", gitID).Documents(ctx).GetAll()
+	docs, err := db.ProfileCollection().Where("GithubUser.ID", "==", gitID).Documents(ctx).GetAll()
 	if err != nil {
 		return nil, err
 	}
@@ -70,7 +70,7 @@ func bytegolfUserFromGitID(gitID int64) (*models.BytegolfUser, error) {
 // It will return nil, nil if one does not exist
 func bytegolfUserFromBGID(bgid string) (*models.BytegolfUser, error) {
 	ctx := context.Background()
-	doc, err := fs.Client.Collection(fs.ProfileCollection()).Doc(bgid).Get(ctx)
+	doc, err := db.ProfileCollection().Doc(bgid).Get(ctx)
 	if status.Code(err) == codes.NotFound {
 		// User not found
 		return nil, nil

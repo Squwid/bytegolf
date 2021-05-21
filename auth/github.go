@@ -7,7 +7,6 @@ import (
 	"net/http"
 
 	"github.com/Squwid/bytegolf/models"
-	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -66,48 +65,6 @@ func ShowClaims(w http.ResponseWriter, r *http.Request) {
 		"BGID": claims.BGID,
 		"IP":   r.RemoteAddr,
 	}).Infof("Retreived Claims")
-	w.Header().Set("Content-Type", "application/json")
-	w.Write(bs)
-}
-
-// ShowProfile shows the target user's profile
-func ShowProfile(w http.ResponseWriter, r *http.Request) {
-	bgid := mux.Vars(r)["bgid"]
-
-	l := log.WithFields(log.Fields{
-		"Action": "ShowProfile",
-		"BGID":   bgid,
-		"IP":     r.RemoteAddr,
-	})
-	log.Infof("Request to show profile")
-
-	// Get user by BGID
-	user, err := bytegolfUserFromBGID(bgid)
-	if err != nil {
-		l.WithError(err).Errorf("Error getting profile")
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-		return
-	}
-
-	// User doesnt exist, return a 404
-	if user == nil {
-		l.Warnf("Profile not found")
-		http.Error(w, "Profile not found", http.StatusNotFound)
-		return
-	}
-
-	// Got user, translate to profile and send to user
-	profile := user.ToProfile()
-
-	bs, err := json.Marshal(profile)
-	if err != nil {
-		l.WithError(err).Errorf("Error marshalling profile")
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-		return
-	}
-
-	l.Infof("Found profile")
-
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(bs)
 }

@@ -63,5 +63,10 @@ func Get(getter models.Getter) (map[string]interface{}, error) {
 		return nil, err
 	}
 
-	return doc.Data(), nil
+	data := doc.Data()
+	if err := getter.Transform(data); err != nil {
+		return nil, err
+	}
+
+	return data, nil
 }

@@ -2,20 +2,9 @@ package models
 
 import "cloud.google.com/go/firestore"
 
-// Storer is the interface for database objects that get stored
-type Storer interface {
-	Collection() *firestore.CollectionRef
-	DocID() string
-	Data() interface{}
-}
-
 type Queryer interface {
 	Query() firestore.Query
 	Transform(map[string]interface{}) error
-}
-
-type Getter interface {
-	Doc() *firestore.DocumentRef
 }
 
 type Query struct {
@@ -29,7 +18,6 @@ func (q Query) Transform(item map[string]interface{}) error {
 	if q.transform == nil {
 		return nil
 	}
-
 	return q.transform(item)
 }
 

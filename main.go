@@ -7,6 +7,7 @@ import (
 	_ "github.com/Squwid/bytegolf/db"
 	"github.com/Squwid/bytegolf/globals"
 	"github.com/Squwid/bytegolf/holes"
+	"github.com/Squwid/bytegolf/profiles"
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 )
@@ -23,9 +24,10 @@ func main() {
 	r.HandleFunc("/login", auth.LoginHandler)
 
 	r.HandleFunc("/api/holes", holes.ListHoles).Methods("GET")
+	r.HandleFunc("/api/hole/{id}", holes.GetHole).Methods("GET")
 
-	r.HandleFunc("/api/profile/{bgid}", auth.ShowProfile).Methods("GET") // checks if a user is logged in
-	r.HandleFunc("/api/claims", auth.ShowClaims).Methods("GET")          // Returns a user's claims
+	r.HandleFunc("/api/profile/{id}", profiles.GetProfile).Methods("GET") // checks if a user is logged in
+	r.HandleFunc("/api/claims", auth.ShowClaims).Methods("GET")           // Returns a user's claims
 
 	log.Infof("Starting container on port :%s", port)
 	http.ListenAndServe(":"+port, r)

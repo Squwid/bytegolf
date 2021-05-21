@@ -8,7 +8,7 @@ import (
 
 	"github.com/Squwid/bytegolf/db"
 	"github.com/Squwid/bytegolf/holes"
-	"github.com/Squwid/go-randomwords"
+	"github.com/Squwid/go-randomizer"
 )
 
 var difficulties = []string{
@@ -20,16 +20,16 @@ var difficulties = []string{
 }
 
 func randomDifficulty() string {
-	return difficulties[randomwords.Number(0, len(difficulties)-1)]
+	return difficulties[randomizer.Number(0, len(difficulties)-1)]
 }
 
 func randomID() string {
-	return fmt.Sprintf("%s_%s", randomwords.Word(), randomwords.Word())
+	return fmt.Sprintf("%s_%s", randomizer.Word(), randomizer.Word())
 }
 
 func randomParagraph(min, max int) string {
-	length := randomwords.Number(min, max)
-	words := randomwords.Words(length)
+	length := randomizer.Number(min, max)
+	words := randomizer.Words(length)
 
 	return strings.Join(words, " ")
 }
@@ -37,7 +37,7 @@ func randomParagraph(min, max int) string {
 func randomDate() time.Time {
 	begin := time.Date(2020, 1, 0, 0, 0, 0, 0, time.UTC)
 	end := time.Date(2021, 1, 0, 0, 0, 0, 0, time.UTC)
-	return randomwords.Date(begin, end)
+	return randomizer.Date(begin, end)
 }
 
 func randomHole() holes.Hole {

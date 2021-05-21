@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/Squwid/bytegolf/auth"
+	"github.com/Squwid/bytegolf/compiler/jdoodle"
 	_ "github.com/Squwid/bytegolf/db"
 	"github.com/Squwid/bytegolf/globals"
 	"github.com/Squwid/bytegolf/holes"
@@ -25,6 +26,8 @@ func main() {
 
 	r.HandleFunc("/api/holes", holes.ListHoles).Methods("GET")
 	r.HandleFunc("/api/hole/{id}", holes.GetHole).Methods("GET")
+
+	r.HandleFunc("/api/submit/{hole}", jdoodle.SubmissionHandler).Methods("POST")
 
 	r.HandleFunc("/api/profile/{id}", profiles.GetProfile).Methods("GET") // checks if a user is logged in
 	r.HandleFunc("/api/claims", auth.ShowClaims).Methods("GET")           // Returns a user's claims

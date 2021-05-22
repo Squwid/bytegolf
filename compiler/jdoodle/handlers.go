@@ -2,6 +2,7 @@ package jdoodle
 
 import (
 	"encoding/json"
+	"io/ioutil"
 	"net/http"
 
 	"github.com/Squwid/bytegolf/compiler"
@@ -64,8 +65,22 @@ func SubmissionHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Infof("Sucessful compile request")
+	// TODO: Check other status codes
+	if compileOutput.StatusCode != http.StatusOK {
+		w.WriteHeader(http.StatusInternalServerError)
+		log.Errorf("Got bad status code from compiler : %v", compileOutput.StatusCode)
+		return
+	}
 
-	bs, _ := json.Marshal(compileOutput.Out)
+	bs, err := ioutil.ReadAll(compileOutput.Body)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		log.WithError(err).Errorf("Error reading body")
+		return
+	}
+	compileOutput.Body.Close()
+
+	w.Header().Set("Content-Type", "application/json")
 	w.Write(bs)
+	log.Infof("Successful compile request")
 }

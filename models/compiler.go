@@ -1,6 +1,9 @@
 package models
 
-import "net/http"
+import (
+	"io"
+	"net/http"
+)
 
 type RemoteCompiler interface {
 	Client() *http.Client
@@ -9,6 +12,7 @@ type RemoteCompiler interface {
 }
 
 type RemoteCompilerOutput struct {
-	Out map[string]interface{}
-	Err error
+	StatusCode int
+	Body       io.ReadCloser
+	Err        error
 }

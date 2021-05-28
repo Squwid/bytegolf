@@ -22,6 +22,17 @@ type Hole struct {
 	Active        bool      `json:"Active"`
 }
 
+type Tests []Test
+
+type Test struct {
+	ID          string `json:"ID"`
+	Input       string `json:"Input"`
+	OutputRegex string `json:"OutputRegex"`
+	Active      bool   `json:"Active"`
+
+	CreatedAt time.Time `json:"CreatedAt"`
+}
+
 func transformHole(hole map[string]interface{}) error {
 	delete(hole, "CreatedBy")
 	return nil

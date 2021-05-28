@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/Squwid/bytegolf/globals"
-	"github.com/Squwid/bytegolf/models"
 	jwt "github.com/dgrijalva/jwt-go"
 	log "github.com/sirupsen/logrus"
 )
@@ -153,7 +152,7 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	expires := time.Now().Add(timeoutDur)
 
 	// Claims
-	claims := models.Claims{
+	claims := Claims{
 		BGID: bgUser.BGID,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: expires.Unix(),
@@ -186,7 +185,7 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // LoggedIn Checks if a user is logged in, if they are it returns their claims
-func LoggedIn(r *http.Request) (bool, *models.Claims) {
+func LoggedIn(r *http.Request) (bool, *Claims) {
 	// Get the cookie
 	cookie, err := r.Cookie(cookieName)
 	if err != nil {
@@ -197,7 +196,7 @@ func LoggedIn(r *http.Request) (bool, *models.Claims) {
 	signedToken := cookie.Value
 
 	// Claims var
-	var claims models.Claims
+	var claims Claims
 	token, err := jwt.ParseWithClaims(signedToken, &claims, func(token *jwt.Token) (interface{}, error) {
 		// TODO: Function to get the key
 		return jwtKey, nil

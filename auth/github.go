@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/Squwid/bytegolf/models"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -14,7 +13,7 @@ import (
 var ErrBadGithubStatus = errors.New("bad status code from github")
 
 // GetGithubUser gets a github user using their access token
-func GetGithubUser(token string) (*models.GithubUser, error) {
+func GetGithubUser(token string) (*GithubUser, error) {
 	// Create request
 	r, err := http.NewRequest("GET", "https://api.github.com/user", nil)
 	if err != nil {
@@ -36,7 +35,7 @@ func GetGithubUser(token string) (*models.GithubUser, error) {
 	}
 
 	// Parse to github object
-	var ghu models.GithubUser
+	var ghu GithubUser
 	if err := json.NewDecoder(resp.Body).Decode(&ghu); err != nil {
 		return nil, err
 	}

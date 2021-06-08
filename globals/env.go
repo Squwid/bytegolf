@@ -10,7 +10,7 @@ const BGID = "9581d9ef-d998-4903-b88c-5345e980770f"
 
 // Possible environments
 const (
-	EnvDev  = "dev"
+	EnvDev  = "stage"
 	EnvProd = "prod"
 )
 
@@ -30,11 +30,11 @@ func Port() string {
 }
 
 func Addr() string {
-	return "http://10.218.67.120"
+	return os.Getenv("ADDR")
 }
 
 func Env() string {
-	env := strings.ToLower(os.Getenv("BG_ENV"))
+	env := strings.ToLower(os.Getenv("env"))
 	switch env {
 	case EnvProd:
 		return env

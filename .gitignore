@@ -20,3 +20,8 @@ Bytegolf.md
 
 dist/
 frontend/dist/
+
+terraform/squid-cloud.json
+terraform/terraform.tfvars
+.terraform/
+*.backup

@@ -1,4 +1,4 @@
-FROM golang:1.16.4-alpine3.10 AS build
+FROM golang:1.16.4-alpine3.11 AS build
 RUN apk add --no-cache git
 ADD . /bytegolf
 WORKDIR /bytegolf

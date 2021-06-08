@@ -9,6 +9,7 @@ import (
 	"github.com/Squwid/bytegolf/globals"
 	"github.com/Squwid/bytegolf/holes"
 	"github.com/Squwid/bytegolf/profiles"
+
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 )

@@ -43,18 +43,12 @@ func HoleTitle(str string) string {
 	return strings.ToLower(strings.ReplaceAll(str, " ", "-"))
 }
 
-func (h Hole) Collection() *firestore.CollectionRef {
-	return db.HoleCollection()
-}
+// DB Interface stuff
+func (h Hole) Collection() *firestore.CollectionRef { return db.HoleCollection() }
+func (h Hole) DocID() string                        { return h.ID }
+func (h Hole) Data() interface{}                    { return h }
 
-func (h Hole) DocID() string {
-	return h.ID
-}
-
-func (h Hole) Data() interface{} {
-	return h
-}
-
+// Sort interface stuff
 func (hs Holes) Len() int           { return len(hs) }
 func (hs Holes) Swap(i, j int)      { hs[i], hs[j] = hs[j], hs[i] }
 func (hs Holes) Less(i, j int) bool { return hs[i].CreatedAt.Before(hs[j].CreatedAt) }

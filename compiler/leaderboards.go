@@ -89,6 +89,7 @@ func LeaderboardHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
+	log = log.WithField("Hole", hole)
 
 	query := db.SubmissionsCollection().Where("Correct", "==", true).Where("HoleID", "==", hole).
 		OrderBy("Length", firestore.Asc).OrderBy("SubmittedTime", firestore.Asc)
@@ -99,7 +100,7 @@ func LeaderboardHandler(w http.ResponseWriter, r *http.Request) {
 		tLimit, err := strconv.Atoi(limitStr)
 		if err != nil {
 			log.WithError(err).Warnf("Invalid limit input '%s'", limitStr)
-		} else if tLimit > 5 || limit <= 0 {
+		} else if tLimit > 10 || limit <= 0 {
 			log.Warnf("Invalid limit input '%v'", tLimit)
 		} else {
 			limit = tLimit
@@ -111,8 +112,6 @@ func LeaderboardHandler(w http.ResponseWriter, r *http.Request) {
 		log = log.WithField("Lang", lang)
 		query = query.Where("Language", "==", lang)
 	}
-
-	log.Infof("Leaderboard request")
 
 	leaders, err := LeaderboardQuery(query, limit)
 	if err != nil {

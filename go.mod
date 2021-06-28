@@ -10,7 +10,7 @@ require (
 	github.com/mitchellh/mapstructure v1.4.1
 	github.com/sirupsen/logrus v1.6.0
 	golang.org/x/sys v0.0.0-20200602225109-6fdc65e7d980 // indirect
-	google.golang.org/api v0.21.0 // indirect
+	google.golang.org/api v0.21.0
 	google.golang.org/grpc v1.38.0
 )
 

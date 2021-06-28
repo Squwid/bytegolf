@@ -5,10 +5,12 @@ import (
 	"testing"
 
 	"cloud.google.com/go/firestore"
+	"github.com/Squwid/bytegolf/compiler"
 	"github.com/Squwid/bytegolf/db"
 	"github.com/Squwid/bytegolf/holes"
 	"github.com/Squwid/bytegolf/models"
 	"github.com/Squwid/go-randomizer"
+	"github.com/google/uuid"
 	"github.com/mitchellh/mapstructure"
 )
 
@@ -24,6 +26,19 @@ var possibleBGIDs = []string{
 	"039f073a7ee9",
 }
 
+var possibleLangs = []string{
+	"go",
+	"python2",
+	"python3",
+	"php",
+	"javascript",
+	"bash",
+}
+
+func randomDBLang() string {
+	return possibleLangs[randomizer.Number(0, len(possibleLangs))]
+}
+
 func randomDBHole() (holes.Hole, error) {
 	if possibleHoles == nil {
 		hs, err := allHoles()
@@ -34,7 +49,7 @@ func randomDBHole() (holes.Hole, error) {
 		possibleHoles = hs
 	}
 
-	return possibleHoles[randomizer.Number(0, len(possibleHoles)-1)], nil
+	return possibleHoles[randomizer.Number(0, len(possibleHoles))], nil
 }
 
 func randomDBBGID() string {
@@ -65,6 +80,22 @@ func TestPopulateSubmissions(t *testing.T) {
 			panic(err)
 		}
 
-		fmt.Printf("[%v] %v\n", i, h.ID)
+		p := randomParagraph(5, 100)
+
+		sub := compiler.SubmissionDB{
+			ID:       uuid.NewString(),
+			Script:   p,
+			Language: randomDBLang(),
+			Version:  "0",
+			Correct:  randomizer.Number(0, 2) == 1,
+			BGID:     randomDBBGID(),
+			HoleID:   h.ID,
+			Length:   int64(len(p)),
+			Tests:    nil,
+		}
+
+		if err := db.Store(sub); err != nil {
+			panic(err)
+		}
 	}
 }

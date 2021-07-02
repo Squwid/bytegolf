@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"cloud.google.com/go/firestore"
+	"github.com/Squwid/bytegolf/auth"
 	"github.com/Squwid/bytegolf/db"
 	"github.com/Squwid/bytegolf/models"
 	"github.com/gorilla/mux"
@@ -14,9 +15,12 @@ import (
 )
 
 func ListHoles(w http.ResponseWriter, r *http.Request) {
-	log := logrus.WithFields(logrus.Fields{
-		"Action": "ListHoles",
-	})
+	claims := auth.LoggedIn(r)
+
+	log := logrus.WithField("Action", "ListHoles")
+	if claims != nil {
+		log = log.WithField("User", claims.BGID)
+	}
 
 	query := db.HoleCollection().OrderBy("CreatedAt", firestore.Desc).Where("Active", "==", true).Limit(100)
 

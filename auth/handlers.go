@@ -18,8 +18,8 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	l.Infof("New login request")
 
 	// Check if user is already logged in
-	loggedIn, _ := LoggedIn(r)
-	if loggedIn {
+	claims := LoggedIn(r)
+	if claims != nil {
 		l.Infof("Already logged in")
 		http.Redirect(w, r, loginRedirect, http.StatusSeeOther)
 		return
@@ -44,9 +44,11 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ghReq.URL.RawQuery = q.Encode()
+	redirectTo := "https://github.com" + ghReq.URL.RequestURI()
+	l.WithField("Redirect", redirectTo).Debugf("Redirect to github")
 
 	// Redirect using the Github URL
-	http.Redirect(w, ghReq, "https://github.com"+ghReq.URL.RequestURI(), http.StatusSeeOther)
+	http.Redirect(w, ghReq, redirectTo, http.StatusSeeOther)
 }
 
 // CallbackHandler is the callback from Github to grab the auth token
@@ -173,7 +175,7 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Set the cookie
 	http.SetCookie(w, &http.Cookie{
-		Name:     cookieName,
+		Name:     CookieName,
 		Value:    signedToken,
 		Expires:  expires,
 		Path:     "/",
@@ -184,37 +186,15 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, loginRedirect, http.StatusSeeOther)
 }
 
-// LoggedIn Checks if a user is logged in, if they are it returns their claims
-func LoggedIn(r *http.Request) (bool, *Claims) {
-	// Get the cookie
-	cookie, err := r.Cookie(cookieName)
-	if err != nil {
-		return false, nil
+// TODO: Should the method of getting the token change?
+func JWT(token *jwt.Token) (interface{}, error) {
+	return jwtKey, nil
+}
+
+func LoggedIn(r *http.Request) *Claims {
+	claims, ok := r.Context().Value("Claims").(*Claims)
+	if !ok {
+		return nil
 	}
-
-	// Get signed JWT from cookie
-	signedToken := cookie.Value
-
-	// Claims var
-	var claims Claims
-	token, err := jwt.ParseWithClaims(signedToken, &claims, func(token *jwt.Token) (interface{}, error) {
-		// TODO: Function to get the key
-		return jwtKey, nil
-	})
-	if err != nil {
-		if err == jwt.ErrSignatureInvalid {
-			log.Warnf("Got invalid JWT signiture")
-			return false, nil
-		}
-		log.WithError(err).Errorf("Error parsing JWT")
-		return false, nil
-	}
-
-	// Check if token is valid
-	if !token.Valid {
-		log.Warnf("Invalid JWT token after parsing")
-		return false, nil
-	}
-
-	return true, &claims
+	return claims
 }

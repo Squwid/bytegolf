@@ -35,7 +35,7 @@ func main() {
 	r.HandleFunc("/api/claims", auth.ShowClaims).Methods("GET")           // Returns a user's claims
 
 	log.Infof("Starting container on port :%s", port)
-	http.ListenAndServe(":"+port, cors(r))
+	http.ListenAndServe(":"+port, loggedIn(cors(r)))
 }
 
 func cors(next http.Handler) http.Handler {

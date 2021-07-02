@@ -10,7 +10,7 @@ import (
 	"github.com/google/uuid"
 )
 
-const cookieName = "bg-token"
+const CookieName = "bg-token"
 const loginRedirect = "/" // Where to go post login
 
 var githubClient, githubSecret, githubState string

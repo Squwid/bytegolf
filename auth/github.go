@@ -45,8 +45,8 @@ func GetGithubUser(token string) (*GithubUser, error) {
 
 // ShowClaims shows the claims in the users cookie for the frontend
 func ShowClaims(w http.ResponseWriter, r *http.Request) {
-	loggedIn, claims := LoggedIn(r)
-	if !loggedIn {
+	claims := LoggedIn(r)
+	if claims == nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.Write([]byte(`{"LoggedIn": false}`))
 		return

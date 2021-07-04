@@ -170,6 +170,7 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 		Expires:  expires,
 		Path:     "/",
 		HttpOnly: true,
+		SameSite: http.SameSiteLaxMode,
 	})
 
 	// Successful, redirect

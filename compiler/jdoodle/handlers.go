@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/Squwid/bytegolf/auth"
 	"github.com/Squwid/bytegolf/compiler"
 	"github.com/Squwid/bytegolf/db"
 	"github.com/Squwid/bytegolf/globals"
@@ -21,12 +22,19 @@ import (
 
 func SubmissionHandler(w http.ResponseWriter, r *http.Request) {
 	holeID := mux.Vars(r)["hole"]
-
 	log := logrus.WithFields(logrus.Fields{
 		"Hole":   holeID,
 		"Action": "NewSubmission",
 		"IP":     r.RemoteAddr,
 	})
+
+	claims := auth.LoggedIn(r)
+	if claims == nil {
+		log.Infof("User not authenticated")
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+	log = log.WithField("User", claims.BGID)
 
 	// Make sure hole exists
 	out, err := db.Get(models.NewGet(db.HoleCollection().Doc(holeID), nil))

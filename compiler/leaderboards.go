@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"cloud.google.com/go/firestore"
+	"github.com/Squwid/bytegolf/auth"
 	"github.com/Squwid/bytegolf/db"
 	"github.com/Squwid/bytegolf/models"
 	"github.com/sirupsen/logrus"
@@ -81,6 +82,11 @@ func LeaderboardHandler(w http.ResponseWriter, r *http.Request) {
 	log := logrus.WithFields(logrus.Fields{
 		"Action": "Leaderboard",
 	})
+
+	claims := auth.LoggedIn(r)
+	if claims != nil {
+		log = log.WithField("User", claims.BGID)
+	}
 
 	// holeID querystring is
 	hole := r.URL.Query().Get("hole")

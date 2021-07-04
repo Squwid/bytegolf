@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/Squwid/bytegolf/auth"
 	"github.com/Squwid/bytegolf/db"
 	"github.com/Squwid/bytegolf/models"
 	"github.com/gorilla/mux"
@@ -14,12 +15,16 @@ import (
 
 func GetProfile(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
-
 	log := logrus.WithFields(logrus.Fields{
 		"ID":     id,
 		"Action": "GetProfile",
 		"IP":     r.RemoteAddr,
 	})
+
+	claims := auth.LoggedIn(r)
+	if claims != nil {
+		log = log.WithField("User", claims.BGID)
+	}
 
 	getter := models.NewGet(db.ProfileCollection().Doc(id), transform)
 	profile, err := db.Get(getter)

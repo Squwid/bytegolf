@@ -28,6 +28,8 @@ func main() {
 	r.HandleFunc("/api/holes", holes.ListHoles).Methods("GET")
 	r.HandleFunc("/api/hole/{id}", holes.GetHole).Methods("GET")
 
+	r.HandleFunc("/api/submissions", compiler.ListSubmissions).Methods("GET")
+	r.HandleFunc("/api/submissions/{id}", compiler.GetSubmission).Methods("GET")
 	r.HandleFunc("/api/submit/{hole}", jdoodle.SubmissionHandler).Methods("POST")
 	r.HandleFunc("/api/leaderboards", compiler.LeaderboardHandler).Methods("GET")
 
@@ -41,7 +43,8 @@ func main() {
 func cors(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Methods", "GET,POST,OPTIONS")
-		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Origin", globals.FrontendAddr())
+		w.Header().Set("Access-Control-Allow-Credentials", "true")
 		if r.Method == http.MethodOptions {
 			w.WriteHeader(200)
 			return

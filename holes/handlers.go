@@ -15,9 +15,9 @@ import (
 )
 
 func ListHoles(w http.ResponseWriter, r *http.Request) {
-	claims := auth.LoggedIn(r)
-
 	log := logrus.WithField("Action", "ListHoles")
+
+	claims := auth.LoggedIn(r)
 	if claims != nil {
 		log = log.WithField("User", claims.BGID)
 	}
@@ -44,12 +44,16 @@ func ListHoles(w http.ResponseWriter, r *http.Request) {
 
 func GetHole(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
-
 	log := logrus.WithFields(logrus.Fields{
 		"ID":     id,
 		"Action": "GetHole",
 		"IP":     r.RemoteAddr,
 	})
+
+	claims := auth.LoggedIn(r)
+	if claims != nil {
+		log = log.WithField("User", claims.BGID)
+	}
 
 	getter := models.NewGet(db.HoleCollection().Doc(id), transformHole)
 	hole, err := db.Get(getter)

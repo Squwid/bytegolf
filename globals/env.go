@@ -34,7 +34,7 @@ func Addr() string {
 }
 
 func FrontendAddr() string {
-	return "http://localhost:3000"
+	return "http://10.218.67.120:3000"
 }
 
 func Env() string {

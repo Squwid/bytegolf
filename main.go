@@ -32,7 +32,7 @@ func main() {
 	r.HandleFunc("/api/leaderboards", compiler.LeaderboardHandler).Methods("GET")
 
 	r.HandleFunc("/api/profile/{id}", profiles.GetProfile).Methods("GET") // checks if a user is logged in
-	r.HandleFunc("/api/claims", auth.ShowClaims).Methods("GET")           // Returns a user's claims
+	r.HandleFunc("/api/claims", auth.ShowClaims).Methods("GET")           // Returns a user's claims and see if they are logged in
 
 	log.Infof("Starting container on port :%s", port)
 	http.ListenAndServe(":"+port, loggedIn(cors(r)))

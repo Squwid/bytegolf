@@ -33,6 +33,10 @@ func Addr() string {
 	return "http://10.218.67.120"
 }
 
+func FrontendAddr() string {
+	return "http://localhost:3000"
+}
+
 func Env() string {
 	env := strings.ToLower(os.Getenv("BG_ENV"))
 	switch env {

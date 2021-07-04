@@ -3,7 +3,6 @@ package auth
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"time"
 
@@ -21,7 +20,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	claims := LoggedIn(r)
 	if claims != nil {
 		l.Infof("Already logged in")
-		http.Redirect(w, r, loginRedirect, http.StatusSeeOther)
+		http.Redirect(w, r, globals.FrontendAddr()+"/profile/"+claims.BGID, http.StatusSeeOther)
 		return
 	}
 
@@ -38,10 +37,6 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	q.Add("client_id", githubClient)
 	q.Add("state", githubState)
 	q.Add("allow_signup", "true")
-	if globals.ENV == globals.EnvDev {
-		// TODO: Why doesnt the redirect_uri work
-		q.Add("redirect_uri", fmt.Sprintf("%s:%s/login/check", globals.Addr(), globals.Port()))
-	}
 
 	ghReq.URL.RawQuery = q.Encode()
 	redirectTo := "https://github.com" + ghReq.URL.RequestURI()
@@ -72,7 +67,7 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Call github back
-	body, err := json.Marshal(struct {
+	body, _ := json.Marshal(struct {
 		ClientID     string `json:"client_id"`
 		ClientSecret string `json:"client_secret"`
 		Code         string `json:"code"`
@@ -83,11 +78,6 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 		Code:         codeResp,
 		State:        stateResp,
 	})
-	if err != nil {
-		l.WithError(err).Errorf("Error marshalling request body")
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-		return
-	}
 
 	// Send post request
 	req, err := http.NewRequest("POST", "https://github.com/login/oauth/access_token", bytes.NewReader(body))
@@ -150,7 +140,7 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// TODO: Move JWT logic somewhere else
-	timeoutDur := time.Hour * 8
+	timeoutDur := time.Hour * 48
 	expires := time.Now().Add(timeoutDur)
 
 	// Claims
@@ -183,7 +173,7 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	})
 
 	// Successful, redirect
-	http.Redirect(w, r, loginRedirect, http.StatusSeeOther)
+	http.Redirect(w, r, globals.FrontendAddr()+"/profile", http.StatusSeeOther)
 }
 
 // TODO: Should the method of getting the token change?

@@ -48,6 +48,7 @@ func ShowClaims(w http.ResponseWriter, r *http.Request) {
 	claims := LoggedIn(r)
 	if claims == nil {
 		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusUnauthorized)
 		w.Write([]byte(`{"LoggedIn": false}`))
 		return
 	}
@@ -64,6 +65,7 @@ func ShowClaims(w http.ResponseWriter, r *http.Request) {
 		"BGID": claims.BGID,
 		"IP":   r.RemoteAddr,
 	}).Infof("Retreived Claims")
+
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(bs)
 }

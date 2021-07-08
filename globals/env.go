@@ -34,7 +34,7 @@ func Addr() string {
 }
 
 func FrontendAddr() string {
-	return "http://10.218.67.120:3000"
+	return os.Getenv("BG_FRONTEND_ADDR")
 }
 
 func Env() string {

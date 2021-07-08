@@ -2,7 +2,6 @@ package db
 
 import (
 	"context"
-	"fmt"
 	"os"
 
 	"cloud.google.com/go/firestore"
@@ -15,8 +14,6 @@ var projectID string
 var client *firestore.Client
 
 func init() {
-	fmt.Println("creds: " + os.Getenv("GOOGLE_APPLICATION_CREDENTIALS"))
-
 	projectID = os.Getenv("GCP_PROJECT_ID")
 
 	c, err := firestore.NewClient(context.Background(), projectID)

@@ -18,5 +18,4 @@ todo.txt
 node_modules/
 Bytegolf.md
 
-dist/
-frontend/dist/
+*auto-save*

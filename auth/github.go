@@ -6,9 +6,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/Squwid/bytegolf/models"
-	"github.com/gorilla/mux"
-	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -16,7 +13,7 @@ import (
 var ErrBadGithubStatus = errors.New("bad status code from github")
 
 // GetGithubUser gets a github user using their access token
-func GetGithubUser(token string) (*models.GithubUser, error) {
+func GetGithubUser(token string) (*GithubUser, error) {
 	// Create request
 	r, err := http.NewRequest("GET", "https://api.github.com/user", nil)
 	if err != nil {
@@ -34,12 +31,11 @@ func GetGithubUser(token string) (*models.GithubUser, error) {
 
 	// Check status code
 	if resp.StatusCode != http.StatusOK {
-		log.Warnf("Expected 200 from github but got %s (%v)", resp.Status, resp.StatusCode)
-		return nil, ErrBadGithubStatus
+		return nil, fmt.Errorf("got bad status code %v", resp.StatusCode)
 	}
 
 	// Parse to github object
-	var ghu models.GithubUser
+	var ghu GithubUser
 	if err := json.NewDecoder(resp.Body).Decode(&ghu); err != nil {
 		return nil, err
 	}
@@ -49,9 +45,10 @@ func GetGithubUser(token string) (*models.GithubUser, error) {
 
 // ShowClaims shows the claims in the users cookie for the frontend
 func ShowClaims(w http.ResponseWriter, r *http.Request) {
-	loggedIn, claims := LoggedIn(r)
-	if !loggedIn {
+	claims := LoggedIn(r)
+	if claims == nil {
 		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusUnauthorized)
 		w.Write([]byte(`{"LoggedIn": false}`))
 		return
 	}
@@ -64,48 +61,10 @@ func ShowClaims(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.WithField("BGID", claims.BGID).WithField("IP", r.RemoteAddr).Infof("Retreived Claims")
-	w.Header().Set("Content-Type", "application/json")
-	w.Write(bs)
-}
-
-// ShowProfile shows the target user's profile
-func ShowProfile(w http.ResponseWriter, r *http.Request) {
-	bgid := mux.Vars(r)["bgid"]
-
-	log := logrus.WithFields(logrus.Fields{
-		"Action": "ShowProfile",
-		"BGID":   bgid,
-		"IP":     r.RemoteAddr,
-	})
-	log.Infof("Request to show profile")
-
-	// Get user by BGID
-	user, err := bytegolfUserFromBGID(bgid)
-	if err != nil {
-		log.WithError(err).Errorf("Error getting profile")
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-		return
-	}
-
-	// User doesnt exist, return a 404
-	if user == nil {
-		log.Warnf("Profile not found")
-		http.Error(w, "Profile not found", http.StatusNotFound)
-		return
-	}
-
-	// Got user, translate to profile and send to user
-	profile := user.ToProfile()
-
-	bs, err := json.Marshal(profile)
-	if err != nil {
-		log.WithError(err).Errorf("Error marshalling profile")
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-		return
-	}
-
-	log.Infof("Found profile")
+	log.WithFields(log.Fields{
+		"BGID": claims.BGID,
+		"IP":   r.RemoteAddr,
+	}).Infof("Retreived Claims")
 
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(bs)

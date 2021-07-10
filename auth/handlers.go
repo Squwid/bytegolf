@@ -3,12 +3,10 @@ package auth
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"time"
 
 	"github.com/Squwid/bytegolf/globals"
-	"github.com/Squwid/bytegolf/models"
 	jwt "github.com/dgrijalva/jwt-go"
 	log "github.com/sirupsen/logrus"
 )
@@ -16,13 +14,13 @@ import (
 // LoginHandler will send the request to Github to make sure that the user is logged in
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	l := log.WithField("Action", "LoginRequest")
-	l.Infof("Login Request")
+	l.Infof("New login request")
 
 	// Check if user is already logged in
-	loggedIn, _ := LoggedIn(r)
-	if loggedIn {
+	claims := LoggedIn(r)
+	if claims != nil {
 		l.Infof("Already logged in")
-		http.Redirect(w, r, loginRedirect, http.StatusSeeOther)
+		http.Redirect(w, r, globals.FrontendAddr()+"/profile/"+claims.BGID, http.StatusSeeOther)
 		return
 	}
 
@@ -36,18 +34,16 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Query Strings
 	q := ghReq.URL.Query()
-	q.Add("client_id", client.Client)
-	q.Add("state", state)
+	q.Add("client_id", githubClient)
+	q.Add("state", githubState)
 	q.Add("allow_signup", "true")
-	if globals.ENV() == globals.EnvDev {
-		// Add redirect to localhost if dev stage
-		q.Add("redirect_uri", fmt.Sprintf("%s:%s/login/check", globals.Addr(), globals.Port()))
-	}
 
 	ghReq.URL.RawQuery = q.Encode()
+	redirectTo := "https://github.com" + ghReq.URL.RequestURI()
+	l.WithField("Redirect", redirectTo).Debugf("Redirect to github")
 
 	// Redirect using the Github URL
-	http.Redirect(w, ghReq, "https://github.com"+ghReq.URL.RequestURI(), http.StatusSeeOther)
+	http.Redirect(w, ghReq, redirectTo, http.StatusSeeOther)
 }
 
 // CallbackHandler is the callback from Github to grab the auth token
@@ -61,32 +57,27 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	l.WithFields(log.Fields{
 		"Code":  codeResp,
 		"State": stateResp,
-	}).Infof("Github Callback")
+	}).Infof("Github callback")
 
 	// Check state
-	if stateResp != state {
-		l.Warnf("State %s does not match expected state")
+	if stateResp != githubState {
+		l.Warnf("State %s does not match expected state", stateResp)
 		http.Error(w, "Bad request", http.StatusBadRequest)
 		return
 	}
 
 	// Call github back
-	body, err := json.Marshal(struct {
+	body, _ := json.Marshal(struct {
 		ClientID     string `json:"client_id"`
 		ClientSecret string `json:"client_secret"`
 		Code         string `json:"code"`
 		State        string `json:"state"`
 	}{
-		ClientID:     client.Client,
-		ClientSecret: client.Secret,
+		ClientID:     githubClient,
+		ClientSecret: githubSecret,
 		Code:         codeResp,
 		State:        stateResp,
 	})
-	if err != nil {
-		l.WithError(err).Errorf("Error marshalling request body")
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-		return
-	}
 
 	// Send post request
 	req, err := http.NewRequest("POST", "https://github.com/login/oauth/access_token", bytes.NewReader(body))
@@ -149,13 +140,12 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// TODO: Move JWT logic somewhere else
-	timeoutDur := time.Hour * 8
+	timeoutDur := time.Hour * 48
 	expires := time.Now().Add(timeoutDur)
 
 	// Claims
-	claims := models.Claims{
+	claims := Claims{
 		BGID: bgUser.BGID,
-		Role: bgUser.Role,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: expires.Unix(),
 			IssuedAt:  time.Now().Unix(),
@@ -175,48 +165,27 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Set the cookie
 	http.SetCookie(w, &http.Cookie{
-		Name:     cookieName,
+		Name:     CookieName,
 		Value:    signedToken,
 		Expires:  expires,
 		Path:     "/",
 		HttpOnly: true,
+		SameSite: http.SameSiteLaxMode,
 	})
 
 	// Successful, redirect
-	http.Redirect(w, r, loginRedirect, http.StatusSeeOther)
+	http.Redirect(w, r, globals.FrontendAddr()+"/profile", http.StatusSeeOther)
 }
 
-// LoggedIn Checks if a user is logged in, if they are it returns their claims
-func LoggedIn(r *http.Request) (bool, *models.Claims) {
-	// Get the cookie
-	cookie, err := r.Cookie(cookieName)
-	if err != nil {
-		return false, nil
+// TODO: Should the method of getting the token change?
+func JWT(token *jwt.Token) (interface{}, error) {
+	return jwtKey, nil
+}
+
+func LoggedIn(r *http.Request) *Claims {
+	claims, ok := r.Context().Value("Claims").(*Claims)
+	if !ok {
+		return nil
 	}
-
-	// Get signed JWT from cookie
-	signedToken := cookie.Value
-
-	// Claims var
-	var claims models.Claims
-	token, err := jwt.ParseWithClaims(signedToken, &claims, func(token *jwt.Token) (interface{}, error) {
-		// TODO: Function to get the key
-		return jwtKey, nil
-	})
-	if err != nil {
-		if err == jwt.ErrSignatureInvalid {
-			log.Warnf("Got invalid JWT signiture")
-			return false, nil
-		}
-		log.WithError(err).Errorf("Error parsing JWT")
-		return false, nil
-	}
-
-	// Check if token is valid
-	if !token.Valid {
-		log.Warnf("Invalid JWT token after parsing")
-		return false, nil
-	}
-
-	return true, &claims
+	return claims
 }

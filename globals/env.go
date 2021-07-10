@@ -29,8 +29,9 @@ func Port() string {
 	return port
 }
 
+// Addr is the self address of the backend
 func Addr() string {
-	return "http://10.218.67.120"
+	return os.Getenv("BG_BACKEND_ADDR")
 }
 
 func FrontendAddr() string {

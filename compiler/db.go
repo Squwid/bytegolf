@@ -67,11 +67,17 @@ func NewSubmissionDB(holeID, bgID, script, language, version string) *Submission
 	}
 }
 
-func (sub *SubmissionDB) ShortSub() (*ShortSubmission, error) {
-	getter := models.NewGet(db.HoleCollection().Doc(sub.HoleID), nil)
-	hole, err := db.Get(getter)
-	if err != nil {
-		return nil, err
+// ShortSub turns a SubmissionDB to a ShortSubmission. If holename is set to true, the database is hit
+// and the hole name is grabbed, otherwise the error check is not needed and the HoleName will be set to ""
+func (sub *SubmissionDB) ShortSub(holename bool) (*ShortSubmission, error) {
+	var name = ""
+	if holename {
+		getter := models.NewGet(db.HoleCollection().Doc(sub.HoleID), nil)
+		hole, err := db.Get(getter)
+		if err != nil {
+			return nil, err
+		}
+		name = hole["Name"].(string)
 	}
 
 	return &ShortSubmission{
@@ -83,12 +89,12 @@ func (sub *SubmissionDB) ShortSub() (*ShortSubmission, error) {
 		Length:        sub.Length,
 		SubmittedTime: sub.SubmittedTime,
 		Correct:       sub.Correct,
-		HoleName:      hole["Name"].(string),
+		HoleName:      name,
 	}, nil
 }
 
 func (sub *SubmissionDB) FullSub() (*FullSubmission, error) {
-	ss, err := sub.ShortSub()
+	ss, err := sub.ShortSub(true)
 	if err != nil {
 		return nil, err
 	}

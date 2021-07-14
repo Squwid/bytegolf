@@ -61,6 +61,7 @@ func SubmissionHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Validate user input
 	var userInput UserInput
 	if err := json.NewDecoder(r.Body).Decode(&userInput); err != nil {
 		http.Error(w, "Bad Input: "+err.Error(), http.StatusBadRequest)
@@ -71,9 +72,9 @@ func SubmissionHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, msg, http.StatusBadRequest)
 		return
 	}
+	log.Debugf("Hole active & exists, getting test cases")
 
-	log.Infof("Hole active & exists, getting test cases")
-
+	// Get all tests for the hole
 	tests, err := holes.GetTests(hole.ID)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -82,7 +83,7 @@ func SubmissionHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	log = log.WithField("Tests", len(tests))
 
-	// Wait for tests to complete
+	// Run each test individually and compare results
 	var ch = make(chan compileResult, len(tests))
 	for _, test := range tests {
 
@@ -122,8 +123,8 @@ func SubmissionHandler(w http.ResponseWriter, r *http.Request) {
 
 	}
 
-	var sub = compiler.NewSubmissionDB(holeID, globals.BGID, userInput.Script, userInput.Language, userInput.Version)
-	i, correct, incorrect := 0, 0, 0
+	sub := compiler.NewSubmissionDB(holeID, globals.BGID, userInput.Script, userInput.Language, userInput.Version)
+	i, correct := 0, 0
 	timeout := time.NewTimer(time.Second * 15)
 
 	// Wait for all tests to be done or timeout
@@ -142,8 +143,6 @@ func SubmissionHandler(w http.ResponseWriter, r *http.Request) {
 			i++
 			if out.correct {
 				correct++
-			} else {
-				incorrect++
 			}
 
 		case <-timeout.C:
@@ -157,6 +156,7 @@ func SubmissionHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	close(ch)
+	log = log.WithField("CorrectCount", correct)
 
 	if err := db.Store(sub); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -164,20 +164,40 @@ func SubmissionHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	bs, _ := json.Marshal(struct {
-		Correct bool  `json:"Correct"`
-		Length  int64 `json:"Length"`
-	}{
-		Correct: incorrect == 0,
-		Length:  sub.Length,
-	})
+	type response struct {
+		Correct      bool
+		Length       int64
+		CorrectTests int
+		TotalTests   int
+		BestScore    bool
+	}
+	var resp = response{
+		Correct:      i == correct,
+		Length:       sub.Length,
+		CorrectTests: correct,
+		TotalTests:   i,
+	}
 
 	w.Header().Set("Content-Type", "application/json")
+	if !resp.Correct {
+		bs, _ := json.Marshal(resp)
+		log.Infof("Successful compile request")
+		w.Write(bs)
+		return
+	}
+
+	// Sleep for a second to wait for store to finish before checking for final score
+	time.Sleep(1 * time.Second)
+
+	// Compare to best submission for easier frontend displays
+	bestSub, err := compiler.BestSubmission(claims.BGID, holeID)
+	if err != nil {
+		log.WithError(err).Errorf("Error getting best submission")
+	}
+
+	resp.BestScore = bestSub != nil && bestSub.ID == sub.ID
+
+	bs, _ := json.Marshal(resp)
 	w.Write(bs)
-	log.WithFields(logrus.Fields{
-		"Correct":        incorrect == 0,
-		"Length":         len(userInput.Script),
-		"CorrectCount":   correct,
-		"IncorrectCount": incorrect,
-	}).Infof("Successful compile request")
+	log.WithField("CorrectCount", resp.Correct).Infof("Successful compile request")
 }

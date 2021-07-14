@@ -52,7 +52,7 @@ func ListSubmissions(w http.ResponseWriter, r *http.Request) {
 	// TODO: Convert this to use goroutines to make submissions concurrent
 	var shortSubs = make([]ShortSubmission, len(subs))
 	for i := 0; i < len(subs); i++ {
-		ss, err := subs[i].ShortSub()
+		ss, err := subs[i].ShortSub(true)
 		if err != nil {
 			log.WithError(err).Errorf("Error converting short sub")
 			w.WriteHeader(http.StatusInternalServerError)
@@ -156,12 +156,7 @@ func GetBestSubmissionHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ss, err := sub.ShortSub()
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		log.WithError(err).Errorf("Error getting best short sub")
-		return
-	}
+	ss, _ := sub.ShortSub(false)
 
 	bs, _ := json.Marshal(ss)
 	w.Header().Set("Content-Type", "application/json")

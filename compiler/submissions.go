@@ -17,7 +17,9 @@ import (
 
 const subLimit = 20
 
-// ListSubmissions needs to be able to list submissions for ONLY the logged in user
+// ListSubmissions needs to be able to list submissions for ONLY the logged in user.
+// It lists submissions in a short submission fasion, without sending the entire script back.
+//
 // Possible query strings:
 //     "hole": Optional query string just to get submissions for a single hole
 func ListSubmissions(w http.ResponseWriter, r *http.Request) {
@@ -31,6 +33,7 @@ func ListSubmissions(w http.ResponseWriter, r *http.Request) {
 	}
 	log = log.WithField("User", claims.BGID)
 
+	// Descending to show most recent submissions first
 	query := db.SubmissionsCollection().Where("BGID", "==", claims.BGID).OrderBy("SubmittedTime", firestore.Desc).Limit(subLimit)
 
 	if hole := r.URL.Query().Get("hole"); hole != "" {
@@ -121,6 +124,71 @@ func GetSubmission(w http.ResponseWriter, r *http.Request) {
 	bs, _ := json.Marshal(fs)
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(bs)
+}
+
+// GetBestSubmissionHandler will check if a user is logged in, then grab their best submission using a short submission
+func GetBestSubmissionHandler(w http.ResponseWriter, r *http.Request) {
+	hole := mux.Vars(r)["hole"]
+	log := logrus.WithFields(logrus.Fields{
+		"Action": "BestSubmission",
+		"Hole":   hole,
+	})
+
+	claims := auth.LoggedIn(r)
+	if claims == nil {
+		log.Infof("User unauthenticated")
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+	log = log.WithField("User", claims.BGID)
+
+	sub, err := BestSubmission(claims.BGID, hole)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		log.WithError(err).Errorf("Error getting best submission")
+		return
+	}
+
+	// Best submission for hole was not found
+	if sub == nil {
+		w.WriteHeader(http.StatusNotFound)
+		log.Infof("Submission does not exist")
+		return
+	}
+
+	ss, err := sub.ShortSub()
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		log.WithError(err).Errorf("Error getting best short sub")
+		return
+	}
+
+	bs, _ := json.Marshal(ss)
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(bs)
+
+	log.WithField("ID", ss.ID).Infof("Got best submission")
+}
+
+// BestSubmission takes a bgid and hole and returns the user's best submission for that given hole
+func BestSubmission(bgid, hole string) (*SubmissionDB, error) {
+	query := db.SubmissionsCollection().Where("Correct", "==", true).Where("HoleID", "==", hole).
+		OrderBy("Length", firestore.Asc).OrderBy("SubmittedTime", firestore.Asc).Where("BGID", "==", bgid).Limit(1)
+
+	docs, err := db.Query(models.NewQuery(query, nil))
+	if err != nil {
+		return nil, err
+	}
+
+	if len(docs) == 0 {
+		return nil, nil
+	}
+
+	var sub SubmissionDB
+	if err := mapstructure.Decode(docs[0], &sub); err != nil {
+		return nil, err
+	}
+	return &sub, nil
 }
 
 // SubmissionsQuery is a query wrapper to add results to a cache for when a GET is called at a later time

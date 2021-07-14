@@ -30,6 +30,7 @@ func main() {
 
 	r.HandleFunc("/api/submissions", compiler.ListSubmissions).Methods("GET")
 	r.HandleFunc("/api/submissions/{id}", compiler.GetSubmission).Methods("GET")
+	r.HandleFunc("/api/submissions/best/{hole}", compiler.GetBestSubmissionHandler).Methods("GET")
 	r.HandleFunc("/api/submit/{hole}", jdoodle.SubmissionHandler).Methods("POST")
 	r.HandleFunc("/api/leaderboards", compiler.LeaderboardHandler).Methods("GET")
 

@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/Squwid/bytegolf/auth"
+
 	"github.com/dgrijalva/jwt-go"
 	"github.com/sirupsen/logrus"
 )

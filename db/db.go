@@ -3,8 +3,9 @@ package db
 import (
 	"fmt"
 
-	"cloud.google.com/go/firestore"
 	"github.com/Squwid/bytegolf/globals"
+
+	"cloud.google.com/go/firestore"
 )
 
 func ProfileCollection() *firestore.CollectionRef {

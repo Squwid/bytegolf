@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/Squwid/bytegolf/globals"
+
 	jwt "github.com/dgrijalva/jwt-go"
 	log "github.com/sirupsen/logrus"
 )

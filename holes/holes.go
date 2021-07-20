@@ -4,8 +4,9 @@ import (
 	"strings"
 	"time"
 
-	"cloud.google.com/go/firestore"
 	"github.com/Squwid/bytegolf/db"
+
+	"cloud.google.com/go/firestore"
 )
 
 type Holes []Hole

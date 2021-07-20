@@ -7,6 +7,7 @@ import (
 	"github.com/Squwid/bytegolf/auth"
 	"github.com/Squwid/bytegolf/db"
 	"github.com/Squwid/bytegolf/models"
+
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"

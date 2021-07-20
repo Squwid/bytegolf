@@ -4,8 +4,9 @@ import (
 	"os"
 	"time"
 
-	"cloud.google.com/go/firestore"
 	"github.com/Squwid/bytegolf/db"
+
+	"cloud.google.com/go/firestore"
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/google/uuid"
 )

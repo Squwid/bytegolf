@@ -10,12 +10,12 @@ import (
 	"github.com/Squwid/bytegolf/globals"
 	"github.com/Squwid/bytegolf/holes"
 	"github.com/Squwid/bytegolf/profiles"
+
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 )
 
 func main() {
-	// getting the port here is essential when using google cloud runa
 	port := globals.Port()
 
 	r := mux.NewRouter()

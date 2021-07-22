@@ -133,7 +133,7 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get Bytegolf User from GithubUser
-	bgUser, err := Bytegolf(githubUser)
+	bgUser, err := BGUser(githubUser)
 	if err != nil {
 		l.WithError(err).Errorf("Error swapping Github User -> Bytegolf User")
 		http.Error(w, "Internal server error", http.StatusInternalServerError)

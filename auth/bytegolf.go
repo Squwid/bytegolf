@@ -1,17 +1,21 @@
 package auth
 
 import (
+	"fmt"
+
 	"github.com/Squwid/bytegolf/db"
 	"github.com/Squwid/bytegolf/models"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
 )
 
-// Bytegolf returns a bytegolf user based on the github user. Will create one
+// BGUser returns a bytegolf user based on the github user. Will create one
 // if one does not exist yet
-func Bytegolf(ghu *GithubUser) (*BytegolfUser, error) {
-	user, err := bytegolfUserFromGitID(ghu.ID)
+func BGUser(ghu *GithubUser) (*BytegolfUser, error) {
+	user, err := bgUserFromGit(ghu.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -31,18 +35,20 @@ func Bytegolf(ghu *GithubUser) (*BytegolfUser, error) {
 	return user, nil
 }
 
-// bytegolfUserFromGitID will get a BytegolfUser from the table using a gitID, will return nil, nil if one
+// bgUserFromGit will get a BytegolfUser from the table using a gitID, will return nil, nil if one
 // does not exist
-func bytegolfUserFromGitID(gitID int64) (*BytegolfUser, error) {
-	query := db.ProfileCollection().Where("GithubUser.ID", "==", gitID).Limit(1)
-	docs, err := db.Query(models.NewQuery(query, nil))
+func bgUserFromGit(gitID int64) (*BytegolfUser, error) {
+	getter := models.NewGet(db.ProfileCollection().Doc(fmt.Sprintf("%v", gitID)), nil)
+	doc, err := db.Get(getter)
 	if err != nil {
+		if status.Code(err) == codes.NotFound {
+			return nil, nil
+		}
 		return nil, err
 	}
 
-	// Parse user
 	var bgu BytegolfUser
-	if err := mapstructure.Decode(docs[0], &bgu); err != nil {
+	if err := mapstructure.Decode(doc, &bgu); err != nil {
 		return nil, err
 	}
 

@@ -5,11 +5,11 @@ import (
 
 	"github.com/Squwid/bytegolf/db"
 	"github.com/Squwid/bytegolf/models"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 // BGUser returns a bytegolf user based on the github user. Will create one

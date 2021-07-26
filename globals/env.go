@@ -5,9 +5,6 @@ import (
 	"strings"
 )
 
-// TODO: Use user tokens instead of this hardcoded BGID
-const BGID = "9581d9ef-d998-4903-b88c-5345e980770f"
-
 // Possible environments
 const (
 	EnvDev  = "dev"

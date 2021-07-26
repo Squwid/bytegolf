@@ -9,7 +9,6 @@ import (
 	"github.com/Squwid/bytegolf/auth"
 	"github.com/Squwid/bytegolf/compiler"
 	"github.com/Squwid/bytegolf/db"
-	"github.com/Squwid/bytegolf/globals"
 	"github.com/Squwid/bytegolf/holes"
 	"github.com/Squwid/bytegolf/models"
 
@@ -68,11 +67,18 @@ func SubmissionHandler(w http.ResponseWriter, r *http.Request) {
 		log.WithError(err).Errorf("Error parsing user input")
 		return
 	}
-	if valid, msg := userInput.validate(); !valid {
-		http.Error(w, msg, http.StatusBadRequest)
+	v := userInput.validate()
+	if !v.valid {
+		log.Infof("Invalid compile request: %s", v.msg)
+		http.Error(w, v.msg, http.StatusBadRequest)
 		return
 	}
 	log.Debugf("Hole active & exists, getting test cases")
+
+	// Language and version specific to Jdoodle
+	userInput.Language = v.jdoodle.JdoodleLang
+	userInput.Version = v.jdoodle.JdoodleVersion
+	log.WithField("Language", userInput.Language).WithField("Version", userInput.Version).Debugf("Valid request")
 
 	// Get all tests for the hole
 	tests, err := holes.GetTests(hole.ID)
@@ -82,6 +88,7 @@ func SubmissionHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	log = log.WithField("Tests", len(tests))
+	log.Debugf("Test cases: %+v", tests)
 
 	// Run each test individually and compare results
 	var ch = make(chan compileResult, len(tests))
@@ -120,20 +127,23 @@ func SubmissionHandler(w http.ResponseWriter, r *http.Request) {
 				ch <- result
 			}
 		}(test, userInput)
-
 	}
 
-	sub := compiler.NewSubmissionDB(holeID, globals.BGID, userInput.Script, userInput.Language, userInput.Version)
+	sub := compiler.NewSubmissionDB(holeID, claims.BGID, userInput.Script, v.jdoodle.JdoodleLang, v.jdoodle.JdoodleVersion)
 	i, correct := 0, 0
 	timeout := time.NewTimer(time.Second * 15)
 
 	// Wait for all tests to be done or timeout
 	for {
+		if i == len(tests) {
+			break
+		}
+
 		select {
 		case out := <-ch:
 			if out.err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
-				log.WithField("Test", out.test.ID).WithError(err).Errorf("Error compiling test")
+				log.WithField("Test", out.test.ID).WithError(out.err).Errorf("Error compiling test")
 				return
 			}
 
@@ -149,10 +159,6 @@ func SubmissionHandler(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusInternalServerError)
 			log.Warnf("Compiler timed out")
 			return
-		}
-
-		if i == len(tests) {
-			break
 		}
 	}
 	close(ch)
@@ -194,6 +200,8 @@ func SubmissionHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.WithError(err).Errorf("Error getting best submission")
 	}
+	logrus.SetLevel(logrus.DebugLevel)
+	log.Debugf("Best sub %+v", bestSub)
 
 	resp.BestScore = bestSub != nil && bestSub.ID == sub.ID
 

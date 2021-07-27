@@ -9,7 +9,6 @@ import (
 	"github.com/Squwid/bytegolf/auth"
 	"github.com/Squwid/bytegolf/compiler"
 	"github.com/Squwid/bytegolf/db"
-	"github.com/Squwid/bytegolf/globals"
 	"github.com/Squwid/bytegolf/holes"
 	"github.com/Squwid/bytegolf/models"
 
@@ -61,19 +60,27 @@ func SubmissionHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Validate user input
 	var userInput UserInput
 	if err := json.NewDecoder(r.Body).Decode(&userInput); err != nil {
 		http.Error(w, "Bad Input: "+err.Error(), http.StatusBadRequest)
 		log.WithError(err).Errorf("Error parsing user input")
 		return
 	}
-	if valid, msg := userInput.validate(); !valid {
-		http.Error(w, msg, http.StatusBadRequest)
+	v := userInput.validate()
+	if !v.valid {
+		log.Infof("Invalid compile request: %s", v.msg)
+		http.Error(w, v.msg, http.StatusBadRequest)
 		return
 	}
+	log.Debugf("Hole active & exists, getting test cases")
 
-	log.Infof("Hole active & exists, getting test cases")
+	// Language and version specific to Jdoodle
+	userInput.Language = v.jdoodle.JdoodleLang
+	userInput.Version = v.jdoodle.JdoodleVersion
+	log.WithField("Language", userInput.Language).WithField("Version", userInput.Version).Debugf("Valid request")
 
+	// Get all tests for the hole
 	tests, err := holes.GetTests(hole.ID)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -81,8 +88,9 @@ func SubmissionHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	log = log.WithField("Tests", len(tests))
+	log.Debugf("Test cases: %+v", tests)
 
-	// Wait for tests to complete
+	// Run each test individually and compare results
 	var ch = make(chan compileResult, len(tests))
 	for _, test := range tests {
 
@@ -119,20 +127,23 @@ func SubmissionHandler(w http.ResponseWriter, r *http.Request) {
 				ch <- result
 			}
 		}(test, userInput)
-
 	}
 
-	var sub = compiler.NewSubmissionDB(holeID, globals.BGID, userInput.Script, userInput.Language, userInput.Version)
-	i, correct, incorrect := 0, 0, 0
+	sub := compiler.NewSubmissionDB(holeID, claims.BGID, userInput.Script, v.jdoodle.JdoodleLang, v.jdoodle.JdoodleVersion)
+	i, correct := 0, 0
 	timeout := time.NewTimer(time.Second * 15)
 
 	// Wait for all tests to be done or timeout
 	for {
+		if i == len(tests) {
+			break
+		}
+
 		select {
 		case out := <-ch:
 			if out.err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
-				log.WithField("Test", out.test.ID).WithError(err).Errorf("Error compiling test")
+				log.WithField("Test", out.test.ID).WithError(out.err).Errorf("Error compiling test")
 				return
 			}
 
@@ -142,8 +153,6 @@ func SubmissionHandler(w http.ResponseWriter, r *http.Request) {
 			i++
 			if out.correct {
 				correct++
-			} else {
-				incorrect++
 			}
 
 		case <-timeout.C:
@@ -151,12 +160,9 @@ func SubmissionHandler(w http.ResponseWriter, r *http.Request) {
 			log.Warnf("Compiler timed out")
 			return
 		}
-
-		if i == len(tests) {
-			break
-		}
 	}
 	close(ch)
+	log = log.WithField("CorrectCount", correct)
 
 	if err := db.Store(sub); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -164,20 +170,43 @@ func SubmissionHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	bs, _ := json.Marshal(struct {
-		Correct bool  `json:"Correct"`
-		Length  int64 `json:"Length"`
-	}{
-		Correct: incorrect == 0,
-		Length:  sub.Length,
-	})
+	type response struct {
+		ID           string
+		Correct      bool
+		Length       int64
+		CorrectTests int
+		TotalTests   int
+		BestScore    bool
+	}
+	var resp = response{
+		ID:           sub.ID,
+		Correct:      i == correct,
+		Length:       sub.Length,
+		CorrectTests: correct,
+		TotalTests:   i,
+	}
 
 	w.Header().Set("Content-Type", "application/json")
+	if !resp.Correct {
+		bs, _ := json.Marshal(resp)
+		log.Infof("Successful compile request")
+		w.Write(bs)
+		return
+	}
+
+	// Sleep for a second to wait for store to finish before checking for final score
+	time.Sleep(1 * time.Second)
+
+	// Compare to best submission for easier frontend displays
+	bestSub, err := compiler.BestSubmission(claims.BGID, holeID)
+	if err != nil {
+		log.WithError(err).Errorf("Error getting best submission")
+	}
+	log.Debugf("Best sub %+v", bestSub)
+
+	resp.BestScore = bestSub != nil && bestSub.ID == sub.ID
+
+	bs, _ := json.Marshal(resp)
 	w.Write(bs)
-	log.WithFields(logrus.Fields{
-		"Correct":        incorrect == 0,
-		"Length":         len(userInput.Script),
-		"CorrectCount":   correct,
-		"IncorrectCount": incorrect,
-	}).Infof("Successful compile request")
+	log.WithField("CorrectCount", resp.Correct).Infof("Successful compile request")
 }

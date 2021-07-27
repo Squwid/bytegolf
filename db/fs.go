@@ -4,8 +4,9 @@ import (
 	"context"
 	"os"
 
-	"cloud.google.com/go/firestore"
 	"github.com/Squwid/bytegolf/models"
+
+	"cloud.google.com/go/firestore"
 )
 
 var projectID string

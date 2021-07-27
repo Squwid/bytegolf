@@ -10,12 +10,12 @@ import (
 	"github.com/Squwid/bytegolf/globals"
 	"github.com/Squwid/bytegolf/holes"
 	"github.com/Squwid/bytegolf/profiles"
+
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 )
 
 func main() {
-	// getting the port here is essential when using google cloud runa
 	port := globals.Port()
 
 	r := mux.NewRouter()
@@ -30,6 +30,7 @@ func main() {
 
 	r.HandleFunc("/api/submissions", compiler.ListSubmissions).Methods("GET")
 	r.HandleFunc("/api/submissions/{id}", compiler.GetSubmission).Methods("GET")
+	r.HandleFunc("/api/submissions/best/{hole}", compiler.GetBestSubmissionHandler).Methods("GET")
 	r.HandleFunc("/api/submit/{hole}", jdoodle.SubmissionHandler).Methods("POST")
 	r.HandleFunc("/api/leaderboards", compiler.LeaderboardHandler).Methods("GET")
 

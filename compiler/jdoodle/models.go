@@ -3,8 +3,10 @@ package jdoodle
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
 
+	"github.com/Squwid/bytegolf/globals"
 	"github.com/Squwid/bytegolf/holes"
 	"github.com/Squwid/bytegolf/models"
 )
@@ -46,9 +48,14 @@ type compileResult struct {
 	test   *holes.Test
 }
 
+type validation struct {
+	valid bool
+	msg   string // msg exists if validation is invalid
+
+	jdoodle globals.JdoodleLang
+}
+
 func (in UserInput) Input(stdIn string) *Input {
-	// TODO: Verify that language and version can be used before calling compiler
-	// TODO: StdIn needs to come from the tests somewhere
 	return &Input{
 		ClientID:     clientID,
 		ClientSecret: clientSecret,
@@ -60,17 +67,24 @@ func (in UserInput) Input(stdIn string) *Input {
 	}
 }
 
-func (in UserInput) validate() (bool, string) {
-	if in.Language == "" {
-		return false, "invalid language"
+func (in UserInput) validate() validation {
+	var v validation
+
+	// Make sure that the language and version match up
+	jdoodle := globals.GetLanguage(in.Language, in.Version)
+	if jdoodle == nil {
+		v.msg = fmt.Sprintf("invalid language: %v:%v", in.Language, in.Version)
+		return v
 	}
+
 	if in.Script == "" {
-		return false, "invalid script"
+		v.msg = "invalid script"
+		return v
 	}
-	if in.Version == "" {
-		return false, "invalid version"
-	}
-	return true, ""
+
+	v.valid = true
+	v.jdoodle = *jdoodle
+	return v
 }
 
 /* Interface things for the compiler interface */

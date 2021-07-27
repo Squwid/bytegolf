@@ -5,13 +5,11 @@ import (
 	"strings"
 )
 
-// TODO: Use user tokens instead of this hardcoded BGID
-const BGID = "9581d9ef-d998-4903-b88c-5345e980770f"
-
 // Possible environments
 const (
-	EnvDev  = "dev"
-	EnvProd = "prod"
+	EnvLocal = "local"
+	EnvDev   = "dev"
+	EnvProd  = "prod"
 )
 
 var ENV string
@@ -41,9 +39,9 @@ func FrontendAddr() string {
 func Env() string {
 	env := strings.ToLower(os.Getenv("BG_ENV"))
 	switch env {
-	case EnvProd:
+	case EnvProd, EnvDev:
 		return env
 	default:
-		return EnvDev
+		return EnvLocal
 	}
 }

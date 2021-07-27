@@ -3,9 +3,10 @@ package holes
 import (
 	"regexp"
 
-	"cloud.google.com/go/firestore"
 	"github.com/Squwid/bytegolf/db"
 	"github.com/Squwid/bytegolf/models"
+
+	"cloud.google.com/go/firestore"
 	"github.com/mitchellh/mapstructure"
 )
 

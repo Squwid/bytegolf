@@ -1,16 +1,17 @@
 package auth
 
 import (
+	"fmt"
 	"os"
 	"time"
 
-	"cloud.google.com/go/firestore"
 	"github.com/Squwid/bytegolf/db"
+
+	"cloud.google.com/go/firestore"
 	jwt "github.com/dgrijalva/jwt-go"
-	"github.com/google/uuid"
 )
 
-const CookieName = "bg-token"
+var CookieName string
 
 var githubClient, githubSecret, githubState string
 var jwtKey []byte
@@ -20,8 +21,9 @@ func init() {
 	githubSecret = os.Getenv("GITHUB_SECRET")
 	githubState = os.Getenv("GITHUB_STATE")
 	jwtKey = []byte(os.Getenv("JWT_SECRET"))
+	CookieName = os.Getenv("BG_COOKIE_NAME")
 
-	if githubClient == "" || githubSecret == "" || githubState == "" || len(jwtKey) == 0 {
+	if githubClient == "" || githubSecret == "" || githubState == "" || len(jwtKey) == 0 || CookieName == "" {
 		panic("missing github env variables")
 	}
 }
@@ -29,7 +31,7 @@ func init() {
 // NewBytegolfUser returns a new bytegolf user
 func NewBytegolfUser(ghu GithubUser) *BytegolfUser {
 	return &BytegolfUser{
-		BGID:        uuid.New().String(),
+		BGID:        fmt.Sprintf("%v", ghu.ID),
 		GithubUser:  ghu,
 		CreatedTime: time.Now().UTC(),
 	}

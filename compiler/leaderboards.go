@@ -6,10 +6,11 @@ import (
 	"net/http"
 	"strconv"
 
-	"cloud.google.com/go/firestore"
 	"github.com/Squwid/bytegolf/auth"
 	"github.com/Squwid/bytegolf/db"
 	"github.com/Squwid/bytegolf/models"
+
+	"cloud.google.com/go/firestore"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/api/iterator"
 )
@@ -38,8 +39,11 @@ func (e *Entry) GetUserFields() error {
 	return nil
 }
 
+// LeaderboardQuery is a wrapper query function to list leaderboard submissions for a given hole.
+// Since leaderboard have to be unique by BGID, that query is handled in this function. If the limit is not
+// reached it will return a slice of the users it was able to get
 func LeaderboardQuery(query firestore.Query, limit int) ([]Entry, error) {
-	var users = make(map[string]bool) // Map users for O(1) time rather than list iteration
+	var users = make(map[string]bool) // Map users in O(1) time
 	var entries = []Entry{}
 
 	iter := query.Documents(context.Background())

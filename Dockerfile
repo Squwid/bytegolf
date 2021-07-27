@@ -9,10 +9,13 @@ FROM alpine:latest
 COPY --from=build /bytegolf/bytegolf-backend .
 
 ARG ENV=dev
+ARG FRONTEND_URL=https://dev.byte.golf
+ARG BACKEND_URL=https://dev-api.byte.golf
 
 ENV GCP_PROJECT_ID=squid-cloud
 ENV BG_ENV=${ENV}
-ENV BG_FRONTEND_ADDR=https://dev.byte.golf
-ENV BG_BACKEND_ADDR=https://dev-api.byte.golf
+ENV BG_FRONTEND_ADDR=${FRONTEND_URL}
+ENV BG_BACKEND_ADDR=${BACKEND_URL}
+ENV BG_COOKIE_NAME=bg-token-${ENV}
 
 CMD ["./bytegolf-backend"]

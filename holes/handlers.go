@@ -4,10 +4,11 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"cloud.google.com/go/firestore"
 	"github.com/Squwid/bytegolf/auth"
 	"github.com/Squwid/bytegolf/db"
 	"github.com/Squwid/bytegolf/models"
+
+	"cloud.google.com/go/firestore"
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"

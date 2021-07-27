@@ -3,6 +3,7 @@ package jdoodle
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/Squwid/bytegolf/globals"
@@ -72,7 +73,7 @@ func (in UserInput) validate() validation {
 	// Make sure that the language and version match up
 	jdoodle := globals.GetLanguage(in.Language, in.Version)
 	if jdoodle == nil {
-		v.msg = "invalid language"
+		v.msg = fmt.Sprintf("invalid language: %v:%v", in.Language, in.Version)
 		return v
 	}
 

@@ -13,12 +13,14 @@ import (
 func parseCookie(r *http.Request) *auth.Claims {
 	c, err := r.Cookie(auth.CookieName)
 	if err != nil {
+		logrus.WithField("CookieName", auth.CookieName).Debugf("Cookie doesnt exist")
 		return nil
 	}
 
 	var claims auth.Claims
 	token, err := jwt.ParseWithClaims(c.Value, &claims, auth.JWT)
 	if err != nil {
+		logrus.WithError(err).Debugf("Couldnt parse cookie")
 		if err == jwt.ErrSignatureInvalid {
 			return nil
 		}
@@ -27,6 +29,7 @@ func parseCookie(r *http.Request) *auth.Claims {
 	}
 
 	if !token.Valid {
+		logrus.WithError(err).Debugf("Invalid cookie")
 		return nil
 	}
 

@@ -20,6 +20,7 @@ import (
 )
 
 func SubmissionHandler(w http.ResponseWriter, r *http.Request) {
+	logrus.SetLevel(logrus.DebugLevel)
 	holeID := mux.Vars(r)["hole"]
 	log := logrus.WithFields(logrus.Fields{
 		"Hole":   holeID,
@@ -171,6 +172,7 @@ func SubmissionHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	type response struct {
+		ID           string
 		Correct      bool
 		Length       int64
 		CorrectTests int
@@ -178,6 +180,7 @@ func SubmissionHandler(w http.ResponseWriter, r *http.Request) {
 		BestScore    bool
 	}
 	var resp = response{
+		ID:           sub.ID,
 		Correct:      i == correct,
 		Length:       sub.Length,
 		CorrectTests: correct,

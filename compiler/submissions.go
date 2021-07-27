@@ -127,7 +127,7 @@ func GetSubmission(w http.ResponseWriter, r *http.Request) {
 	w.Write(bs)
 }
 
-// GetBestSubmissionHandler will check if a user is logged in, then grab their best submission using a short submission
+// GetBestSubmissionHandler will check if a user is logged in, then grab their best submission using a short submission. If no submission is found, a 204 is returned to the user
 func GetBestSubmissionHandler(w http.ResponseWriter, r *http.Request) {
 	hole := mux.Vars(r)["hole"]
 	log := logrus.WithFields(logrus.Fields{
@@ -152,7 +152,7 @@ func GetBestSubmissionHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Best submission for hole was not found
 	if sub == nil {
-		w.WriteHeader(http.StatusNotFound)
+		w.WriteHeader(http.StatusNoContent)
 		log.Infof("Submission does not exist")
 		return
 	}

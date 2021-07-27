@@ -20,7 +20,6 @@ import (
 )
 
 func SubmissionHandler(w http.ResponseWriter, r *http.Request) {
-	logrus.SetLevel(logrus.DebugLevel)
 	holeID := mux.Vars(r)["hole"]
 	log := logrus.WithFields(logrus.Fields{
 		"Hole":   holeID,
@@ -203,7 +202,6 @@ func SubmissionHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.WithError(err).Errorf("Error getting best submission")
 	}
-	logrus.SetLevel(logrus.DebugLevel)
 	log.Debugf("Best sub %+v", bestSub)
 
 	resp.BestScore = bestSub != nil && bestSub.ID == sub.ID

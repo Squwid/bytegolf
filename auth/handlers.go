@@ -8,7 +8,7 @@ import (
 
 	"github.com/Squwid/bytegolf/globals"
 
-	jwt "github.com/dgrijalva/jwt-go"
+	jwt "github.com/golang-jwt/jwt"
 	log "github.com/sirupsen/logrus"
 )
 

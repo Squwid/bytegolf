@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 )
 
+// SubmissionDB is complete submission object that gets stored in the database
 type SubmissionDB struct {
 	ID       string
 	Script   string
@@ -24,8 +25,15 @@ type SubmissionDB struct {
 	SubmittedTime time.Time
 
 	// Tests holds data for each individual test and whether it was correct or not
-	Tests     map[string]bool
+	Tests     SubmissionTests
 	TestCount int
+}
+
+// SubmissionTest is the test output that gets stored in the Tests field under SubmissionDB
+type SubmissionTest struct {
+	Correct bool   // Test correct or not
+	Hidden  bool   // Whether to show the output on the frontend or not
+	Output  string `json:"Output,omitempty"` // User test output
 }
 
 // ShortSubmission is the short submission for the frontend to list all submissions,
@@ -42,11 +50,27 @@ type ShortSubmission struct {
 	HoleName      string
 }
 
-// FullSubmission is the full submission for the frontend including the script and all short submission data
+// FullSubmission extends the ShortSubmission with the Script and TestCases
 type FullSubmission struct {
 	ShortSubmission
 
 	Script string
+	Tests  map[string]SubmissionTest
+}
+
+type SubmissionTests map[string]SubmissionTest
+
+// HideHidden hides the hidden test cases after getting the entire object from the database
+func (st SubmissionTests) HideHidden() SubmissionTests {
+	for k := range st {
+		if st[k].Hidden {
+			st[k] = SubmissionTest{
+				Hidden:  true,
+				Correct: st[k].Correct,
+			}
+		}
+	}
+	return st
 }
 
 func NewSubmissionDB(holeID, bgID, script, language, version string) *SubmissionDB {
@@ -63,7 +87,7 @@ func NewSubmissionDB(holeID, bgID, script, language, version string) *Submission
 
 		// TODO: Add a better length counter specifically for bytes
 		Length:    int64(len(script)),
-		Tests:     make(map[string]bool),
+		Tests:     make(SubmissionTests),
 		TestCount: 0,
 	}
 }
@@ -103,12 +127,18 @@ func (sub *SubmissionDB) FullSub() (*FullSubmission, error) {
 	return &FullSubmission{
 		ShortSubmission: *ss,
 		Script:          sub.Script,
+		Tests:           sub.Tests.HideHidden(),
 	}, nil
 }
 
-func (sub *SubmissionDB) AddTest(testID string, correct bool) {
+func (sub *SubmissionDB) AddTest(testID, output string, correct, hidden bool) {
 	sub.TestCount++
-	sub.Tests[testID] = correct
+
+	sub.Tests[testID] = SubmissionTest{
+		Correct: correct,
+		Hidden:  hidden,
+		Output:  output,
+	}
 
 	if !correct {
 		sub.Correct = false

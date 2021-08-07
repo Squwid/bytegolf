@@ -25,6 +25,8 @@ func main() {
 	r.HandleFunc("/login/check", auth.CallbackHandler)
 	r.HandleFunc("/login", auth.LoginHandler)
 
+	r.HandleFunc("/api/test/{hole}/{id}", holes.GetTest).Methods("GET")
+	r.HandleFunc("/api/tests/{hole}", holes.ListTests).Methods("GET")
 	r.HandleFunc("/api/holes", holes.ListHoles).Methods("GET")
 	r.HandleFunc("/api/hole/{id}", holes.GetHole).Methods("GET")
 

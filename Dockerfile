@@ -10,7 +10,7 @@ COPY --from=build /bytegolf/bytegolf-backend .
 
 ARG ENV=dev
 ARG FRONTEND_URL=https://dev.byte.golf
-ARG BACKEND_URL=https://dev-api.byte.golf
+ARG BACKEND_URL=https://dev.api.byte.golf
 
 ENV GCP_PROJECT_ID=squid-cloud
 ENV BG_ENV=${ENV}

@@ -18,7 +18,10 @@ import (
 
 // ListHoles lists 100 active holes
 func ListHoles(w http.ResponseWriter, r *http.Request) {
-	log := logrus.WithField("Action", "ListHoles")
+	log := logrus.WithFields(logrus.Fields{
+		"Action": "ListHoles",
+		"IP":     r.RemoteAddr,
+	})
 
 	claims := auth.LoggedIn(r)
 	if claims != nil {
@@ -43,6 +46,7 @@ func ListHoles(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(bs)
+	log.Infof("Listed %v holes", len(hs))
 }
 
 // GetHole gets a hole using an id

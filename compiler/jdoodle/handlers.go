@@ -131,7 +131,7 @@ func SubmissionHandler(w http.ResponseWriter, r *http.Request) {
 
 	sub := compiler.NewSubmissionDB(holeID, claims.BGID, userInput.Script, v.jdoodle.JdoodleLang, v.jdoodle.JdoodleVersion)
 	i, correct := 0, 0
-	timeout := time.NewTimer(time.Second * 15)
+	timeout := time.NewTimer(time.Second * 20) // Timeout on compiler side is 15 seconds
 
 	// Wait for all tests to be done or timeout
 	for {
@@ -147,7 +147,7 @@ func SubmissionHandler(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			sub.AddTest(out.test.ID, out.correct)
+			sub.AddTest(out.test.ID, out.output.Output, out.correct, out.test.Hidden)
 			log.WithField("TestID", out.test.ID).WithField("Output", out.output.Output).Infof("Correct: %v", out.correct)
 
 			i++

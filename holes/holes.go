@@ -23,15 +23,49 @@ type Hole struct {
 	Active        bool      `json:"Active"`
 }
 
+type ShortTests []ShortTest
+
+// ShortTest is the frontend object for a Test structure
+type ShortTest struct {
+	ID          string `json:"ID"`
+	Name        string `json:"Name"`                  // Test name on the frontend
+	Hidden      bool   `json:"Hidden"`                // When hidden is false, output will be shown on frontend
+	Description string `json:"Description,omitempty"` // Optional description field
+	Active      bool   `json:"Active"`
+}
+
 type Tests []Test
 
+// Test extends ShortTest and has hidden information solely for the database
 type Test struct {
 	ID          string `json:"ID"`
-	Input       string `json:"Input"`
-	OutputRegex string `json:"OutputRegex"`
+	Name        string `json:"Name"`        // Test name on the frontend
+	Hidden      bool   `json:"Hidden"`      // When hidden is false, output will be shown on frontend
+	Description string `json:"Description"` // Optional description field
 	Active      bool   `json:"Active"`
 
+	Input       string `json:"Input"`
+	OutputRegex string `json:"OutputRegex"`
+
 	CreatedAt time.Time `json:"CreatedAt"`
+}
+
+func (ts Tests) ShortTests() ShortTests {
+	var sts = make(ShortTests, len(ts))
+	for i := 0; i < len(ts); i++ {
+		sts[i] = ts[i].ShortTest()
+	}
+	return sts
+}
+
+func (t Test) ShortTest() ShortTest {
+	return ShortTest{
+		ID:          t.ID,
+		Name:        t.Name,
+		Hidden:      t.Hidden,
+		Description: t.Description,
+		Active:      t.Active,
+	}
 }
 
 func transformHole(hole map[string]interface{}) error {

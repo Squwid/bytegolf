@@ -8,7 +8,7 @@ import (
 	"github.com/Squwid/bytegolf/db"
 
 	"cloud.google.com/go/firestore"
-	jwt "github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt"
 )
 
 var CookieName string

@@ -17,6 +17,7 @@ import (
 
 func main() {
 	port := globals.Port()
+	env := globals.Env()
 
 	r := mux.NewRouter()
 
@@ -25,6 +26,8 @@ func main() {
 	r.HandleFunc("/login/check", auth.CallbackHandler)
 	r.HandleFunc("/login", auth.LoginHandler)
 
+	r.HandleFunc("/api/test/{hole}/{id}", holes.GetTest).Methods("GET")
+	r.HandleFunc("/api/tests/{hole}", holes.ListTests).Methods("GET")
 	r.HandleFunc("/api/holes", holes.ListHoles).Methods("GET")
 	r.HandleFunc("/api/hole/{id}", holes.GetHole).Methods("GET")
 
@@ -37,7 +40,7 @@ func main() {
 	r.HandleFunc("/api/profile/{id}", profiles.GetProfile).Methods("GET") // checks if a user is logged in
 	r.HandleFunc("/api/claims", auth.ShowClaims).Methods("GET")           // Returns a user's claims and see if they are logged in
 
-	log.Infof("Starting container on port :%s", port)
+	log.WithField("Env", env).Infof("Starting container on port :%s", port)
 	http.ListenAndServe(":"+port, loggedIn(cors(r)))
 }
 

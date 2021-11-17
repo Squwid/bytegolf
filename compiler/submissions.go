@@ -24,7 +24,10 @@ const subLimit = 20
 // Possible query strings:
 //     "hole": Optional query string just to get submissions for a single hole
 func ListSubmissions(w http.ResponseWriter, r *http.Request) {
-	log := logrus.WithField("Action", "ListSubmissions")
+	log := logrus.WithFields(logrus.Fields{
+		"Action": "ListSubmissions",
+		"IP":     r.RemoteAddr,
+	})
 
 	claims := auth.LoggedIn(r)
 	if claims == nil {
@@ -62,11 +65,12 @@ func ListSubmissions(w http.ResponseWriter, r *http.Request) {
 		shortSubs[i] = *ss
 	}
 
-	log.WithField("Submissions", len(subs)).Infof("Got submissions")
-
 	bs, _ := json.Marshal(shortSubs)
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(bs)
+
+	log.WithField("Submissions", len(subs)).Infof("Got submissions")
+
 }
 
 // GetSubmission gets a single submission if the users BGID is the same as the submission requested

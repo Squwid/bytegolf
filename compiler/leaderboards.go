@@ -85,6 +85,7 @@ func LeaderboardQuery(query firestore.Query, limit int) ([]Entry, error) {
 func LeaderboardHandler(w http.ResponseWriter, r *http.Request) {
 	log := logrus.WithFields(logrus.Fields{
 		"Action": "Leaderboard",
+		"IP":     r.RemoteAddr,
 	})
 
 	claims := auth.LoggedIn(r)

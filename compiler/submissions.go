@@ -112,7 +112,7 @@ func GetSubmission(w http.ResponseWriter, r *http.Request) {
 
 	// Make sure BGID matches submission
 	if sub.BGID != claims.BGID {
-		log.Infof("%s on sub doesnt match %s", sub.BGID, claims.BGID)
+		log.Warnf("%s on sub doesnt match %s", sub.BGID, claims.BGID)
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}

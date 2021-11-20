@@ -30,6 +30,7 @@ type ShortTest struct {
 	ID          string `json:"ID"`
 	Name        string `json:"Name"`                  // Test name on the frontend
 	Hidden      bool   `json:"Hidden"`                // When hidden is false, output will be shown on frontend
+	Input       string `json:"Input,omitempty"`       // Returns test input when test is NOT hidden
 	Description string `json:"Description,omitempty"` // Optional description field
 	Active      bool   `json:"Active"`
 }
@@ -58,14 +59,20 @@ func (ts Tests) ShortTests() ShortTests {
 	return sts
 }
 
+// ShortTest returns what a user should see for a test case. If a test is not hidden, then
+// the input is returned as well
 func (t Test) ShortTest() ShortTest {
-	return ShortTest{
+	st := ShortTest{
 		ID:          t.ID,
 		Name:        t.Name,
 		Hidden:      t.Hidden,
 		Description: t.Description,
 		Active:      t.Active,
 	}
+	if !t.Hidden {
+		st.Input = t.Input
+	}
+	return st
 }
 
 func transformHole(hole map[string]interface{}) error {

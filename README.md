@@ -1,5 +1,7 @@
 # Byte Golf
 
+Play Byte Golf - https://byte.golf/
+
 Byte Golf is a code solving problem that rewards players for solving code problems in the shortest amount of code! Some questions require parsing of Stdin while others have to do with printing a simple output. Byte Golf is completely open sourced [here](https://github.com/Squwid/bytegolf) as well!
 
 ## Rules

@@ -1,0 +1,37 @@
+.text {
+    font-family: 'FiraCode';
+    font-weight: lighter;
+    color: white;
+    font-size: 1.875rem;
+    letter-spacing: -.1rem;
+    padding-left: 0.413rem;
+    padding-right: 0.413rem;
+}
+
+.text:hover {
+    color: rgb(235, 235, 235);
+    cursor: pointer;
+}
+
+.text:active {
+    color: rgb(25, 112, 25);
+}
+
+.selected {
+    font-family: 'FiraCode';
+    font-weight: lighter;
+    color: lightgreen;
+    font-size: 1.875rem;
+    letter-spacing: -.1rem;
+    padding-left: 0.413rem;
+    padding-right: 0.413rem;
+}
+
+.selected:hover {
+    color: rgb(235, 235, 235);
+    cursor: pointer;
+}
+
+.selected:active {
+    color: rgb(25, 112, 25);
+}

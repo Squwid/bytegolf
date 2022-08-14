@@ -7,7 +7,7 @@ terraform {
   required_providers {
     google = {
       source  = "hashicorp/google"
-      version = "4.13.0"
+      version = "4.31.0"
     }
   }
 
@@ -20,8 +20,8 @@ terraform {
 locals {
   env               = terraform.workspace
   project           = "squid-cloud"
-  backend_container = "gcr.io/squid-cloud/bytegolf-backend@sha256:dff7b98627d9784eaa050aa4a0c04daa638647d9c093b42b0100135a0a43bc46"
-  frontend_addr     = "https://byte.golf"
-  backend_addr      = "https://api.byte.golf"
+  backend_container = "gcr.io/squid-cloud/bytegolf-backend@sha256:69a9ee3bc4c0d27346973809587ece52ec639938151d9a4573602e880a9f211a"
+  frontend_addr     = terraform.workspace == "prod" ? "https://byte.golf" : "https://${terraform.workspace}.byte.golf"
+  backend_addr      = terraform.workspace == "prod" ? "https://api.byte.golf" : "https://${terraform.workspace}.api.byte.golf"
   cookie_name       = "bg-token"
 }

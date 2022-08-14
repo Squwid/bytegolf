@@ -1,10 +1,10 @@
 resource "google_cloud_run_service" "backend_service" {
-  name     = "${local.env}-bytegolf-backend1"
+  name     = "${local.env}-bytegolf-backend"
   location = "us-central1"
 
   metadata {
     annotations = {
-      "run.googleapis.com/ingress": "internal-and-cloud-load-balancing"
+      "run.googleapis.com/ingress" : "internal-and-cloud-load-balancing"
     }
   }
 
@@ -30,7 +30,7 @@ resource "google_cloud_run_service" "backend_service" {
 
           limits = {
             memory = "256Mi"
-            cpu = "1000m"
+            cpu    = "1000m"
           }
         }
 
@@ -155,6 +155,31 @@ resource "google_cloud_run_service_iam_policy" "noauth" {
 }
 
 #################################################
+#                      NEG                      #
+#################################################
+
+resource "google_compute_backend_service" "backend_service" {
+  provider    = google
+  name        = "${local.env}-bytegolf-backend-service"
+  description = "Backend service for Bytegolf Backend ${local.env}"
+  enable_cdn  = false
+
+  backend {
+    group = google_compute_region_network_endpoint_group.backend_neg.id
+  }
+}
+
+resource "google_compute_region_network_endpoint_group" "backend_neg" {
+  name                  = "${local.env}-backend-neg"
+  network_endpoint_type = "SERVERLESS"
+  region                = "us-central1"
+
+  cloud_run {
+    service = google_cloud_run_service.backend_service.name
+  }
+}
+
+#################################################
 #                SERVICE ACCOUNT                #
 #################################################
 
@@ -172,7 +197,7 @@ resource "google_project_iam_binding" "backend_secret_accessor" {
 
 resource "google_project_iam_binding" "firestore_service_agent" {
   project = local.project
-  role = "roles/firestore.serviceAgent"
+  role    = "roles/firestore.serviceAgent"
 
   members = ["serviceAccount:${resource.google_service_account.backend.email}"]
 }

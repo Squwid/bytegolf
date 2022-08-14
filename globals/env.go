@@ -7,9 +7,10 @@ import (
 
 // Possible environments
 const (
-	EnvLocal = "local"
-	EnvDev   = "dev"
-	EnvProd  = "prod"
+	EnvLocal   = "local"
+	EnvDev     = "dev"
+	EnvStaging = "staging"
+	EnvProd    = "prod"
 )
 
 var ENV string
@@ -39,7 +40,7 @@ func FrontendAddr() string {
 func Env() string {
 	env := strings.ToLower(os.Getenv("BG_ENV"))
 	switch env {
-	case EnvProd, EnvDev:
+	case EnvProd, EnvDev, EnvStaging:
 		return env
 	default:
 		return EnvLocal

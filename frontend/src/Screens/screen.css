@@ -1,0 +1,39 @@
+.screenText {
+  font-family: 'FiraCode';
+  font-size: 1rem;
+  text-align: center;
+  margin: 0;
+}
+  
+.screenTitle {
+  font-family: 'FiraCode';
+  font-size: 3rem;
+  text-align: center;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+  
+.screenContainer {
+  width: 980px;
+  margin: 0 auto;
+  height: auto;
+  font-family: 'FiraCode';
+}
+
+.holesBtnContainer {
+  width: 100%;
+  height: auto;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  flex-direction: row;
+  margin-bottom: 3rem;
+}
+
+.screenSubText {
+  font-family: 'FiraCode';
+  font-size: 1.5rem;
+  text-align: center;
+  margin: 0;
+  color: darkslategray;
+}

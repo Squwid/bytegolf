@@ -188,16 +188,14 @@ resource "google_service_account" "backend" {
   display_name = "Backend Service Account - ${local.env}"
 }
 
-resource "google_project_iam_binding" "backend_secret_accessor" {
+resource "google_project_iam_member" "backend_secret_accessor" {
   project = local.project
-  role    = "roles/secretmanager.secretAccessor"
-
-  members = ["serviceAccount:${resource.google_service_account.backend.email}"]
+  role = "roles/secretmanager.secretAccessor"
+  member = "serviceAccount:${resource.google_service_account.backend.email}"
 }
 
-resource "google_project_iam_binding" "firestore_service_agent" {
+resource "google_project_iam_member" "backend_firebase_admin" {
   project = local.project
-  role    = "roles/firestore.serviceAgent"
-
-  members = ["serviceAccount:${resource.google_service_account.backend.email}"]
+  role = "roles/firebase.admin"
+  member = "serviceAccount:${resource.google_service_account.backend.email}"
 }

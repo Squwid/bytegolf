@@ -20,8 +20,8 @@ terraform {
 locals {
   env               = terraform.workspace
   project           = "squid-cloud"
-  backend_container = "gcr.io/squid-cloud/bytegolf-backend@sha256:69a9ee3bc4c0d27346973809587ece52ec639938151d9a4573602e880a9f211a"
+  backend_container = "gcr.io/squid-cloud/bytegolf-backend@sha256:dfb2710e0cf0fcc86c5a8052b337679aef441e28238cd005e7802b3e7fc7bcd5"
   frontend_addr     = terraform.workspace == "prod" ? "https://byte.golf" : "https://${terraform.workspace}.byte.golf"
   backend_addr      = terraform.workspace == "prod" ? "https://api.byte.golf" : "https://${terraform.workspace}.api.byte.golf"
-  cookie_name       = "bg-token"
+  cookie_name       = terraform.workspace == "prod" ? "bg-token" : "bg-token-${terraform.workspace}"
 }

@@ -30,6 +30,7 @@
     "start": "PORT=3000 env-cmd -f .env.local react-scripts start",
     "build:master": "env-cmd -f .env.prod react-scripts build",
     "build:stage": "env-cmd -f .env.dev react-scripts build",
+    "build:local": "env-cmd -f .env.local react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },

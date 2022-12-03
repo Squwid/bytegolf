@@ -4,7 +4,7 @@ resource "google_cloud_run_service" "backend_service" {
 
   metadata {
     annotations = {
-      "run.googleapis.com/ingress" : "internal-and-cloud-load-balancing"
+      "run.googleapis.com/ingress" : "all"
     }
   }
 
@@ -18,9 +18,11 @@ resource "google_cloud_run_service" "backend_service" {
 
     spec {
       service_account_name = google_service_account.backend.email
+      container_concurrency = 20
+      timeout_seconds = 30
 
       containers {
-        image = local.backend_container
+        image = local.backend_image
 
         resources {
           # requests = {
@@ -29,7 +31,7 @@ resource "google_cloud_run_service" "backend_service" {
           # }
 
           limits = {
-            memory = "256Mi"
+            memory = "128Mi"
             cpu    = "1000m"
           }
         }
@@ -139,45 +141,38 @@ resource "google_cloud_run_service" "backend_service" {
   ]
 }
 
-data "google_iam_policy" "noauth" {
+data "google_iam_policy" "noauth_backend" {
   binding {
     role    = "roles/run.invoker"
     members = ["allUsers"]
   }
 }
 
-resource "google_cloud_run_service_iam_policy" "noauth" {
+resource "google_cloud_run_service_iam_policy" "backend_noauth" {
   location = google_cloud_run_service.backend_service.location
   project  = google_cloud_run_service.backend_service.project
   service  = google_cloud_run_service.backend_service.name
 
-  policy_data = data.google_iam_policy.noauth.policy_data
+  policy_data = data.google_iam_policy.noauth_backend.policy_data
 }
 
-#################################################
-#                      NEG                      #
-#################################################
+resource "google_cloud_run_domain_mapping" "backend" {
+  location = "us-central1"
+  name     = local.backend_url
 
-resource "google_compute_backend_service" "backend_service" {
-  provider    = google
-  name        = "${local.env}-bytegolf-backend-service"
-  description = "Backend service for Bytegolf Backend ${local.env}"
-  enable_cdn  = false
-
-  backend {
-    group = google_compute_region_network_endpoint_group.backend_neg.id
+  metadata {
+    namespace = local.project
   }
-}
 
-resource "google_compute_region_network_endpoint_group" "backend_neg" {
-  name                  = "${local.env}-backend-neg"
-  network_endpoint_type = "SERVERLESS"
-  region                = "us-central1"
-
-  cloud_run {
-    service = google_cloud_run_service.backend_service.name
+  spec {
+    route_name = google_cloud_run_service.backend_service.name
   }
+
+  depends_on = [
+    google_cloud_run_service.backend_service
+  ]
 }
+
 
 #################################################
 #                SERVICE ACCOUNT                #
@@ -188,14 +183,16 @@ resource "google_service_account" "backend" {
   display_name = "Backend Service Account - ${local.env}"
 }
 
+# TODO: Find a better way to limit access to specific secrets that should be unaccessable 
+# between environments
 resource "google_project_iam_member" "backend_secret_accessor" {
   project = local.project
-  role = "roles/secretmanager.secretAccessor"
-  member = "serviceAccount:${resource.google_service_account.backend.email}"
+  role    = "roles/secretmanager.secretAccessor"
+  member  = "serviceAccount:${resource.google_service_account.backend.email}"
 }
 
 resource "google_project_iam_member" "backend_firebase_admin" {
   project = local.project
-  role = "roles/firebase.admin"
-  member = "serviceAccount:${resource.google_service_account.backend.email}"
+  role    = "roles/firebase.admin"
+  member  = "serviceAccount:${resource.google_service_account.backend.email}"
 }

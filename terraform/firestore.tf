@@ -1,5 +1,4 @@
 resource "google_firestore_index" "active_holes" {
-  # collection = "bytegolf_ActiveHoles_${local.env}"
   collection = "bg_${local.env}_Hole"
 
   fields {
@@ -82,7 +81,6 @@ resource "google_firestore_index" "user_submissions" {
 }
 
 resource "google_firestore_index" "best_hole_submissions_lang" {
-  # collection = "bytegolf_BestHoleLangSubs_${local.env}"
   collection = "bg_${local.env}_Submission"
 
   fields {
@@ -109,10 +107,13 @@ resource "google_firestore_index" "best_hole_submissions_lang" {
     field_path = "SubmittedTime"
     order      = "ASCENDING"
   }
+
+  depends_on = [
+    google_firestore_index.active_test_cases
+  ]
 }
 
 resource "google_firestore_index" "best_hole_submissions" {
-  # collection = "bytegolf_BestHoleSubs_${local.env}"
   collection = "bg_${local.env}_Submission"
 
   fields {
@@ -137,7 +138,6 @@ resource "google_firestore_index" "best_hole_submissions" {
 }
 
 resource "google_firestore_index" "active_test_cases" {
-  # collection = "bytegolf_ActiveHoleTests_${local.env}"
   collection = "bg_${local.env}_Test"
 
   fields {

@@ -1,192 +1,110 @@
 package auth
 
 import (
-	"bytes"
+	"context"
 	"encoding/json"
 	"net/http"
-	"time"
 
 	"github.com/Squwid/bytegolf/globals"
-
-	"github.com/golang-jwt/jwt"
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 )
 
 // LoginHandler will send the request to Github to make sure that the user is logged in
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
-	l := log.WithField("Action", "LoginRequest")
-	l.Infof("New login request")
+	logger := logrus.WithField("Action", "LoginRequest")
+	logger.Debugf("New login request.")
 
-	// Check if user is already logged in
 	claims := LoggedIn(r)
 	if claims != nil {
-		l.Infof("Already logged in")
 		http.Redirect(w, r, globals.FrontendAddr()+"/profile/"+claims.BGID, http.StatusSeeOther)
+		logger.Debugf("User already logged in, redirecting.")
 		return
 	}
 
-	// Create the github request for the upcoming redirect
-	ghReq, err := http.NewRequest("GET", "https://github.com/login/oauth/authorize", nil)
-	if err != nil {
-		l.WithError(err).Errorf("Error creating new request for Github")
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-		return
-	}
+	ghReq, _ := http.NewRequest("GET", "https://github.com/login/oauth/authorize", nil)
+	qs := ghReq.URL.Query()
+	qs.Add("client_id", githubClient)
+	qs.Add("state", githubState)
+	qs.Add("allow_signup", "true")
+	ghReq.URL.RawQuery = qs.Encode()
 
-	// Query Strings
-	q := ghReq.URL.Query()
-	q.Add("client_id", githubClient)
-	q.Add("state", githubState)
-	q.Add("allow_signup", "true")
-
-	ghReq.URL.RawQuery = q.Encode()
-	redirectTo := "https://github.com" + ghReq.URL.RequestURI()
-	l.WithField("Redirect", redirectTo).Debugf("Redirect to github")
-
-	// Redirect using the Github URL
+	redirectTo := ghReq.URL.String()
 	http.Redirect(w, ghReq, redirectTo, http.StatusSeeOther)
+
+	logger.WithField("Redirect", redirectTo).Debugf("Github login redirect.")
 }
 
 // CallbackHandler is the callback from Github to grab the auth token
 func CallbackHandler(w http.ResponseWriter, r *http.Request) {
-	l := log.WithField("Action", "CallbackResponse")
+	logger := logrus.WithField("Action", "CallbackResponse")
 
-	// Get code and state from response body
-	codeResp := r.URL.Query().Get("code")
-	stateResp := r.URL.Query().Get("state")
+	code := r.URL.Query().Get("code")
+	state := r.URL.Query().Get("state")
+	logger.WithFields(logrus.Fields{
+		"Code":  code,
+		"State": state,
+	}).Debugf("Github callback.")
 
-	l.WithFields(log.Fields{
-		"Code":  codeResp,
-		"State": stateResp,
-	}).Infof("Github callback")
-
-	// Check state
-	if stateResp != githubState {
-		l.Warnf("State %s does not match expected state", stateResp)
+	if state != githubState {
 		http.Error(w, "Bad request", http.StatusBadRequest)
+		logger.Warnf("State %s does not match expected state.", state)
 		return
 	}
 
-	// Call github back
-	body, _ := json.Marshal(struct {
-		ClientID     string `json:"client_id"`
-		ClientSecret string `json:"client_secret"`
-		Code         string `json:"code"`
-		State        string `json:"state"`
-	}{
-		ClientID:     githubClient,
-		ClientSecret: githubSecret,
-		Code:         codeResp,
-		State:        stateResp,
-	})
-
-	// Send post request
-	req, err := http.NewRequest("POST", "https://github.com/login/oauth/access_token", bytes.NewReader(body))
+	accessToken, err := callback(code, state)
 	if err != nil {
-		l.WithError(err).Errorf("Error creating post request to swap code for access token")
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		http.Error(w, "Bad request", http.StatusBadRequest)
+		logger.WithError(err).Errorf("Could not call Github back.")
 		return
 	}
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
 
-	// Send Request
-	resp, err := http.DefaultClient.Do(req)
+	// Use Access Token to call Github to fetch user.
+	githubUser, err := fetchUserFromGithub(*accessToken)
 	if err != nil {
-		l.WithError(err).Errorf("Error sending request to Github")
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		logger.WithError(err).
+			Errorf("Error getting Github user using the access token.")
 		return
 	}
 
-	// Make sure status code was 200
-	if resp.StatusCode != 200 {
-		l.Errorf("Invalid status code back from Github: %v (%v)", resp.Status, resp.StatusCode)
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-		return
-	}
-
-	// Parse access token from Github
-	var authResp struct {
-		AccessToken string `json:"access_token"`
-	}
-	if err := json.NewDecoder(resp.Body).Decode(&authResp); err != nil {
-		l.WithError(err).Errorf("Error decoding access_token resp from Github: %v", err)
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-		return
-	}
-
-	// Make sure access token exists
-	if authResp.AccessToken == "" {
-		l.Errorf("Expected auth token but it was blank") // Gets called if code is invalid
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-		return
-	}
-
-	l.Infof("Got access token from Github")
-
-	// Use Access Token to get User
-	githubUser, err := GetGithubUser(authResp.AccessToken)
+	// Check if user already exists, create if not.
+	ctx := context.Background()
+	bgUser, err := createOrGetDBUser(ctx, githubUser)
 	if err != nil {
-		l.WithError(err).Errorf("Error getting Github user")
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		logger.WithError(err).
+			Errorf("Error swapping Github User -> Bytegolf User.")
 		return
 	}
 
-	// Get Bytegolf User from GithubUser
-	bgUser, err := BGUser(githubUser)
-	if err != nil {
-		l.WithError(err).Errorf("Error swapping Github User -> Bytegolf User")
+	if err := writeJWT(w, bgUser); err != nil {
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		logger.WithError(err).Errorf("Error writing JWT.")
 		return
 	}
+	logger.Debugf("Login flow complete. JWT Written.")
 
-	// TODO: Move JWT logic somewhere else
-	timeoutDur := time.Hour * 48
-	expires := time.Now().Add(timeoutDur)
-
-	// Claims
-	claims := Claims{
-		BGID: bgUser.BGID,
-		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: expires.Unix(),
-			IssuedAt:  time.Now().Unix(),
-		},
-	}
-
-	// Create a new token with claims
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-
-	// Sign token using key
-	signedToken, err := token.SignedString(jwtKey)
-	if err != nil {
-		l.WithError(err).Errorf("Error signing token string")
-		http.Error(w, "Invalid signing token", http.StatusInternalServerError)
-		return
-	}
-
-	// Set the cookie
-	http.SetCookie(w, &http.Cookie{
-		Name:     CookieName,
-		Value:    signedToken,
-		Expires:  expires,
-		Path:     "/",
-		HttpOnly: true,
-		SameSite: http.SameSiteLaxMode,
-	})
-
-	// Successful, redirect
 	http.Redirect(w, r, globals.FrontendAddr()+"/profile", http.StatusSeeOther)
 }
 
-// TODO: Should the method of getting the token change?
-func JWT(token *jwt.Token) (interface{}, error) {
-	return jwtKey, nil
-}
+// ShowClaims shows the claims in the users cookie for the frontend
+func ShowClaims(w http.ResponseWriter, r *http.Request) {
+	logger := logrus.WithField("Action", "ShowClaims")
 
-func LoggedIn(r *http.Request) *Claims {
-	claims, ok := r.Context().Value("Claims").(*Claims)
-	if !ok {
-		return nil
+	claims := LoggedIn(r)
+	if claims == nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write([]byte(`{"LoggedIn": false}`))
+		return
 	}
-	return claims
+
+	bs, _ := json.Marshal(claims)
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(bs)
+
+	logger.WithFields(logrus.Fields{
+		"BGID": claims.BGID,
+		"IP":   r.RemoteAddr,
+	}).Debugf("Retreived Claims")
 }

@@ -1,7 +1,6 @@
 module github.com/Squwid/bytegolf
 
 require (
-	cloud.google.com/go v0.56.0 // indirect
 	cloud.google.com/go/firestore v1.2.0
 	github.com/Squwid/go-randomizer v0.1.1
 	github.com/golang-jwt/jwt v3.2.2+incompatible
@@ -9,11 +8,40 @@ require (
 	github.com/gorilla/mux v1.7.4
 	github.com/mitchellh/mapstructure v1.4.1
 	github.com/sirupsen/logrus v1.6.0
-	golang.org/x/net v0.0.0-20210805182204-aaa1db679c0d // indirect
-	golang.org/x/sys v0.0.0-20210806184541-e5e7981a1069 // indirect
+	github.com/uptrace/bun v1.1.9
+	github.com/uptrace/bun/dialect/pgdialect v1.1.9
+	github.com/uptrace/bun/driver/pgdriver v1.1.9
 	google.golang.org/api v0.21.0
 	google.golang.org/grpc v1.38.0
-	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
 
-go 1.16
+require (
+	cloud.google.com/go v0.56.0 // indirect
+	github.com/BurntSushi/toml v0.3.1 // indirect
+	github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e // indirect
+	github.com/golang/protobuf v1.4.2 // indirect
+	github.com/google/go-cmp v0.5.0 // indirect
+	github.com/googleapis/gax-go/v2 v2.0.5 // indirect
+	github.com/jinzhu/inflection v1.0.0 // indirect
+	github.com/jstemmer/go-junit-report v0.9.1 // indirect
+	github.com/konsorten/go-windows-terminal-sequences v1.0.3 // indirect
+	github.com/tmthrgd/go-hex v0.0.0-20190904060850-447a3041c3bc // indirect
+	github.com/vmihailenco/msgpack/v5 v5.3.5 // indirect
+	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
+	go.opencensus.io v0.22.3 // indirect
+	golang.org/x/crypto v0.4.0 // indirect
+	golang.org/x/lint v0.0.0-20200302205851-738671d3881b // indirect
+	golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4 // indirect
+	golang.org/x/net v0.3.0 // indirect
+	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d // indirect
+	golang.org/x/sys v0.3.0 // indirect
+	golang.org/x/text v0.5.0 // indirect
+	golang.org/x/tools v0.1.12 // indirect
+	google.golang.org/appengine v1.6.5 // indirect
+	google.golang.org/genproto v0.0.0-20200526211855-cb27e3aa2013 // indirect
+	google.golang.org/protobuf v1.25.0 // indirect
+	honnef.co/go/tools v0.0.1-2020.1.3 // indirect
+	mellium.im/sasl v0.3.0 // indirect
+)
+
+go 1.19

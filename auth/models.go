@@ -5,12 +5,11 @@ import (
 	"os"
 	"time"
 
-	"github.com/Squwid/bytegolf/db"
-
-	"cloud.google.com/go/firestore"
 	"github.com/golang-jwt/jwt"
+	"github.com/uptrace/bun"
 )
 
+// CookieName is the key of the cookie for the environment.
 var CookieName string
 
 var githubClient, githubSecret, githubState string
@@ -23,66 +22,67 @@ func init() {
 	jwtKey = []byte(os.Getenv("JWT_SECRET"))
 	CookieName = os.Getenv("BG_COOKIE_NAME")
 
-	if githubClient == "" || githubSecret == "" || githubState == "" || len(jwtKey) == 0 || CookieName == "" {
+	if githubClient == "" || githubSecret == "" ||
+		githubState == "" || len(jwtKey) == 0 || CookieName == "" {
 		panic("missing github env variables")
 	}
 }
 
 // NewBytegolfUser returns a new bytegolf user
-func NewBytegolfUser(ghu GithubUser) *BytegolfUser {
-	return &BytegolfUser{
-		BGID:        fmt.Sprintf("%v", ghu.ID),
-		GithubUser:  ghu,
-		CreatedTime: time.Now().UTC(),
+func NewBytegolfUser(ghu GithubUser) *BytegolfUserDB {
+	return &BytegolfUserDB{
+		// TODO: Randomize a custom BGID.
+		GithubUser:      ghu,
+		BGID:            fmt.Sprintf("%v", ghu.GithubID),
+		LastUpdatedTime: time.Now().UTC(),
+		CreatedTime:     time.Now().UTC(),
 	}
 }
 
-// GithubUser is the object that comes back from github on a user lookup
+// GithubUser gets returned from Github and is composed by BytegolfUser.
 type GithubUser struct {
-	ID        int64     `json:"id"`
-	Login     string    `json:"login"`
-	URL       string    `json:"html_url"`
-	AvatarURL string    `json:"avatar_url"`
-	UpdatedAt time.Time `json:"updated_at"`
+	GithubID  int64     `json:"id" bun:"id,pk,notnull"`
+	Login     string    `json:"login" bun:"login"`
+	URL       string    `json:"html_url" bun:"github_url"`
+	AvatarURL string    `json:"avatar_url" bun:"github_avatar_url"`
+	UpdatedAt time.Time `json:"updated_at" bun:"-"`
 }
 
-// BytegolfUser is the structure of how bytegolf user's are stored in the database
-type BytegolfUser struct {
-	BGID            string
-	LastUpdatedTime time.Time
-	CreatedTime     time.Time
+// BytegolfUserDB is the database object for the 'users' table.
+type BytegolfUserDB struct {
+	bun.BaseModel `bun:"table:users"`
 
-	GithubUser GithubUser
+	BGID            string    `bun:"bgid,notnull"`
+	LastUpdatedTime time.Time `bun:"updated_time,notnull"`
+	CreatedTime     time.Time `bun:"created_time,notnull"`
+
+	GithubUser
 }
 
-// BytegolfUserProfile is the BytegolfUser struct but with no sensitive fields
-type BytegolfUserProfile struct {
+// BytegolfUserClient is the object that gets returned to the client when making
+// profile calls.
+type BytegolfUserClient struct {
+	GithubID    string `json:"GithubId"`
 	BGID        string `json:"BGID"`
 	DisplayName string `json:"DisplayName"`
 	GithubURL   string `json:"GithubUrl"`
 	AvatarURL   string `json:"AvatarUrl"`
 }
 
-// ToProfile takes the BytegolfUser (Database object) and mutates it to a Profile (Frontend object)
-func (bgu BytegolfUser) ToProfile() BytegolfUserProfile {
-	return BytegolfUserProfile{
-		BGID:        bgu.BGID,
-		DisplayName: bgu.GithubUser.Login,
-		GithubURL:   bgu.GithubUser.URL,
-		AvatarURL:   bgu.GithubUser.AvatarURL,
+func (bgdb BytegolfUserDB) ToProfile() BytegolfUserClient {
+	return BytegolfUserClient{
+		GithubID:    fmt.Sprintf("%v", bgdb.GithubID),
+		BGID:        bgdb.BGID,
+		DisplayName: bgdb.GithubUser.Login,
+		GithubURL:   bgdb.GithubUser.URL,
+		AvatarURL:   bgdb.GithubUser.AvatarURL,
 	}
 }
 
-// Claims is what gets stored in the JWT
+// Claims = JWTClaims.
 type Claims struct {
-	BGID string `json:"BGID"`
+	GithubID int64  `json:"GithubId"`
+	BGID     string `json:"BGID"`
 
 	jwt.StandardClaims
-}
-
-func (bgu *BytegolfUser) Collection() *firestore.CollectionRef { return db.ProfileCollection() }
-func (bgu *BytegolfUser) DocID() string                        { return bgu.BGID }
-func (bgu *BytegolfUser) Data() interface{} {
-	bgu.LastUpdatedTime = time.Now().UTC()
-	return *bgu
 }

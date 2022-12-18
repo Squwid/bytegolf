@@ -10,12 +10,21 @@ import (
 	"github.com/Squwid/bytegolf/globals"
 	"github.com/Squwid/bytegolf/holes"
 	"github.com/Squwid/bytegolf/profiles"
-
+	"github.com/Squwid/bytegolf/sqldb"
 	"github.com/gorilla/mux"
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 )
 
 func main() {
+	if err := sqldb.Open(); err != nil {
+		logrus.WithError(err).Fatalf("Error connecting to db")
+	}
+	defer func() {
+		if err := sqldb.Close(); err != nil {
+			logrus.WithError(err).Errorf("")
+		}
+	}()
+
 	port := globals.Port()
 	env := globals.Env()
 
@@ -40,7 +49,7 @@ func main() {
 	r.HandleFunc("/api/profile/{id}", profiles.GetProfile).Methods("GET") // checks if a user is logged in
 	r.HandleFunc("/api/claims", auth.ShowClaims).Methods("GET")           // Returns a user's claims and see if they are logged in
 
-	log.WithField("Env", env).Infof("Starting container on port :%s", port)
+	logrus.WithField("Env", env).Infof("Starting container on port :%s", port)
 	http.ListenAndServe(":"+port, loggedIn(cors(r)))
 }
 

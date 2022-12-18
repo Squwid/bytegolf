@@ -1,71 +1,73 @@
 package auth
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
-
-	log "github.com/sirupsen/logrus"
 )
 
-// ErrBadGithubStatus gets returned from GetGithubUser if a 200 is not returned from github
+// ErrBadGithubStatus gets returned from GetGithubUser if a 200
+// is not returned from github when making calls.
 var ErrBadGithubStatus = errors.New("bad status code from github")
 
-// GetGithubUser gets a github user using their access token
-func GetGithubUser(token string) (*GithubUser, error) {
-	// Create request
-	r, err := http.NewRequest("GET", "https://api.github.com/user", nil)
-	if err != nil {
-		return nil, err
-	}
-
-	// Attach token header
+// fetchUserFromGithub gets a github user using their access token.
+func fetchUserFromGithub(token string) (*GithubUser, error) {
+	r, _ := http.NewRequest("GET", "https://api.github.com/user", nil)
 	r.Header.Set("Authorization", fmt.Sprintf("token %s", token))
 
-	// Send request
 	resp, err := http.DefaultClient.Do(r)
 	if err != nil {
 		return nil, err
 	}
-
-	// Check status code
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("got bad status code %v", resp.StatusCode)
+		return nil, ErrBadGithubStatus
 	}
 
-	// Parse to github object
 	var ghu GithubUser
 	if err := json.NewDecoder(resp.Body).Decode(&ghu); err != nil {
 		return nil, err
 	}
-
 	return &ghu, nil
 }
 
-// ShowClaims shows the claims in the users cookie for the frontend
-func ShowClaims(w http.ResponseWriter, r *http.Request) {
-	claims := LoggedIn(r)
-	if claims == nil {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusUnauthorized)
-		w.Write([]byte(`{"LoggedIn": false}`))
-		return
-	}
-
-	// Marshal claims and return
-	bs, err := json.Marshal(claims)
+// callback returns the access token from Github if the code
+// and state are correct.
+func callback(code, state string) (*string, error) {
+	bs, _ := json.Marshal(struct {
+		ClientID     string `json:"client_id"`
+		ClientSecret string `json:"client_secret"`
+		Code         string `json:"code"`
+		State        string `json:"state"`
+	}{
+		ClientID:     githubClient,
+		ClientSecret: githubSecret,
+		Code:         code,
+		State:        state,
+	})
+	req, err := http.NewRequest("POST",
+		"https://github.com/login/oauth/access_token", bytes.NewReader(bs))
 	if err != nil {
-		log.WithError(err).Errorf("Error marshalling claims")
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-		return
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode != 200 {
+		return nil, ErrBadGithubStatus
 	}
 
-	log.WithFields(log.Fields{
-		"BGID": claims.BGID,
-		"IP":   r.RemoteAddr,
-	}).Infof("Retreived Claims")
+	var authResp struct {
+		AccessToken string `json:"access_token"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&authResp); err != nil {
+		return nil, err
+	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.Write(bs)
+	return &authResp.AccessToken, nil
 }

@@ -63,12 +63,13 @@ func createOrGetDBUser(ctx context.Context, ghu *GithubUser) (*BytegolfUserDB, e
 // fetchUser will get a BytegolfUser from the table using a gitID, will return nil, nil if one
 // does not exist.
 func fetchUser(ctx context.Context, gitID int64) (*BytegolfUserDB, error) {
-	var user = BytegolfUserDB{}
-	err := sqldb.DB.NewSelect().Model(&user).Where("id = ?", gitID).Scan(ctx)
+	var user = &BytegolfUserDB{}
+	err := sqldb.DB.NewSelect().Model(user).Where("id = ?", gitID).Scan(ctx)
 	if err == sql.ErrNoRows {
 		err = nil
+		user = nil
 	}
-	return &user, err
+	return user, err
 }
 
 func writeJWT(w http.ResponseWriter, user *BytegolfUserDB) error {

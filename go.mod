@@ -2,7 +2,7 @@ module github.com/Squwid/bytegolf
 
 require (
 	cloud.google.com/go/firestore v1.2.0
-	github.com/Squwid/go-randomizer v0.1.1
+	github.com/Squwid/go-randomizer v0.1.2
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/google/uuid v1.2.0
 	github.com/gorilla/mux v1.7.4

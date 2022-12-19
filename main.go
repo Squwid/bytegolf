@@ -3,6 +3,7 @@ package main
 import (
 	"net/http"
 
+	"github.com/Squwid/bytegolf/api"
 	"github.com/Squwid/bytegolf/auth"
 	"github.com/Squwid/bytegolf/compiler"
 	"github.com/Squwid/bytegolf/compiler/jdoodle"
@@ -37,8 +38,8 @@ func main() {
 
 	r.HandleFunc("/api/test/{hole}/{id}", holes.GetTest).Methods("GET")
 	r.HandleFunc("/api/tests/{hole}", holes.ListTests).Methods("GET")
-	r.HandleFunc("/api/holes", holes.ListHoles).Methods("GET")
-	r.HandleFunc("/api/hole/{id}", holes.GetHole).Methods("GET")
+	r.HandleFunc("/api/holes", api.ListHolesHandler).Methods("GET")
+	r.HandleFunc("/api/hole/{hole}", api.GetHoleHandler).Methods("GET")
 
 	r.HandleFunc("/api/submissions", compiler.ListSubmissions).Methods("GET")
 	r.HandleFunc("/api/submissions/{id}", compiler.GetSubmission).Methods("GET")

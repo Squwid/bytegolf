@@ -8,46 +8,12 @@ import (
 	"github.com/Squwid/bytegolf/db"
 	"github.com/Squwid/bytegolf/models"
 
-	"cloud.google.com/go/firestore"
 	"github.com/gorilla/mux"
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
-
-// ListHoles lists 100 active holes
-func ListHoles(w http.ResponseWriter, r *http.Request) {
-	log := logrus.WithFields(logrus.Fields{
-		"Action": "ListHoles",
-		"IP":     r.RemoteAddr,
-	})
-
-	claims := auth.LoggedIn(r)
-	if claims != nil {
-		log = log.WithField("User", claims.BGID)
-	}
-
-	query := db.HoleCollection().OrderBy("CreatedAt", firestore.Desc).Where("Active", "==", true).Limit(100)
-
-	hs, err := db.Query(models.NewQuery(query, transformHole))
-	if err != nil {
-		log.WithError(err).Errorf("Error querying holes")
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	bs, err := json.Marshal(hs)
-	if err != nil {
-		log.WithError(err).Errorf("error marshalling holes")
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.Write(bs)
-	log.Infof("Listed %v holes", len(hs))
-}
 
 // GetHole gets a hole using an id
 func GetHole(w http.ResponseWriter, r *http.Request) {

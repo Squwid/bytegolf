@@ -10,6 +10,7 @@ import (
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/pgdialect"
 	"github.com/uptrace/bun/driver/pgdriver"
+	"github.com/uptrace/bun/extra/bundebug"
 )
 
 var (
@@ -40,6 +41,9 @@ func Open() error {
 	}
 
 	DB = bun.NewDB(sqldb, pgdialect.New())
+
+	DB.AddQueryHook(bundebug.NewQueryHook())
+	bundebug.NewQueryHook(bundebug.WithVerbose(true))
 	return DB.Ping()
 }
 

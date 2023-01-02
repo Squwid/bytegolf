@@ -31,7 +31,10 @@ func main() {
 
 	r := mux.NewRouter()
 
-	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(200) })
+	r.HandleFunc("/", func(w http.ResponseWriter,
+		r *http.Request) {
+		w.WriteHeader(200)
+	})
 
 	r.HandleFunc("/login/check", auth.CallbackHandler)
 	r.HandleFunc("/login", auth.LoginHandler)
@@ -40,6 +43,7 @@ func main() {
 	r.HandleFunc("/api/tests/{hole}", holes.ListTests).Methods("GET")
 	r.HandleFunc("/api/holes", api.ListHolesHandler).Methods("GET")
 	r.HandleFunc("/api/hole/{hole}", api.GetHoleHandler).Methods("GET")
+	r.HandleFunc("/api/languages", api.ListLanguagesHandler).Methods("GET")
 
 	r.HandleFunc("/api/submissions", compiler.ListSubmissions).Methods("GET")
 	r.HandleFunc("/api/submissions/{id}", compiler.GetSubmission).Methods("GET")

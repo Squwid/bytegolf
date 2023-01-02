@@ -26,14 +26,17 @@ var difficulties = map[uint8]string{
 type HolesDB []HoleDB
 
 type HoleDB struct {
-	bun.BaseModel `bun:"table:holes"`
+	bun.BaseModel `bun:"table:holes,alias:h"`
 
-	ID         string    `bun:"id,pk,notnull"`
-	Name       string    `bun:"name,notnull"`
-	Difficulty uint8     `bun:"difficulty,notnull"`
-	Question   string    `bun:"question,notnull"`
-	CreatedAt  time.Time `bun:"created_at,notnull"`
-	Active     bool      `bun:"active,notnull"`
+	LanguageDB *LanguageDB `bun:"rel:has-one,join:language_enum=id"`
+
+	ID           string    `bun:"id,pk,notnull"`
+	Name         string    `bun:"name,notnull"`
+	Difficulty   uint8     `bun:"difficulty,notnull"`
+	Question     string    `bun:"question,notnull"`
+	CreatedAt    time.Time `bun:"created_at,notnull"`
+	Active       bool      `bun:"active,notnull"`
+	LanguageEnum int64     `bun:"language_enum,notnull"`
 }
 
 type HoleClient struct {
@@ -45,6 +48,8 @@ type HoleClient struct {
 	Active     bool      `json:"Active"`
 
 	Tests []any `json:"Tests,omitempty"`
+
+	Language LanguageClient `json:"language"`
 }
 
 func (hdb HoleDB) toClient() HoleClient {
@@ -55,6 +60,7 @@ func (hdb HoleDB) toClient() HoleClient {
 		Question:   hdb.Question,
 		CreatedAt:  hdb.CreatedAt,
 		Active:     hdb.Active,
+		Language:   hdb.LanguageDB.toClient(),
 	}
 }
 
@@ -75,12 +81,16 @@ func ListHolesHandler(w http.ResponseWriter, r *http.Request) {
 
 	var holes = HolesDB{}
 	if err := sqldb.DB.NewSelect().Model(&holes).
+		Column("h.*").
+		Relation("LanguageDB").
 		Limit(20).
-		Where("active = true").
 		Order("created_at DESC").
+		Where("h.active = true").
 		Offset(offset).
 		Scan(ctx); err != nil {
-		logger.WithError(err).Fatalf("Error getting holes")
+		logger.WithError(err).Errorf("Error getting holes")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
 	}
 
 	var clientHoles = make([]HoleClient, len(holes))
@@ -109,8 +119,9 @@ func GetHoleHandler(w http.ResponseWriter, r *http.Request) {
 	var hole = &HoleDB{}
 	err := sqldb.DB.NewSelect().
 		Model(hole).
-		Where("id = ?", holeID).
-		Where("active = true").
+		Where("h.id = ?", holeID).
+		Where("h.active = true").
+		Relation("LanguageDB").
 		Scan(ctx)
 	if err == sql.ErrNoRows {
 		err = nil
@@ -127,7 +138,7 @@ func GetHoleHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	bs, _ := json.Marshal(hole)
+	bs, _ := json.Marshal(hole.toClient())
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(bs)
 

@@ -44,6 +44,7 @@ func main() {
 	r.HandleFunc("/api/holes", api.ListHolesHandler).Methods("GET")
 	r.HandleFunc("/api/hole/{hole}", api.GetHoleHandler).Methods("GET")
 	r.HandleFunc("/api/languages", api.ListLanguagesHandler).Methods("GET")
+	r.HandleFunc("/api/submission", api.PostSubmissionHandler).Methods("POST")
 
 	r.HandleFunc("/api/submissions", compiler.ListSubmissions).Methods("GET")
 	r.HandleFunc("/api/submissions/{id}", compiler.GetSubmission).Methods("GET")

@@ -116,25 +116,14 @@ func GetHoleHandler(w http.ResponseWriter, r *http.Request) {
 		logger = logger.WithField("User", claims.BGID)
 	}
 
-	var hole = &HoleDB{}
-	err := sqldb.DB.NewSelect().
-		Model(hole).
-		Where("h.id = ?", holeID).
-		Where("h.active = true").
-		Relation("LanguageDB").
-		Scan(ctx)
-	if err == sql.ErrNoRows {
-		err = nil
-		hole = nil
-	} else if err != nil {
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
+	hole, err := getHole(ctx, holeID, true)
+	if err != nil {
 		logger.WithError(err).Errorf("Error getting hole")
+		w.WriteHeader(http.StatusInternalServerError)
 		return
-	}
-
-	if hole == nil {
+	} else if hole == nil {
 		w.WriteHeader(http.StatusNotFound)
-		logger.Infof("Hole not found.")
+		logger.Warnf("Hole not found")
 		return
 	}
 
@@ -143,4 +132,19 @@ func GetHoleHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(bs)
 
 	logger.Infof("Fetched hole.")
+}
+
+// getHole returns a hole from the database, or nil if it doesn't exist.
+func getHole(ctx context.Context, id string, active bool) (*HoleDB, error) {
+	var hole = &HoleDB{}
+	err := sqldb.DB.NewSelect().
+		Model(hole).
+		Where("h.id = ?", id).
+		Where("h.active = true").
+		Relation("LanguageDB").
+		Scan(ctx)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	return hole, err
 }

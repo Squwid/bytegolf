@@ -8,8 +8,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/Squwid/bytegolf/auth"
-	"github.com/Squwid/bytegolf/sqldb"
+	"github.com/Squwid/bytegolf/lib/auth"
+	"github.com/Squwid/bytegolf/lib/sqldb"
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
 	"github.com/uptrace/bun"

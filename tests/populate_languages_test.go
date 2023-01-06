@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/Squwid/bytegolf/api"
-	"github.com/Squwid/bytegolf/sqldb"
+	"github.com/Squwid/bytegolf/lib/api"
+	"github.com/Squwid/bytegolf/lib/sqldb"
 	"github.com/sirupsen/logrus"
 )
 

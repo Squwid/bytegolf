@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/Squwid/bytegolf/auth"
-	"github.com/Squwid/bytegolf/sqldb"
+	"github.com/Squwid/bytegolf/lib/auth"
+	"github.com/Squwid/bytegolf/lib/sqldb"
 	"github.com/sirupsen/logrus"
 	"github.com/uptrace/bun"
 )

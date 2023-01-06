@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/Squwid/bytegolf/auth"
+	"github.com/Squwid/bytegolf/lib/auth"
 	"github.com/golang-jwt/jwt"
 	"github.com/sirupsen/logrus"
 )

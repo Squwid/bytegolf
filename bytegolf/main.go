@@ -3,15 +3,10 @@ package main
 import (
 	"net/http"
 
-	"github.com/Squwid/bytegolf/api"
-	"github.com/Squwid/bytegolf/auth"
-	"github.com/Squwid/bytegolf/compiler"
-	"github.com/Squwid/bytegolf/compiler/jdoodle"
-	_ "github.com/Squwid/bytegolf/db"
-	"github.com/Squwid/bytegolf/globals"
-	"github.com/Squwid/bytegolf/holes"
-	"github.com/Squwid/bytegolf/profiles"
-	"github.com/Squwid/bytegolf/sqldb"
+	"github.com/Squwid/bytegolf/lib/api"
+	"github.com/Squwid/bytegolf/lib/auth"
+	"github.com/Squwid/bytegolf/lib/globals"
+	"github.com/Squwid/bytegolf/lib/sqldb"
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
 )
@@ -39,21 +34,12 @@ func main() {
 	r.HandleFunc("/login/check", auth.CallbackHandler)
 	r.HandleFunc("/login", auth.LoginHandler)
 
-	r.HandleFunc("/api/test/{hole}/{id}", holes.GetTest).Methods("GET")
-	r.HandleFunc("/api/tests/{hole}", holes.ListTests).Methods("GET")
 	r.HandleFunc("/api/holes", api.ListHolesHandler).Methods("GET")
 	r.HandleFunc("/api/hole/{hole}", api.GetHoleHandler).Methods("GET")
 	r.HandleFunc("/api/languages", api.ListLanguagesHandler).Methods("GET")
 	r.HandleFunc("/api/submission", api.PostSubmissionHandler).Methods("POST")
 
-	r.HandleFunc("/api/submissions", compiler.ListSubmissions).Methods("GET")
-	r.HandleFunc("/api/submissions/{id}", compiler.GetSubmission).Methods("GET")
-	r.HandleFunc("/api/submissions/best/{hole}", compiler.GetBestSubmissionHandler).Methods("GET")
-	r.HandleFunc("/api/submit/{hole}", jdoodle.SubmissionHandler).Methods("POST")
-	r.HandleFunc("/api/leaderboards", compiler.LeaderboardHandler).Methods("GET")
-
-	r.HandleFunc("/api/profile/{id}", profiles.GetProfile).Methods("GET") // checks if a user is logged in
-	r.HandleFunc("/api/claims", auth.ShowClaims).Methods("GET")           // Returns a user's claims and see if they are logged in
+	r.HandleFunc("/api/claims", auth.ShowClaims).Methods("GET") // Returns a user's claims and see if they are logged in
 
 	logrus.WithField("Env", env).Infof("Starting container on port :%s", port)
 	http.ListenAndServe(":"+port, loggedIn(cors(r)))

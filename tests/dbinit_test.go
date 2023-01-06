@@ -1,7 +1,7 @@
 package tests
 
 import (
-	"github.com/Squwid/bytegolf/sqldb"
+	"github.com/Squwid/bytegolf/lib/sqldb"
 	"github.com/sirupsen/logrus"
 )
 

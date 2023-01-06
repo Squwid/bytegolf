@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/Squwid/bytegolf/globals"
+	"github.com/Squwid/bytegolf/lib/globals"
 	"github.com/sirupsen/logrus"
 )
 

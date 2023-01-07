@@ -11,12 +11,12 @@ var randMutex = &sync.Mutex{}
 const charset = `abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789`
 
 // RandomString generates a 6 character/number string.
-func RandomString() string {
+func RandomString(length int) string {
 	randMutex.Lock()
 	defer randMutex.Unlock()
 
 	rand.Seed(time.Now().UnixNano())
-	b := make([]byte, 6)
+	b := make([]byte, length)
 	for i := range b {
 		b[i] = charset[rand.Intn(len(charset))]
 	}

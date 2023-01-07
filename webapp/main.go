@@ -37,7 +37,7 @@ func main() {
 	r.HandleFunc("/api/holes", api.ListHolesHandler).Methods("GET")
 	r.HandleFunc("/api/hole/{hole}", api.GetHoleHandler).Methods("GET")
 	r.HandleFunc("/api/languages", api.ListLanguagesHandler).Methods("GET")
-	r.HandleFunc("/api/submission", api.PostSubmissionHandler).Methods("POST")
+	r.HandleFunc("/api/submit/{hole}", api.PostSubmissionHandler).Methods("POST")
 
 	r.HandleFunc("/api/claims", auth.ShowClaims).Methods("GET") // Returns a user's claims and see if they are logged in
 

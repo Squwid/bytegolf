@@ -47,4 +47,21 @@ func TestCreateTables(t *testing.T) {
 	} else {
 		logrus.Infof("Successfully created 'languages' table.")
 	}
+
+	// Create 'submissions' table.
+	if _, err := sqldb.DB.NewCreateTable().
+		Model((*api.SubmissionDB)(nil)).Exec(ctx); err != nil {
+		logrus.WithError(err).Warnf("Skipping creation of 'submissions' table.")
+	} else {
+		logrus.Infof("Successfully created 'submissions' table.")
+	}
+
+	// Create 'jobs' table.
+	if _, err := sqldb.DB.NewCreateTable().
+		Model((*api.JobOutputDB)(nil)).Exec(ctx); err != nil {
+		logrus.WithError(err).Warnf("Skipping creation of 'jobs' table.")
+	} else {
+		logrus.Infof("Successfully created 'jobs' table.")
+	}
+
 }

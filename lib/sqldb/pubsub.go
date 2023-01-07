@@ -14,7 +14,8 @@ type PubSub struct {
 	client *pubsub.Client
 }
 
-var topic = os.Getenv("PUBSUB_TOPIC")
+// TODO: Move this logic to a shared location between the two binaries.
+var topic = "testing"
 
 func init() {
 	client, err := NewPubSub(context.Background())
@@ -25,7 +26,7 @@ func init() {
 }
 
 func NewPubSub(ctx context.Context) (*PubSub, error) {
-	client, err := pubsub.NewClient(ctx, os.Getenv("PUBSUB_PROJECT"))
+	client, err := pubsub.NewClient(ctx, os.Getenv("GCP_PROJECT_ID"))
 	if err != nil {
 		return nil, err
 	}

@@ -1,6 +1,8 @@
 .DS_STORE
 .vscode/
-bytegolf/bytegolf
+webapp/webapp
+webapp/bytegolf
+compiler/compiler
 *.exe
 *.exe~
 subs/

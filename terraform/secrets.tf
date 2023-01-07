@@ -37,32 +37,6 @@ resource "google_secret_manager_secret" "github_state_secret" {
   }
 }
 
-resource "google_secret_manager_secret" "jdoodle_client_secret" {
-  secret_id = "${local.env}_JDOODLE_CLIENT"
-
-  labels = {
-    app : "bytegolf"
-    env : "${local.env}"
-  }
-
-  replication {
-    automatic = true
-  }
-}
-
-resource "google_secret_manager_secret" "jdoodle_secret_secret" {
-  secret_id = "${local.env}_JDOODLE_SECRET"
-
-  labels = {
-    app : "bytegolf"
-    env : "${local.env}"
-  }
-
-  replication {
-    automatic = true
-  }
-}
-
 resource "google_secret_manager_secret" "jwt_secret" {
   secret_id = "${local.env}_JWT_SECRET"
 

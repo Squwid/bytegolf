@@ -2,7 +2,7 @@ package api
 
 import (
 	"context"
-	"encoding/json"
+	"database/sql"
 	"errors"
 	"io"
 	"net/http"
@@ -30,10 +30,9 @@ func (sdb SubmissionDB) Store(ctx context.Context) error {
 	return err
 }
 
-// Submit submits a submission to the compiler.
+// Submit submits a submission id to the compiler.
 func (sdb SubmissionDB) Submit(ctx context.Context) error {
-	bs, _ := json.Marshal(sdb)
-	return sqldb.PubSubClient.Publish(ctx, bs)
+	return sqldb.PubSubClient.Publish(ctx, []byte(sdb.ID))
 }
 
 // PostSubmissionHandler is the handler to take a submission from a player, parse it, and
@@ -66,7 +65,7 @@ func PostSubmissionHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Make sure that the hole exists.
-	hole, err := getHole(ctx, holeID, true)
+	hole, err := GetHole(ctx, holeID)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		logger.WithError(err).Error("Error retrieving hole")
@@ -94,6 +93,19 @@ func PostSubmissionHandler(w http.ResponseWriter, r *http.Request) {
 		logger.WithError(err).Error("Error submitting to pubsub")
 		return
 	}
+}
+
+// GetSubmission returns a submission by id. This doesnt do a BGID check yet.
+func GetSubmission(ctx context.Context, id string) (*SubmissionDB, error) {
+	sub := &SubmissionDB{}
+	err := sqldb.DB.NewSelect().Model(sub).Where("id = ?", id).Scan(ctx)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	} else if err != nil {
+		return nil, err
+	}
+
+	return sub, nil
 }
 
 func readBytes(r io.Reader) ([]byte, error) {

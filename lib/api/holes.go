@@ -29,6 +29,7 @@ type HoleDB struct {
 	bun.BaseModel `bun:"table:holes,alias:h"`
 
 	LanguageDB *LanguageDB `bun:"rel:has-one,join:language_enum=id"`
+	TestsDB    []*TestDB   `bun:"rel:has-many,join:id=hole"`
 
 	ID           string    `bun:"id,pk,notnull"`
 	Name         string    `bun:"name,notnull"`
@@ -47,12 +48,22 @@ type HoleClient struct {
 	CreatedAt  time.Time `json:"CreatedAt"`
 	Active     bool      `json:"Active"`
 
-	Tests []any `json:"Tests,omitempty"`
+	Tests []TestClient `json:"Tests,omitempty"`
 
-	Language LanguageClient `json:"language"`
+	Language LanguageClient `json:"Language"`
 }
 
 func (hdb HoleDB) toClient() HoleClient {
+	// Gather test cases suitable for the client.
+	var tests = []TestClient{}
+	if hdb.TestsDB != nil {
+		for _, tdb := range hdb.TestsDB {
+			if tdb.Active {
+				tests = append(tests, tdb.toClient())
+			}
+		}
+	}
+
 	return HoleClient{
 		ID:         hdb.ID,
 		Name:       hdb.Name,
@@ -61,6 +72,7 @@ func (hdb HoleDB) toClient() HoleClient {
 		CreatedAt:  hdb.CreatedAt,
 		Active:     hdb.Active,
 		Language:   hdb.LanguageDB.toClient(),
+		Tests:      tests,
 	}
 }
 
@@ -116,7 +128,7 @@ func GetHoleHandler(w http.ResponseWriter, r *http.Request) {
 		logger = logger.WithField("User", claims.BGID)
 	}
 
-	hole, err := getHole(ctx, holeID, true)
+	hole, err := GetHole(ctx, holeID)
 	if err != nil {
 		logger.WithError(err).Errorf("Error getting hole")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -134,17 +146,31 @@ func GetHoleHandler(w http.ResponseWriter, r *http.Request) {
 	logger.Infof("Fetched hole.")
 }
 
-// getHole returns a hole from the database, or nil if it doesn't exist.
-func getHole(ctx context.Context, id string, active bool) (*HoleDB, error) {
+// GetHole returns a hole from the database, or nil if it doesn't exist.
+func GetHole(ctx context.Context, id string) (*HoleDB, error) {
 	var hole = &HoleDB{}
 	err := sqldb.DB.NewSelect().
 		Model(hole).
 		Where("h.id = ?", id).
 		Where("h.active = true").
 		Relation("LanguageDB").
+		Relation("TestsDB").
 		Scan(ctx)
 	if err == sql.ErrNoRows {
 		return nil, nil
+	} else if err != nil {
+		return nil, err
 	}
-	return hole, err
+
+	// TODO: Eventually alllow fetching of non-active
+	// tests and holes for admins to enable.
+	var tests = []*TestDB{}
+	for _, test := range hole.TestsDB {
+		if test.Active {
+			tests = append(tests, test)
+		}
+	}
+	hole.TestsDB = tests
+
+	return hole, nil
 }

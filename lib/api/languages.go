@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"net/http"
 
@@ -65,4 +66,21 @@ func ListLanguagesHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(bs)
 
 	logger.Infof("Fetched %v languages.", len(clientLangs))
+}
+
+func GetLanguage(ctx context.Context, id string) (*LanguageDB, error) {
+	// TODO: Could be out of sync between compiler and bytegolf
+	// grabbing an active language. Make it an arg.
+	var lang = &LanguageDB{}
+	err := sqldb.DB.NewSelect().
+		Model(lang).
+		Where("l.id = ?", id).
+		Where("l.active = true").
+		Scan(ctx)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	} else if err != nil {
+		return nil, err
+	}
+	return lang, nil
 }

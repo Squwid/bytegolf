@@ -16,7 +16,10 @@ type TestDB struct {
 	Hole        string `bun:"hole,notnull"`
 	Hidden      bool   `bun:"hidden,notnull"`
 	Description string `bun:"description,notnull"`
-	Active      bool   `bun:"active,notnull"`
+	// Benchmark is ture if its the main test that
+	// is used to calculate the CPU + Memory score.
+	Benchmark bool `bun:"benchmark,notnull"`
+	Active    bool `bun:"active,notnull"`
 
 	Input       string `bun:"input"`
 	OutputRegex string `bun:"regex,notnull"`

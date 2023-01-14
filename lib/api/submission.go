@@ -13,8 +13,6 @@ import (
 	"github.com/uptrace/bun"
 )
 
-const maxBodySize int = 4096
-
 type SubmissionDB struct {
 	bun.BaseModel `bun:"table:submissions,alias:ss"`
 

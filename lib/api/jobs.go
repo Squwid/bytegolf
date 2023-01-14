@@ -13,4 +13,5 @@ type JobOutputDB struct {
 	StdErr   string `bun:"stderr,notnull"`
 	ExitCode int    `bun:"exit_code,notnull"`
 	Duration int64  `bun:"duration,notnull"`
+	Correct  bool   `bun:"correct,notnull"`
 }

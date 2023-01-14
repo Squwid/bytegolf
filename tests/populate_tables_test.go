@@ -35,7 +35,7 @@ func TestPopulateHoles(t *testing.T) {
 				// Any time in the last year
 				time.Now().Add(-time.Hour*8760),
 				time.Now()),
-			Active:       randomizer.Number(0, 2) == 1,
+			Active:       randomizer.Number(0, 5) != 1,
 			LanguageEnum: int64(randomizer.Number(1, 3)),
 		}
 	}
@@ -77,10 +77,11 @@ func PopulateTests(ctx context.Context, holes api.HolesDB) {
 			Name:        strings.Join(randomizer.Words(randomizer.Number(3, 8)), " "),
 			Hole:        holes[randomizer.Number(0, len(holes))].ID,
 			Hidden:      randomizer.Number(0, 5) == 1,
-			Active:      randomizer.Number(0, 5) == 1,
+			Active:      randomizer.Number(0, 5) != 1,
 			Description: strings.Join(randomizer.Words(randomizer.Number(3, 10)), " "),
 			Input:       strings.Join(randomizer.Words(randomizer.Number(3, 8)), " "),
 			OutputRegex: strings.Join(randomizer.Words(randomizer.Number(3, 8)), " "),
+			Benchmark:   false,
 			CreatedAt: randomizer.Date(
 				// Any time in the last year
 				time.Now().Add(-time.Hour*8760),

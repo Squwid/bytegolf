@@ -50,6 +50,8 @@ func (dc *DockerClient) Create(image, dir, cmd, file, id string,
 	ctx := context.Background()
 	var timeout = 10
 
+	// TODO: echo is here to flush the logs to stdout.
+	// This is a hack and should be removed.
 	fullCmd := fmt.Sprintf("%s %s;echo ''", cmd, file)
 	logger.WithField("Cmd", fullCmd).WithField("Dir", dir).Debugf("Container create")
 
@@ -62,7 +64,6 @@ func (dc *DockerClient) Create(image, dir, cmd, file, id string,
 		NetworkDisabled: true,
 		StopTimeout:     &timeout,
 		Cmd: strslice.StrSlice{
-			// "/bin/sh", "-c", "go run /ci/main.go;echo '\n'",
 			"/bin/sh", "-c", fullCmd,
 		},
 		WorkingDir: "/ci",

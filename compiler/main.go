@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"sync"
 	"time"
@@ -17,8 +18,8 @@ const timeout = 5 * time.Second
 // const subName = "bgcompiler-sub"
 const subName = "bgcompiler-rpi-local-sub"
 
-// testRepeatMultiplier is the number of times to repeat the test case.
-const testRepeatMultiplier = 20
+// benchmarkTestMultiplier is the number of times the benchmark test case should run.
+const benchmarkTestMultiplier = 30
 
 func main() {
 	if err := sqldb.Open(); err != nil {
@@ -58,6 +59,7 @@ func newCompiledSubmission(jobs int) *CompiledSubmission {
 	return &CompiledSubmission{
 		jobOutputs: make(chan *Job, jobs),
 		wg:         wg,
+		jobs:       []*Job{},
 	}
 }
 
@@ -86,35 +88,85 @@ func handler(ctx context.Context, m *pubsub.Message) {
 		return
 	}
 	m.Ack()
-	logger.Infof("Acked message")
+	logger.Debugf("Acked message")
 
-	cs := newCompiledSubmission(len(hole.TestsDB) * testRepeatMultiplier)
+	cs := newCompiledSubmission(len(hole.TestsDB) + (benchmarkTestMultiplier - 1))
 
+	// Create a job for each test. Create 20x jobs for the benchmark test case.
 	for _, test := range hole.TestsDB {
-		for i := 0; i < testRepeatMultiplier; i++ {
+		var testCount = 1
+		if test.Benchmark {
+			testCount = benchmarkTestMultiplier
+		}
+
+		for i := 0; i < testCount; i++ {
 			var job = NewJob(sub, hole, test, cs.jobOutputs)
+			cs.jobs = append(cs.jobs, job)
 			jobQueue <- job
 		}
 	}
 
-	go func(cs *CompiledSubmission, logger *logrus.Entry) {
-		for job := range cs.jobOutputs {
-			job.output.SubmissionID = job.Submission.ID
-			job.output.TestID = job.Test.ID
-			logger.Infof("Writing job output (%v %v) to DB", job.output.SubmissionID,
-				job.output.TestID)
-			cs.jobs = append(cs.jobs, job)
-
-			if _, err := sqldb.DB.NewInsert().Model(job.output).Exec(ctx); err != nil {
-				logger.WithError(err).Errorf("Error inserting job output")
-			}
-			cs.wg.Done()
-		}
-		close(cs.jobOutputs)
-	}(cs, logger)
-
+	// Wait for all jobs to finish running and writing to the DB.
+	go waitAndWriteToDB(ctx, cs, logger)
 	cs.wg.Wait()
 
+	// Check if all test cases passed. Error should never occur
+	// but better to have handler than a panic.
+	// TODO: Rather than a single pass fail do one for each test case.
+	// TODO: Compile 1 regex per test case rather than 1 regex per submission.
+	var totalPassed = 0
+	var passed = true
+	for _, job := range cs.jobs {
+		if !job.correct {
+			passed = false
+		} else {
+			totalPassed++
+		}
+	}
+
+	// Average CPU times.
+	var cpuTimes = []int64{}
+	for i := range cs.jobs {
+		if cs.jobs[i].Test.Benchmark {
+			cpuTimes = append(cpuTimes, cs.jobs[i].output.Duration)
+		}
+	}
+	var cpuAverage = average(cpuTimes)
+
 	// TODO: Update the submission database with the results of the tests.
-	logger.Infof("DONE AFTER %vms", time.Since(start).Milliseconds())
+	logger.WithFields(logrus.Fields{
+		"Jobs":          len(cs.jobs),
+		"TotalMS":       time.Since(start).Milliseconds(),
+		"BenchmarkCPU":  cpuAverage,
+		"Passed":        passed,
+		"PercentPassed": fmt.Sprintf("%.2f%%", (float64(totalPassed)/float64(len(cs.jobs)))*100),
+	}).Infof("Finished submission")
+}
+
+func waitAndWriteToDB(ctx context.Context, cs *CompiledSubmission, logger *logrus.Entry) {
+	for job := range cs.jobOutputs {
+		if err := job.checkCorrectness(); err != nil {
+			logger.WithError(err).Errorf("Error checking correctness")
+		}
+
+		job.output.SubmissionID = job.Submission.ID
+		job.output.TestID = job.Test.ID
+		job.output.Correct = job.correct
+		logger.Debugf("Writing job output (%v %v) to DB", job.output.SubmissionID,
+			job.output.TestID)
+
+		if _, err := sqldb.DB.NewInsert().Model(job.output).Exec(ctx); err != nil {
+			logger.WithError(err).Errorf("Error inserting job output")
+		}
+		cs.wg.Done()
+	}
+	close(cs.jobOutputs)
+}
+
+func average(values []int64) int64 {
+	var sum int64
+	for _, v := range values {
+		sum += v
+	}
+	return sum / int64(len(values))
 }

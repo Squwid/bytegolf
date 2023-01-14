@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"regexp"
 
 	"github.com/Squwid/bytegolf/lib/api"
 	"github.com/sirupsen/logrus"
@@ -15,6 +16,8 @@ type Job struct {
 	Language   *api.LanguageDB
 	Test       *api.TestDB
 	Submission *api.SubmissionDB
+
+	correct bool // Correct based on the test regex.
 
 	// Internal job details
 	dir         string
@@ -36,6 +39,7 @@ func NewJob(sub *api.SubmissionDB, hole *api.HoleDB,
 		Language:   hole.LanguageDB,
 		Test:       test,
 		Submission: sub,
+		correct:    true,
 		outputCh:   jobOutputs,
 		errCh:      make(chan error, 1),
 		timeoutCh:  make(chan bool, 1),
@@ -70,4 +74,15 @@ func (job *Job) writeFiles() error {
 
 func (job *Job) clean() error {
 	return os.RemoveAll(job.dir)
+}
+
+func (job *Job) checkCorrectness() error {
+	regex, err := regexp.Compile(job.Test.OutputRegex)
+	if err != nil {
+		return err
+	}
+	if !regex.MatchString(job.output.StdOut) {
+		job.correct = false
+	}
+	return nil
 }

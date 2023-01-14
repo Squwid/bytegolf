@@ -13,7 +13,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-const workerCount = 5
+const workerCount = 4
 const jobBacklog = 5000
 const bytesToRead = 4096
 
@@ -40,14 +40,14 @@ func newWorker() *Worker {
 }
 
 func (worker *Worker) Start() {
-	workerLogger := logrus.WithField("ID", worker.ID)
+	workerLogger := logrus.WithField("Worker", worker.ID)
 	workerLogger.Info("Worker started")
 	defer workerLogger.Warnf("Worker ded")
 
 	for {
 		job := <-jobQueue
 		job.logger = workerLogger.WithField("JobID", job.ID)
-		job.logger.Infof("Job started (%s, %v)", job.Submission.ID, job.Test.ID)
+		job.logger.Debugf("Job started (%s, %v)", job.Submission.ID, job.Test.ID)
 
 		if err := job.init(); err != nil {
 			job.logger.WithError(err).Errorf("Error initializing job")
@@ -93,7 +93,7 @@ func (worker *Worker) Start() {
 			Duration: ms,
 			ExitCode: 0, // TODO: Populate exit code.
 		}
-		job.logger.Infof("Finished job in %vms", ms)
+		job.logger.Debugf("Finished job in %vms", ms)
 		job.output = jobOut
 		job.outputCh <- job
 		job.clean()
@@ -146,6 +146,7 @@ func readAmount(r io.Reader, amount int, logger *logrus.Entry) ([]byte, error) {
 		}
 		i++
 
+		/** Debug logging
 		logger.WithFields(logrus.Fields{
 			"JustRead":         n,
 			"PopulatedBufSize": read,
@@ -154,7 +155,7 @@ func readAmount(r io.Reader, amount int, logger *logrus.Entry) ([]byte, error) {
 		// Read everything we need
 		if read >= amount {
 			break
-		}
+		}*/
 	}
 
 	return bytes[0:read], nil

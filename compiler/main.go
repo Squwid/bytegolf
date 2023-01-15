@@ -112,15 +112,14 @@ func handler(ctx context.Context, m *pubsub.Message) {
 
 	// Check if all test cases passed. Error should never occur
 	// but better to have handler than a panic.
-	// TODO: Rather than a single pass fail do one for each test case.
 	// TODO: Compile 1 regex per test case rather than 1 regex per submission.
 	var totalPassed = 0
 	var passed = true
 	for _, job := range cs.jobs {
-		if !job.correct {
-			passed = false
-		} else {
+		if job.correct {
 			totalPassed++
+		} else {
+			passed = false
 		}
 	}
 

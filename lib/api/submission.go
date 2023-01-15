@@ -2,7 +2,9 @@ package api
 
 import (
 	"context"
+	"crypto/md5"
 	"database/sql"
+	"encoding/hex"
 	"io"
 	"net/http"
 
@@ -16,10 +18,11 @@ import (
 type SubmissionDB struct {
 	bun.BaseModel `bun:"table:submissions,alias:ss"`
 
-	ID     string `bun:"id,pk,notnull"`
-	Script string `bun:"script,notnull"`
-	Hole   string `bun:"hole,notnull"`
-	BGID   string `bun:"bgid,notnull"` // Player ID.
+	ID         string `bun:"id,pk,notnull"`
+	Script     string `bun:"script,notnull"`
+	Hole       string `bun:"hole,notnull"`
+	BGID       string `bun:"bgid,notnull"` // Player ID.
+	ScriptHash string `bun:"hash,notnull"`
 }
 
 func (sdb SubmissionDB) Store(ctx context.Context) error {
@@ -78,10 +81,11 @@ func PostSubmissionHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Create a new submission in the database and submit to compiler.
 	sub := SubmissionDB{
-		ID:     id,
-		Script: string(bs),
-		Hole:   hole.ID,
-		BGID:   claims.BGID,
+		ID:         id,
+		Script:     string(bs),
+		Hole:       hole.ID,
+		BGID:       claims.BGID,
+		ScriptHash: hash(string(bs)),
 	}
 	if err := sub.Store(ctx); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -106,4 +110,10 @@ func GetSubmission(ctx context.Context, id string) (*SubmissionDB, error) {
 	}
 
 	return sub, nil
+}
+
+func hash(s string) string {
+	h := md5.New()
+	h.Write([]byte(s))
+	return hex.EncodeToString(h.Sum(nil))
 }

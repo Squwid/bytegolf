@@ -17,7 +17,8 @@ type Job struct {
 	Test       *api.TestDB
 	Submission *api.SubmissionDB
 
-	correct bool // Correct based on the test regex.
+	correct  bool // Correct based on the test regex.
+	timedOut bool // True if the job timed out during execution.
 
 	// Internal job details
 	dir         string

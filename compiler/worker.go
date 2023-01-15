@@ -13,6 +13,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+const timeout = 5 * time.Second
 const workerCount = 4
 const jobBacklog = 5000
 const bytesToRead = 4096
@@ -104,22 +105,22 @@ func waitAndKillContainer(doneChan chan bool, reader io.ReadCloser, job *Job) {
 	select {
 	case <-doneChan:
 		job.logger.Debugf("Got done reading signal to close reader")
-	case <-job.timeoutCh:
-		job.logger.Debugf("Got timeout signal to close reader")
+	case <-time.After(timeout):
+		job.timedOut = true
+		job.logger.Debugf("Job timed out")
+	case <-job.errCh:
+		job.logger.Debugf("Got error signal to close reader")
 	}
 
-	// TODO: Might be smart to move the container cleanup from here at some point but its fine for now.
-	if err := reader.Close(); err != nil &&
-		job.logger.Logger.GetLevel() == logrus.DebugLevel {
-		job.logger.WithError(err).Errorf("Error closing reader")
+	// TODO: Come up with a better way to kill containers.
+	if err := reader.Close(); err != nil {
+		job.logger.WithError(err).Debugf("Error closing reader")
 	}
-	if err := docker.Client.Kill(context.Background(), job.containerID); err != nil &&
-		job.logger.Logger.GetLevel() == logrus.DebugLevel {
-		job.logger.WithError(err).Errorf("Error killing container")
+	if err := docker.Client.Kill(context.Background(), job.containerID); err != nil {
+		job.logger.WithError(err).Debugf("Error killing container")
 	}
-	if err := docker.Client.Delete(context.Background(), job.containerID); err != nil &&
-		job.logger.Logger.GetLevel() == logrus.DebugLevel {
-		job.logger.WithError(err).Errorf("Error deleting container")
+	if err := docker.Client.Delete(context.Background(), job.containerID); err != nil {
+		job.logger.WithError(err).Debugf("Error deleting container")
 	}
 }
 
@@ -146,16 +147,10 @@ func readAmount(r io.Reader, amount int, logger *logrus.Entry) ([]byte, error) {
 		}
 		i++
 
-		/** Debug logging
-		logger.WithFields(logrus.Fields{
-			"JustRead":         n,
-			"PopulatedBufSize": read,
-		}).Debugf("read more")
-
 		// Read everything we need
 		if read >= amount {
 			break
-		}*/
+		}
 	}
 
 	return bytes[0:read], nil

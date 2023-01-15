@@ -13,8 +13,6 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-const timeout = 5 * time.Second
-
 // const subName = "bgcompiler-sub"
 const subName = "bgcompiler-rpi-local-sub"
 
@@ -22,6 +20,7 @@ const subName = "bgcompiler-rpi-local-sub"
 const benchmarkTestMultiplier = 30
 
 func main() {
+	logrus.SetLevel(logrus.DebugLevel)
 	if err := sqldb.Open(); err != nil {
 		logrus.WithError(err).Fatalf("Error connecting to db")
 	}

@@ -16,7 +16,7 @@ import (
 )
 
 const timeout = 5 * time.Second
-const workerCount = 1
+const workerCount = 2
 const jobBacklog = 5000
 const bytesToRead = 4096
 
@@ -29,8 +29,8 @@ type Worker struct {
 }
 
 type Stats struct {
-	CPU uint64
-	Mem uint64
+	CPU int64
+	Mem int64
 }
 
 func init() {
@@ -135,11 +135,11 @@ func waitAndGetContainerStats(reader io.ReadCloser, job *Job) {
 			return
 		}
 
-		if stats.CPU < v.CPUStats.CPUUsage.TotalUsage {
-			stats.CPU = v.CPUStats.CPUUsage.TotalUsage
+		if stats.CPU < int64(v.CPUStats.CPUUsage.TotalUsage) {
+			stats.CPU = int64(v.CPUStats.CPUUsage.TotalUsage)
 		}
-		if stats.Mem < v.MemoryStats.Usage {
-			stats.Mem = v.MemoryStats.Usage
+		if stats.Mem < int64(v.MemoryStats.Usage) {
+			stats.Mem = int64(v.MemoryStats.Usage)
 		}
 	}
 }

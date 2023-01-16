@@ -88,6 +88,12 @@ func handler(ctx context.Context, m *pubsub.Message) {
 	m.Ack()
 	logger.Debugf("Acked message")
 
+	if err := api.UpdateSubmissionStatus(ctx, sub.ID, 1); err != nil {
+		logger.WithError(err).Errorf("Error updating submission status")
+	} else {
+		logger.Debugf("Updated submission status to 1 (RUNNING)")
+	}
+
 	cs := newCompiledSubmission(len(hole.TestsDB) + (benchmarkTestMultiplier - 1))
 
 	// Create a job for each test. Create 20x jobs for the benchmark test case.
@@ -116,36 +122,36 @@ func handler(ctx context.Context, m *pubsub.Message) {
 	go waitAndWriteToDB(ctx, cs, logger)
 	cs.wg.Wait()
 
-	// Check if all test cases passed. Error should never occur
-	// but better to have handler than a panic.
-	// TODO: Compile 1 regex per test case rather than 1 regex per submission.
-	var totalPassed = 0
-	var passed = true
-	for _, job := range cs.jobs {
-		if job.correct {
-			totalPassed++
-		} else {
-			passed = false
-		}
+	passed, countPassed := checkIfPassed(cs.jobs)
+	avgs := calculateAverages(cs.jobs)
+	if err := updateSubmission(ctx, sub.ID, 2, passed, avgs); err != nil {
+		logger.WithError(err).Errorf("Error updating submission")
+	} else {
+		logger.Debugf("Updated submission")
 	}
 
-	// Average CPU times.
-	var cpuTimes = []int64{}
-	for i := range cs.jobs {
-		if cs.jobs[i].Test.Benchmark {
-			cpuTimes = append(cpuTimes, cs.jobs[i].output.Duration)
-		}
-	}
-	var cpuAverage = average(cpuTimes)
-
-	// TODO: Update the submission database with the results of the tests.
 	logger.WithFields(logrus.Fields{
-		"Jobs":          len(cs.jobs),
-		"TotalMS":       time.Since(start).Milliseconds(),
-		"BenchmarkCPU":  cpuAverage,
-		"Passed":        passed,
-		"PercentPassed": fmt.Sprintf("%.2f%%", (float64(totalPassed)/float64(len(cs.jobs)))*100),
+		"Jobs":         len(cs.jobs),
+		"TotalMS":      time.Since(start).Milliseconds(),
+		"BenchmarkCPU": avgs.AvgCPU,
+		"Passed":       passed,
+		// TODO: Divide by 0 error possible here.
+		"PercentPassed": fmt.Sprintf("%.2f%%", (float64(countPassed)/float64(len(cs.jobs)))*100),
 	}).Infof("Finished submission")
+}
+
+func updateSubmission(ctx context.Context, id string, status int,
+	passed bool, avgs SubmissionAverages) error {
+	_, err := sqldb.DB.NewUpdate().
+		Model(&api.SubmissionDB{}).
+		Set("status = ?", status).
+		Set("passed = ?", passed).
+		Set("avg_cpu = ?", avgs.AvgCPU).
+		Set("avg_mem = ?", avgs.AvgMem).
+		Set("avg_dur = ?", avgs.AvgDur).
+		Where("id = ?", id).
+		Exec(ctx)
+	return err
 }
 
 func waitAndWriteToDB(ctx context.Context, cs *CompiledSubmission, logger *logrus.Entry) {
@@ -166,16 +172,4 @@ func waitAndWriteToDB(ctx context.Context, cs *CompiledSubmission, logger *logru
 		cs.wg.Done()
 	}
 	close(cs.jobOutputs)
-}
-
-func average(values []int64) int64 {
-	if len(values) == 0 {
-		return 0
-	}
-
-	var sum int64
-	for _, v := range values {
-		sum += v
-	}
-	return sum / int64(len(values))
 }

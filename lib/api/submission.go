@@ -23,6 +23,29 @@ type SubmissionDB struct {
 	Hole       string `bun:"hole,notnull"`
 	BGID       string `bun:"bgid,notnull"` // Player ID.
 	ScriptHash string `bun:"hash,notnull"`
+	Status     int    `bun:"status,notnull"`
+
+	// Averages
+	AvgDur int64 `bun:"avg_dur"`
+	AvgCPU int64 `bun:"avg_cpu"`
+	AvgMem int64 `bun:"avg_mem"`
+	Passed bool  `bun:"passed"`
+}
+
+var submissionStatus = map[int]string{
+	0: "PENDING",
+	1: "RUNNING",
+	2: "SUCCESS",
+	3: "FAILURE",
+}
+
+func UpdateSubmissionStatus(ctx context.Context, id string, status int) error {
+	_, err := sqldb.DB.NewUpdate().
+		Model(&SubmissionDB{}).
+		Set("status = ?", status).
+		Where("id = ?", id).
+		Exec(ctx)
+	return err
 }
 
 func (sdb SubmissionDB) Store(ctx context.Context) error {
@@ -86,6 +109,7 @@ func PostSubmissionHandler(w http.ResponseWriter, r *http.Request) {
 		Hole:       hole.ID,
 		BGID:       claims.BGID,
 		ScriptHash: hash(string(bs)),
+		Status:     0,
 	}
 	if err := sub.Store(ctx); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)

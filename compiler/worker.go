@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"io"
 	"strings"
 	"sync"
@@ -9,12 +10,13 @@ import (
 
 	"github.com/Squwid/bytegolf/lib/api"
 	"github.com/Squwid/bytegolf/lib/docker"
+	"github.com/docker/docker/api/types"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
 
 const timeout = 5 * time.Second
-const workerCount = 4
+const workerCount = 1
 const jobBacklog = 5000
 const bytesToRead = 4096
 
@@ -24,6 +26,11 @@ type Worker struct {
 	ID string
 
 	lock *sync.Mutex
+}
+
+type Stats struct {
+	CPU uint64
+	Mem uint64
 }
 
 func init() {
@@ -46,6 +53,7 @@ func (worker *Worker) Start() {
 	defer workerLogger.Warnf("Worker ded")
 
 	for {
+		ctx := context.Background()
 		job := <-jobQueue
 		job.logger = workerLogger.WithField("JobID", job.ID)
 		job.logger.Debugf("Job started (%s, %v)", job.Submission.ID, job.Test.ID)
@@ -72,9 +80,17 @@ func (worker *Worker) Start() {
 		}
 		job.containerID = containerID
 
-		// Signal that we are done reading for the container.
-		doneChan := make(chan bool, 1)
-		go waitAndKillContainer(doneChan, reader, job)
+		// Read stats as they are available.
+		stats, err := docker.Client.Stats(ctx, containerID)
+		if err != nil {
+			job.logger.WithError(err).Error("Failed to get container stats")
+			job.errCh <- errors.Wrap(err, "Failed to get container stats")
+			job.clean()
+			continue
+		}
+
+		go waitAndGetContainerStats(stats.Body, job)
+		go waitAndKillContainer(ctx, reader, job)
 
 		// Read the output from the container.
 		out, err := readAmount(reader, bytesToRead, job.logger)
@@ -84,26 +100,56 @@ func (worker *Worker) Start() {
 			job.clean()
 			continue
 		}
-		doneChan <- true // Done reading output.
-
+		job.doneCh <- true // Done reading output.
 		dur := time.Since(start)
-		ms := dur.Milliseconds()
+		job.wg.Wait() // Wait for job to be "completed"
 
 		var jobOut = &api.JobOutputDB{
 			StdOut:   string(out),
-			Duration: ms,
+			Duration: dur.Milliseconds(),
+			Memory:   int64(job.stats.Mem),
+			CPU:      int64(job.stats.CPU),
 			ExitCode: 0, // TODO: Populate exit code.
 		}
-		job.logger.Debugf("Finished job in %vms", ms)
+		job.logger.Debugf("Finished job in %vms", dur.Milliseconds())
 		job.output = jobOut
 		job.outputCh <- job
 		job.clean()
 	}
 }
 
-func waitAndKillContainer(doneChan chan bool, reader io.ReadCloser, job *Job) {
+func waitAndGetContainerStats(reader io.ReadCloser, job *Job) {
+	defer job.wg.Done()
+	defer reader.Close()
+
+	dec := json.NewDecoder(reader)
+	var stats = &Stats{}
+	for {
+		var v *types.StatsJSON
+		if err := dec.Decode(&v); err != nil {
+			job.stats = stats
+			if err == io.EOF {
+				return
+			}
+			job.logger.WithError(err).Errorf("Error decoding stats")
+			return
+		}
+
+		if stats.CPU < v.CPUStats.CPUUsage.TotalUsage {
+			stats.CPU = v.CPUStats.CPUUsage.TotalUsage
+		}
+		if stats.Mem < v.MemoryStats.Usage {
+			stats.Mem = v.MemoryStats.Usage
+		}
+	}
+}
+
+func waitAndKillContainer(ctx context.Context, reader io.ReadCloser, job *Job) {
+	defer job.wg.Done()
+
+	// Wait for the job to finish or timeout.
 	select {
-	case <-doneChan:
+	case <-job.doneCh:
 		job.logger.Debugf("Got done reading signal to close reader")
 	case <-time.After(timeout):
 		job.timedOut = true
@@ -112,14 +158,14 @@ func waitAndKillContainer(doneChan chan bool, reader io.ReadCloser, job *Job) {
 		job.logger.Debugf("Got error signal to close reader")
 	}
 
-	// TODO: Come up with a better way to kill containers.
 	if err := reader.Close(); err != nil {
 		job.logger.WithError(err).Debugf("Error closing reader")
 	}
-	if err := docker.Client.Kill(context.Background(), job.containerID); err != nil {
+	if err := docker.Client.Kill(ctx, job.containerID); err != nil {
 		job.logger.WithError(err).Debugf("Error killing container")
 	}
-	if err := docker.Client.Delete(context.Background(), job.containerID); err != nil {
+
+	if err := docker.Client.Delete(ctx, job.containerID); err != nil {
 		job.logger.WithError(err).Debugf("Error deleting container")
 	}
 }

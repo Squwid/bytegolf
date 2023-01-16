@@ -20,7 +20,6 @@ const subName = "bgcompiler-rpi-local-sub"
 const benchmarkTestMultiplier = 30
 
 func main() {
-	logrus.SetLevel(logrus.DebugLevel)
 	if err := sqldb.Open(); err != nil {
 		logrus.WithError(err).Fatalf("Error connecting to db")
 	}
@@ -105,6 +104,14 @@ func handler(ctx context.Context, m *pubsub.Message) {
 		}
 	}
 
+	/** TODO: Remove this
+	// Single job submission for quick testing.
+	cs := newCompiledSubmission(1)
+	var job = NewJob(sub, hole, hole.TestsDB[0], cs.jobOutputs)
+	cs.jobs = append(cs.jobs, job)
+	jobQueue <- job
+	*/
+
 	// Wait for all jobs to finish running and writing to the DB.
 	go waitAndWriteToDB(ctx, cs, logger)
 	cs.wg.Wait()
@@ -162,6 +169,10 @@ func waitAndWriteToDB(ctx context.Context, cs *CompiledSubmission, logger *logru
 }
 
 func average(values []int64) int64 {
+	if len(values) == 0 {
+		return 0
+	}
+
 	var sum int64
 	for _, v := range values {
 		sum += v

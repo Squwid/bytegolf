@@ -102,6 +102,12 @@ func (dc *DockerClient) Kill(ctx context.Context, containerID string) error {
 	return dc.c.ContainerKill(ctx, containerID, "KILL")
 }
 
+// Stats returns the stats of the container. This must be called after the container is done
+// running.
+func (dc *DockerClient) Stats(ctx context.Context, containerID string) (types.ContainerStats, error) {
+	return dc.c.ContainerStats(ctx, containerID, true)
+}
+
 // Delete kills and removes a container from the host
 func (dc *DockerClient) Delete(ctx context.Context, containerID string) error {
 	return dc.c.ContainerRemove(ctx, containerID, types.ContainerRemoveOptions{
@@ -109,6 +115,19 @@ func (dc *DockerClient) Delete(ctx context.Context, containerID string) error {
 		RemoveLinks:   true,
 		Force:         true,
 	})
+}
+
+func (dc *DockerClient) Wait(ctx context.Context, containerID string) (int, error) {
+	statusCh, errCh := dc.c.ContainerWait(ctx, containerID, container.WaitConditionNotRunning)
+	select {
+	case err := <-errCh:
+		if err != nil {
+			return -1, err
+		}
+	case status := <-statusCh:
+		return int(status.StatusCode), nil
+	}
+	return -1, nil
 }
 
 func (dc *DockerClient) start(ctx context.Context, containerID string) (string, io.ReadCloser, error) {

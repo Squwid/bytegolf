@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"sync"
 
 	"github.com/Squwid/bytegolf/lib/api"
 	"github.com/sirupsen/logrus"
@@ -17,17 +18,22 @@ type Job struct {
 	Test       *api.TestDB
 	Submission *api.SubmissionDB
 
-	correct  bool // Correct based on the test regex.
-	timedOut bool // True if the job timed out during execution.
+	correct  bool   // Correct based on the test regex.
+	timedOut bool   // True if the job timed out during execution.
+	stats    *Stats // CPU and memory usage
 
 	// Internal job details
 	dir         string
 	file        string
 	containerID string
 
-	outputCh  chan *Job
-	errCh     chan error
-	timeoutCh chan bool
+	outputCh chan *Job
+	errCh    chan error
+	doneCh   chan bool // Signal that reading input is done.
+
+	// wg waits for stats and container removal to
+	// finish before the job is considered done.
+	wg *sync.WaitGroup
 
 	logger *logrus.Entry
 	output *api.JobOutputDB
@@ -35,6 +41,8 @@ type Job struct {
 
 func NewJob(sub *api.SubmissionDB, hole *api.HoleDB,
 	test *api.TestDB, jobOutputs chan *Job) *Job {
+	wg := &sync.WaitGroup{}
+	wg.Add(2) // 1 for containerStats, 1 for waitAndKillContainer
 	return &Job{
 		ID:         api.RandomString(10),
 		Language:   hole.LanguageDB,
@@ -43,7 +51,8 @@ func NewJob(sub *api.SubmissionDB, hole *api.HoleDB,
 		correct:    true,
 		outputCh:   jobOutputs,
 		errCh:      make(chan error, 1),
-		timeoutCh:  make(chan bool, 1),
+		doneCh:     make(chan bool, 1),
+		wg:         wg,
 	}
 }
 

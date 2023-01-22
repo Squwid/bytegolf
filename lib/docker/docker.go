@@ -70,9 +70,10 @@ func (dc *DockerClient) Create(image, dir, cmd, file, id string,
 	}, &container.HostConfig{
 		Mounts: []mount.Mount{
 			{
-				Type:   mount.TypeBind,
-				Source: dir,
-				Target: "/ci",
+				Type:     mount.TypeBind,
+				Source:   dir,
+				Target:   "/ci",
+				ReadOnly: true,
 			},
 		},
 

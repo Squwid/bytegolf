@@ -15,10 +15,12 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-const timeout = 5 * time.Second
-const workerCount = 2
-const jobBacklog = 5000
-const bytesToRead = 4096
+const (
+	timeout     = 5 * time.Second
+	workerCount = 4
+	jobBacklog  = 5000
+	bytesToRead = 4096
+)
 
 var jobQueue = make(chan *Job, jobBacklog)
 

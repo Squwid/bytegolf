@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"regexp"
 	"sync"
@@ -72,14 +73,44 @@ func (job *Job) writeFiles() error {
 
 	// Write input file.
 	if job.Test.Input != "" {
-		if err := os.WriteFile(job.dir+"input.txt",
-			[]byte(job.Test.Input), 0644); err != nil {
+		if err := copyPaste("code_inputs/"+job.Test.Input,
+			job.dir+"input.txt"); err != nil {
 			return err
 		}
 	}
 
 	return os.WriteFile(job.dir+job.file,
 		[]byte(job.Submission.Script), 0755)
+}
+
+func copyPaste(src, dest string) error {
+	fileIn, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer fileIn.Close()
+
+	fileOut, err := os.Create(dest)
+	if err != nil {
+		return err
+	}
+	defer fileOut.Close()
+
+	buf := make([]byte, 1024)
+
+	for {
+		n, err := fileIn.Read(buf)
+		if err != nil && err != io.EOF {
+			return err
+		}
+		if n == 0 {
+			break
+		}
+		if _, err := fileOut.Write(buf[:n]); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (job *Job) clean() error {

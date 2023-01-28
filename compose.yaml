@@ -1,0 +1,127 @@
+version: "3.9"
+services:
+  webapp:
+    build:
+      context: .
+      dockerfile: Dockerfile.webapp
+    ports:
+      - "8080:8080"
+    environment:
+      ##### REQUIRED #####
+      - PORT=8080
+      - GCP_PROJECT_ID={GCP_PROJECT} # Set to GCP project ID.
+
+        ##### OPTIONAL #####
+      - BG_BACKEND_ADDR=value # Set to the backend address ex '192.168.0.1:8080'.
+      - BG_FRONTEND_ADDR=value # Set to the frontend address ex. '192.168.0.1:3000'
+      - JWT_SECRET=value # Set to a random string.
+      - GITHUB_CLIENT=value # Set to Github OAuth client ID.
+      - GITHUB_SECRET=value # Set to Github OAuth client secret.
+      - BG_COOKIE_NAME=bg-local-cookie
+      - GITHUB_STATE=value
+      - BG_ENV=local
+      - BGPG_HOST=db
+      - BGPG_DBNAME=bg-dev
+      - BGPG_PASSWORD=temp_password
+      - GOOGLE_APPLICATION_CREDENTIALS=/home/creds.json
+    
+    volumes:
+      - type: bind
+        ##### REQUIRED #####
+        source: /home/squid/key.json # Set to the path to your GCP service account key.
+        target: /home/creds.json
+        read_only: true
+    depends_on:
+      db:
+        condition: service_healthy
+
+  compiler:
+    privileged: true
+    user: root
+    build:
+      context: .
+      dockerfile: Dockerfile.compiler
+    environment:
+      ##### REQUIRED #####
+      - GCP_PROJECT_ID={GCP_PROJECT} # Set to GCP project ID.
+
+      ##### OPTIONAL #####
+      - TARGET_ARC=amd64 # Set to the target architecture. https://go.dev/doc/install/source.
+      - TARGET_OS=linux # Set to the target OS https://go.dev/doc/install/source
+      # - TARGET_VARIANT=v8 # Uncomment this if running on arm64 and you want to target arm64v8 (rpi).
+      - BGPG_HOST=db 
+      - BGPG_DBNAME=bg-dev
+      - BGPG_PASSWORD=temp_password
+      - GOOGLE_APPLICATION_CREDENTIALS=/home/creds.json
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      - DOCKER_API_VERSION=1.41
+          
+    volumes:
+      - type: bind
+        ##### REQUIRED #####
+        source: /home/squid/key.json # Set to the path to your GCP service account key.
+        target: /home/creds.json
+        read_only: true
+      - type: bind
+        source: ./startup/holes/word_counter/
+        target: /code_inputs
+        read_only: true
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /usr/bin/docker:/usr/bin/docker
+      - type: bind
+        source: /tmp/
+        target: /tmp/
+    depends_on:
+      db:
+        condition: service_healthy
+
+  startup:
+    build:
+      context: .
+      dockerfile: Dockerfile.startup
+    environment:
+      ##### REQUIRED #####
+      - GCP_PROJECT_ID={GCP_PROJECT}
+
+      ##### OPTIONAL #####
+      - BGPG_HOST=db
+      - BGPG_DBNAME=bg-dev
+      - BGPG_PASSWORD=temp_password
+      - GOOGLE_APPLICATION_CREDENTIALS=/home/creds.json
+    volumes:
+      - type: bind
+        ##### REQUIRED #####
+        source: /home/squid/key.json # Set to the path to your GCP service account key.
+        target: /home/creds.json
+        read_only: true
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:13.9-alpine3.17
+    restart: always
+    user: postgres
+    environment:
+      POSTGRES_DB: bg-dev
+      POSTGRES_PASSWORD: temp_password
+    ports:
+      - '5432:5432'
+    expose:
+      - '5432'
+    volumes:
+      - type: bind
+        source: ./pg/
+        target: /var/lib/postgresql/data:z
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 3s
+      timeout: 5s
+      retries: 5
+volumes:
+  docker:
+    driver: local
+    driver_opts:
+      type: none
+      device: /var/run/docker.sock
+      o: bind

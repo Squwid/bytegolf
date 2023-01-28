@@ -15,13 +15,13 @@ import (
 type LanguageDB struct {
 	bun.BaseModel `bun:"table:languages,alias:l"`
 
-	ID        int64  `bun:"id,pk,autoincrement"`
-	Language  string `bun:"language,notnull"`
-	Version   string `bun:"version,notnull"`
-	Image     string `bun:"image,notnull"`
-	Active    bool   `bun:"active,notnull"`
-	Cmd       string `bun:"cmd,notnull"`
-	Extension string `bun:"extension,notnull"`
+	ID        int64  `bun:"id,pk" yaml:"id"`
+	Language  string `bun:"language,notnull" yaml:"language"`
+	Version   string `bun:"version,notnull" yaml:"version"`
+	Image     string `bun:"image,notnull" yaml:"image"`
+	Active    bool   `bun:"active,notnull" yaml:"active"`
+	Cmd       string `bun:"cmd,notnull" yaml:"cmd"`
+	Extension string `bun:"extension,notnull" yaml:"extension"`
 }
 
 type LanguageClient struct {

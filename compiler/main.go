@@ -80,6 +80,12 @@ func handler(ctx context.Context, m *pubsub.Message) {
 		return
 	}
 
+	if sub == nil {
+		logger.Errorf("Submission is nil somehow. Going to ack and remove from queue.")
+		m.Ack()
+		return
+	}
+
 	hole, err := api.GetHole(ctx, sub.Hole)
 	if err != nil {
 		logger.WithError(err).Errorf("Error getting hole")
@@ -136,7 +142,7 @@ func handler(ctx context.Context, m *pubsub.Message) {
 		"BenchmarkCPU": avgs.AvgCPU,
 		"Passed":       passed,
 		// TODO: Divide by 0 error possible here.
-		"PercentPassed": fmt.Sprintf("%.2f%%", (float64(countPassed)/float64(len(cs.jobs)))*100),
+		"PercentPassed": fmt.Sprintf("%.2f%%", percent(countPassed, len(cs.jobs))),
 	}).Infof("Finished submission")
 }
 
@@ -149,6 +155,7 @@ func updateSubmission(ctx context.Context, id string, status int,
 		Set("avg_cpu = ?", avgs.AvgCPU).
 		Set("avg_mem = ?", avgs.AvgMem).
 		Set("avg_dur = ?", avgs.AvgDur).
+		Set("compiled_time = ?", time.Now().UTC()).
 		Where("id = ?", id).
 		Exec(ctx)
 	return err
@@ -172,4 +179,11 @@ func waitAndWriteToDB(ctx context.Context, cs *CompiledSubmission, logger *logru
 		cs.wg.Done()
 	}
 	close(cs.jobOutputs)
+}
+
+func percent(countPassed, jobs int) float64 {
+	if jobs == 0 {
+		return 0
+	}
+	return (float64(countPassed) / float64(jobs)) * 100
 }

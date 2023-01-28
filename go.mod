@@ -13,6 +13,7 @@ require (
 	github.com/uptrace/bun v1.1.9
 	github.com/uptrace/bun/dialect/pgdialect v1.1.9
 	github.com/uptrace/bun/driver/pgdriver v1.1.9
+	gopkg.in/yaml.v2 v2.4.0
 )
 
 require (

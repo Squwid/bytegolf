@@ -22,9 +22,11 @@ func init() {
 	jwtKey = []byte(os.Getenv("JWT_SECRET"))
 	CookieName = os.Getenv("BG_COOKIE_NAME")
 
-	if githubClient == "" || githubSecret == "" ||
-		githubState == "" || len(jwtKey) == 0 || CookieName == "" {
-		panic("missing github env variables")
+	if os.Getenv("app") == "webapp" {
+		if githubClient == "" || githubSecret == "" ||
+			githubState == "" || len(jwtKey) == 0 || CookieName == "" {
+			panic("missing github env variables")
+		}
 	}
 }
 

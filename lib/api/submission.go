@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"io"
 	"net/http"
+	"time"
 
 	"github.com/Squwid/bytegolf/lib/auth"
 	"github.com/Squwid/bytegolf/lib/sqldb"
@@ -18,12 +19,15 @@ import (
 type SubmissionDB struct {
 	bun.BaseModel `bun:"table:submissions,alias:ss"`
 
-	ID         string `bun:"id,pk,notnull"`
-	Script     string `bun:"script,notnull"`
-	Hole       string `bun:"hole,notnull"`
-	BGID       string `bun:"bgid,notnull"` // Player ID.
-	ScriptHash string `bun:"hash,notnull"`
-	Status     int    `bun:"status,notnull"`
+	ID           string    `bun:"id,pk,notnull"`
+	Script       string    `bun:"script,notnull"`
+	Hole         string    `bun:"hole,notnull"`
+	BGID         string    `bun:"bgid,notnull"` // Player ID.
+	ScriptHash   string    `bun:"hash,notnull"`
+	Status       int       `bun:"status,notnull"`
+	CreatedTime  time.Time `bun:"created_time,notnull"`
+	CompiledTime time.Time `bun:"compiled_time"`
+	Length       int       `bun:"length,notnull"`
 
 	// Averages
 	AvgDur int64 `bun:"avg_dur"`
@@ -104,12 +108,14 @@ func PostSubmissionHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Create a new submission in the database and submit to compiler.
 	sub := SubmissionDB{
-		ID:         id,
-		Script:     string(bs),
-		Hole:       hole.ID,
-		BGID:       claims.BGID,
-		ScriptHash: hash(string(bs)),
-		Status:     0,
+		ID:          id,
+		Script:      string(bs),
+		Hole:        hole.ID,
+		BGID:        claims.BGID,
+		ScriptHash:  hash(string(bs)),
+		CreatedTime: time.Now().UTC(),
+		Length:      length(bs),
+		Status:      0,
 	}
 	if err := sub.Store(ctx); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -140,4 +146,8 @@ func hash(s string) string {
 	h := md5.New()
 	h.Write([]byte(s))
 	return hex.EncodeToString(h.Sum(nil))
+}
+
+func length(bs []byte) int {
+	return len(bs)
 }

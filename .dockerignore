@@ -1,1 +1,9 @@
-bytegolf
+webapp/webapp
+compiler/compiler
+.terraform/
+.vscode/
+terraform.tfstate.d/
+terraform/
+vendor/
+pg/
+frontend/

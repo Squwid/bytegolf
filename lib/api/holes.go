@@ -31,13 +31,13 @@ type HoleDB struct {
 	LanguageDB *LanguageDB `bun:"rel:has-one,join:language_enum=id"`
 	TestsDB    []*TestDB   `bun:"rel:has-many,join:id=hole"`
 
-	ID           string    `bun:"id,pk,notnull"`
-	Name         string    `bun:"name,notnull"`
-	Difficulty   uint8     `bun:"difficulty,notnull"`
-	Question     string    `bun:"question,notnull"`
-	CreatedAt    time.Time `bun:"created_at,notnull"`
-	Active       bool      `bun:"active,notnull"`
-	LanguageEnum int64     `bun:"language_enum,notnull"`
+	ID           string    `bun:"id,pk,notnull" yaml:"id"`
+	Name         string    `bun:"name,notnull" yaml:"name"`
+	Difficulty   uint8     `bun:"difficulty,notnull" yaml:"difficulty"`
+	Question     string    `bun:"question,notnull" yaml:"question"`
+	CreatedAt    time.Time `bun:"created_at,notnull" yaml:"created_at"`
+	Active       bool      `bun:"active,notnull" yaml:"active"`
+	LanguageEnum int64     `bun:"language_enum,notnull" yaml:"language_num"`
 }
 
 type HoleClient struct {

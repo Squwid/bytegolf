@@ -1,0 +1,13 @@
+FROM golang:1.19.5-alpine3.17 as build
+ADD . /bytegolf
+WORKDIR /bytegolf/webapp
+
+RUN go mod vendor
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o webapp
+
+FROM alpine:latest
+COPY --from=build /bytegolf/webapp/webapp .
+
+ENV app=webapp
+
+CMD ["./webapp"]

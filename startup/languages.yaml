@@ -1,0 +1,14 @@
+- id: 1
+  language: "Go"
+  version: "1.19.4"
+  image: "golang:1.19.4-alpine3.17"
+  active: true
+  cmd: "go run"
+  extension: "go"
+- id: 2
+  language: "Python"
+  version: "3.11.1"
+  image: "python:3.11.1-alpine3.17"
+  active: true
+  cmd: "python"
+  extension: "py"

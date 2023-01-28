@@ -41,8 +41,6 @@ func Open() error {
 
 	DB = bun.NewDB(sqldb, pgdialect.New())
 
-	// DB.AddQueryHook(bundebug.NewQueryHook())
-	// bundebug.NewQueryHook(bundebug.WithVerbose(true))
 	return DB.Ping()
 }
 

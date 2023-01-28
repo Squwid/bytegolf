@@ -23,8 +23,9 @@ type DockerClient struct {
 var Client *DockerClient
 
 var (
-	targetArc = os.Getenv("TARGET_ARCH")
-	targetOS  = os.Getenv("TARGET_OS")
+	targetArc     = os.Getenv("TARGET_ARCH")
+	targetOS      = os.Getenv("TARGET_OS")
+	targetVariant = os.Getenv("TARGET_VARIANT") // v8 for rpi.
 )
 
 func init() {
@@ -37,7 +38,7 @@ func init() {
 		targetOS = "linux"
 	}
 
-	c, err := client.NewClientWithOpts(client.FromEnv)
+	c, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
 		logrus.WithError(err).Fatalf("Error creating docker client")
 	}
@@ -88,8 +89,7 @@ func (dc *DockerClient) Create(image, dir, cmd, file, id string,
 	}, &network.NetworkingConfig{}, &v1.Platform{
 		Architecture: targetArc,
 		OS:           targetOS,
-		// TODO: This is RPI thing
-		// Variant:      "v8",
+		Variant:      targetVariant,
 	}, id)
 	if err != nil {
 		return "", nil, err

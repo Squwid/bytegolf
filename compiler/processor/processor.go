@@ -57,10 +57,11 @@ func ProcessMessage(ctx context.Context, id string) {
 	}
 	sub.Hole = hole
 
-	if err := api.UpdateSubmissionStatus(ctx, sub.ID, 1); err != nil {
+	if err := api.UpdateSubmissionStatus(ctx, sub.ID, api.StatusRunning); err != nil {
 		sub.logger.WithError(err).Errorf("Error updating submission status")
 	} else {
-		sub.logger.Debugf("Updated submission status to 1 (RUNNING)")
+		sub.logger.Debugf("Updated submission status to %s %s",
+			api.StatusRunning, api.StatusRunningStr)
 	}
 
 	// Generate and send jobs to workers.

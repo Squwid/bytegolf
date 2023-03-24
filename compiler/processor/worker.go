@@ -13,6 +13,8 @@ import (
 )
 
 const (
+	timeout = 5 * time.Second
+
 	workerCount = 4
 	jobBacklog  = 5000
 	bytesToRead = 4096

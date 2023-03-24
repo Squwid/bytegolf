@@ -1,23 +1,13 @@
 package main
 
 import (
-	"context"
-	"fmt"
 	"os"
-	"sync"
-	"time"
 
-	"cloud.google.com/go/pubsub"
-	"github.com/Squwid/bytegolf/lib/api"
+	"github.com/Squwid/bytegolf/compiler/processor"
+	"github.com/Squwid/bytegolf/lib/comms"
 	"github.com/Squwid/bytegolf/lib/sqldb"
 	"github.com/sirupsen/logrus"
 )
-
-// const subName = "bgcompiler-sub"
-const subName = "bgcompiler-rpi-local-sub"
-
-// benchmarkTestMultiplier is the number of times the benchmark test case should run.
-const benchmarkTestMultiplier = 30
 
 func main() {
 	if err := sqldb.Open(); err != nil {
@@ -29,161 +19,6 @@ func main() {
 		}
 	}()
 
-	ctx := context.Background()
-	client, err := pubsub.NewClient(ctx, os.Getenv("GCP_PROJECT_ID"))
-	if err != nil {
-		logrus.WithError(err).Fatalf("Error creating pub/sub subscriber")
-	}
-	sub := client.Subscription(subName)
-
-	for {
-		if err = sub.Receive(context.Background(), handler); err != nil {
-			logrus.WithError(err).Fatalf("Error recieving message\n")
-		}
-	}
-}
-
-// CompiledSubmission is the type that holds all of the individual test results
-// for a submission.
-type CompiledSubmission struct {
-	jobOutputs chan *Job
-	wg         *sync.WaitGroup
-	jobs       []*Job
-}
-
-func newCompiledSubmission(jobs int) *CompiledSubmission {
-	wg := &sync.WaitGroup{}
-	wg.Add(jobs)
-	return &CompiledSubmission{
-		jobOutputs: make(chan *Job, jobs),
-		wg:         wg,
-		jobs:       []*Job{},
-	}
-}
-
-func handler(ctx context.Context, m *pubsub.Message) {
-	start := time.Now()
-	// TODO: Update the submission database with a note that the compiler is working on it.
-	// TODO: Only ack if there is room for the submission in the queue.
-	logger := logrus.WithFields(logrus.Fields{
-		"Action":       "Handler",
-		"MessageID":    m.ID,
-		"SubmissionID": string(m.Data),
-	})
-	logger.Infof("Recieved message")
-
-	// Parse the object coming from the message queue. Fetch test cases from
-	// the database and send each test as a seperate entity to the workers.
-	sub, err := api.GetSubmission(ctx, string(m.Data))
-	if err != nil {
-		logger.WithError(err).Errorf("Error getting submission")
-		return
-	}
-
-	if sub == nil {
-		logger.Errorf("Submission is nil somehow. Going to ack and remove from queue.")
-		m.Ack()
-		return
-	}
-
-	hole, err := api.GetHole(ctx, sub.Hole)
-	if err != nil {
-		logger.WithError(err).Errorf("Error getting hole")
-		return
-	}
-	m.Ack()
-	logger.Debugf("Acked message")
-
-	if err := api.UpdateSubmissionStatus(ctx, sub.ID, 1); err != nil {
-		logger.WithError(err).Errorf("Error updating submission status")
-	} else {
-		logger.Debugf("Updated submission status to 1 (RUNNING)")
-	}
-
-	cs := newCompiledSubmission(len(hole.TestsDB) + (benchmarkTestMultiplier - 1))
-
-	// Create a job for each test. Create 20x jobs for the benchmark test case.
-	for _, test := range hole.TestsDB {
-		var testCount = 1
-		if test.Benchmark {
-			testCount = benchmarkTestMultiplier
-		}
-
-		for i := 0; i < testCount; i++ {
-			var job = NewJob(sub, hole, test, cs.jobOutputs)
-			cs.jobs = append(cs.jobs, job)
-			jobQueue <- job
-		}
-	}
-
-	/** TODO: Remove this
-	// Single job submission for quick testing.
-	cs := newCompiledSubmission(1)
-	var job = NewJob(sub, hole, hole.TestsDB[0], cs.jobOutputs)
-	cs.jobs = append(cs.jobs, job)
-	jobQueue <- job
-	*/
-
-	// Wait for all jobs to finish running and writing to the DB.
-	go waitAndWriteToDB(ctx, cs, logger)
-	cs.wg.Wait()
-
-	passed, countPassed := checkIfPassed(cs.jobs)
-	avgs := calculateAverages(cs.jobs)
-	if err := updateSubmission(ctx, sub.ID, 2, passed, avgs); err != nil {
-		logger.WithError(err).Errorf("Error updating submission")
-	} else {
-		logger.Debugf("Updated submission")
-	}
-
-	logger.WithFields(logrus.Fields{
-		"Jobs":         len(cs.jobs),
-		"TotalMS":      time.Since(start).Milliseconds(),
-		"BenchmarkCPU": avgs.AvgCPU,
-		"Passed":       passed,
-		// TODO: Divide by 0 error possible here.
-		"PercentPassed": fmt.Sprintf("%.2f%%", percent(countPassed, len(cs.jobs))),
-	}).Infof("Finished submission")
-}
-
-func updateSubmission(ctx context.Context, id string, status int,
-	passed bool, avgs SubmissionAverages) error {
-	_, err := sqldb.DB.NewUpdate().
-		Model(&api.SubmissionDB{}).
-		Set("status = ?", status).
-		Set("passed = ?", passed).
-		Set("avg_cpu = ?", avgs.AvgCPU).
-		Set("avg_mem = ?", avgs.AvgMem).
-		Set("avg_dur = ?", avgs.AvgDur).
-		Set("compiled_time = ?", time.Now().UTC()).
-		Where("id = ?", id).
-		Exec(ctx)
-	return err
-}
-
-func waitAndWriteToDB(ctx context.Context, cs *CompiledSubmission, logger *logrus.Entry) {
-	for job := range cs.jobOutputs {
-		if err := job.checkCorrectness(); err != nil {
-			logger.WithError(err).Errorf("Error checking correctness")
-		}
-
-		job.output.SubmissionID = job.Submission.ID
-		job.output.TestID = job.Test.ID
-		job.output.Correct = job.correct
-		logger.Debugf("Writing job output (%v %v) to DB", job.output.SubmissionID,
-			job.output.TestID)
-
-		if _, err := sqldb.DB.NewInsert().Model(job.output).Exec(ctx); err != nil {
-			logger.WithError(err).Errorf("Error inserting job output")
-		}
-		cs.wg.Done()
-	}
-	close(cs.jobOutputs)
-}
-
-func percent(countPassed, jobs int) float64 {
-	if jobs == 0 {
-		return 0
-	}
-	return (float64(countPassed) / float64(jobs)) * 100
+	comms.InitReceiver(os.Getenv("BG_USE_PUBSUB") == "true")
+	comms.ReceiverImpl.Listen(processor.ProcessMessage)
 }

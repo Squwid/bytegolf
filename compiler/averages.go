@@ -6,6 +6,7 @@ type SubmissionAverages struct {
 	AvgMem int64
 }
 
+/**
 func calculateAverages(jobs []*Job) SubmissionAverages {
 	if len(jobs) == 0 {
 		return SubmissionAverages{}
@@ -45,3 +46,4 @@ func checkIfPassed(jobs []*Job) (bool, int) {
 	}
 	return correct == len(jobs), correct
 }
+*/

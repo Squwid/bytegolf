@@ -3,8 +3,10 @@ package comms
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"io"
 	"net/http"
+	"os"
 
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
@@ -25,8 +27,7 @@ func (h *Http) Init() error {
 }
 
 func (h *Http) Publish(ctx context.Context, message []byte) error {
-	// TODO: Get compiler URL.
-	url := "http://localhost:" + h.port
+	url := fmt.Sprintf("http://%s:%s/compile", os.Getenv("BG_COMPILER_URL"), h.port)
 
 	req, err := http.NewRequestWithContext(ctx, "POST",
 		url+"/compile", bytes.NewReader(message))

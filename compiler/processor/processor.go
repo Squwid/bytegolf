@@ -60,17 +60,23 @@ func ProcessMessage(ctx context.Context, id string) {
 	if err := api.UpdateSubmissionStatus(ctx, sub.ID, api.StatusRunning); err != nil {
 		sub.logger.WithError(err).Errorf("Error updating submission status")
 	} else {
-		sub.logger.Debugf("Updated submission status to %s %s",
+		sub.logger.Debugf("Updated submission status to %v %s",
 			api.StatusRunning, api.StatusRunningStr)
 	}
 
 	// Generate and send jobs to workers.
 	sub.GenerateJobs()
+	sub.logger = sub.logger.WithField("Jobs", len(sub.jobs))
 	for _, job := range sub.jobs {
 		JobQueue <- job
 	}
+
 	go sub.waitAndWriteToDB()
+
+	start := time.Now()
+	sub.logger.Infof("Jobs sent to queue. Waiting for jobs to finish...")
 	sub.jobWG.Wait()
+	sub.logger.Infof("All jobs finished in %vms", time.Since(start).Milliseconds())
 }
 
 // waitAndWriteToDB waits for jobs to finish and writes them as they arrive

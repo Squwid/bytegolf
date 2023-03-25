@@ -28,7 +28,8 @@ var (
 	targetVariant = os.Getenv("TARGET_VARIANT") // v8 for rpi.
 )
 
-func init() {
+// Init initializes the docker client.
+func Init() {
 	if targetArc == "" {
 		logrus.Warnf("'TARGET_ARCH' empty, defaulting to 'amd64'")
 		targetArc = "amd64"

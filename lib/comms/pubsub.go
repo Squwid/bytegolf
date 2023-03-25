@@ -20,7 +20,7 @@ type PubSub struct {
 }
 
 func (p *PubSub) Init() error {
-	logrus.Infof("Initializing PubSub receiver (sub: %s)", subName)
+	logrus.Infof("Initializing PubSub (sub: %s)", subName)
 
 	ctx := context.Background()
 	client, err := pubsub.NewClient(ctx, os.Getenv("GCP_PROJECT_ID"))
@@ -62,6 +62,6 @@ func pubsubHandler(processor func(context.Context, string)) func(context.Context
 		logger.Infof("Recieved message")
 
 		msg.Ack()
-		processor(ctx, string(msg.Data))
+		go processor(ctx, string(msg.Data))
 	}
 }

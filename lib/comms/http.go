@@ -19,14 +19,14 @@ type Http struct {
 
 func (h *Http) Init() error {
 	h.port = "8081"
-	logrus.Infof("Initializing HTTP receiver at port %s", h.port)
+	logrus.Infof("Initializing HTTP at port %s", h.port)
 	h.client = http.DefaultClient
 	return nil
 }
 
 func (h *Http) Publish(ctx context.Context, message []byte) error {
 	// TODO: Get compiler URL.
-	url := "http://localhost" + h.port
+	url := "http://localhost:" + h.port
 
 	req, err := http.NewRequestWithContext(ctx, "POST",
 		url+"/compile", bytes.NewReader(message))
@@ -56,6 +56,6 @@ func httpHandler(processor func(context.Context, string)) http.HandlerFunc {
 		logger = logger.WithField("SubmissionID", string(bs))
 		logger.Infof("Recieved message")
 
-		processor(r.Context(), string(bs))
+		go processor(context.Background(), string(bs))
 	})
 }

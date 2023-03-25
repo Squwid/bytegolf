@@ -18,7 +18,7 @@ var PublisherImpl Publisher = nil
 
 // InitPublisher initializes the publisher implementation. If usePubSub is true, it will
 // use Google Cloud Pub/Sub. Otherwise, it will use HTTP.
-func InitPublisher(usePubSub bool) {
+func InitPublisher(usePubSub bool) error {
 	var pt = CommsTypePubSub
 	if !usePubSub {
 		pt = CommsTypeHttp
@@ -31,4 +31,6 @@ func InitPublisher(usePubSub bool) {
 	} else {
 		PublisherImpl = &Http{}
 	}
+
+	return PublisherImpl.Init()
 }

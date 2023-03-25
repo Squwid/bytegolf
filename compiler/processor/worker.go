@@ -2,12 +2,12 @@ package processor
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"strings"
 	"sync"
 	"time"
 
-	"github.com/Squwid/bytegolf/lib/api"
 	"github.com/Squwid/bytegolf/lib/docker"
 	"github.com/sirupsen/logrus"
 )
@@ -36,15 +36,15 @@ var WorkerPool [workerCount]Worker
 
 func init() {
 	for i := 0; i < workerCount; i++ {
-		worker := NewWorker()
+		worker := NewWorker(i)
 		WorkerPool[i] = worker
 		go worker.Start()
 	}
 }
 
-func NewWorker() *WorkerData {
+func NewWorker(id int) *WorkerData {
 	return &WorkerData{
-		ID:   api.RandomString(5),
+		ID:   fmt.Sprintf("w%v", id),
 		lock: &sync.Mutex{},
 	}
 }
@@ -110,16 +110,13 @@ func waitAndKillContainer(ctx context.Context, reader io.ReadCloser, job *Job) {
 		job.logger.Debugf("Got error signal to close reader")
 	}
 
+	// TODO: Better error handle the closing of the docker container here.
 	if err := reader.Close(); err != nil {
 		job.logger.WithError(err).Debugf("Error closing reader")
 	}
-	if err := docker.Client.Kill(ctx, job.containerID); err != nil {
-		job.logger.WithError(err).Debugf("Error killing container")
-	}
 
-	if err := docker.Client.Delete(ctx, job.containerID); err != nil {
-		job.logger.WithError(err).Debugf("Error deleting container")
-	}
+	docker.Client.Kill(ctx, job.containerID)
+	docker.Client.Delete(ctx, job.containerID)
 }
 
 // Read only a certain amount of output without using a ton of memory.

@@ -23,7 +23,7 @@ var ReceiverImpl Receiver = nil
 
 // InitReceiver initializes the receiver implementation. If usePubSub is true, it will
 // use Google Cloud Pub/Sub. Otherwise, it will use HTTP.
-func InitReceiver(usePubSub bool) {
+func InitReceiver(usePubSub bool) error {
 	var rt = CommsTypePubSub
 	if !usePubSub {
 		rt = CommsTypeHttp
@@ -36,4 +36,6 @@ func InitReceiver(usePubSub bool) {
 	} else {
 		ReceiverImpl = &Http{}
 	}
+
+	return ReceiverImpl.Init()
 }

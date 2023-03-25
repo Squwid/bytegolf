@@ -1,14 +1,10 @@
-package main
+package processor
 
-type SubmissionAverages struct {
-	AvgDur int64
-	AvgCPU int64
-	AvgMem int64
-}
+import "github.com/Squwid/bytegolf/lib/api"
 
-func calculateAverages(jobs []*Job) SubmissionAverages {
+func calculateAverages(jobs []*Job) api.SubmissionAverages {
 	if len(jobs) == 0 {
-		return SubmissionAverages{}
+		return api.SubmissionAverages{}
 	}
 
 	avgDur := int64(0)
@@ -19,15 +15,15 @@ func calculateAverages(jobs []*Job) SubmissionAverages {
 	for _, job := range jobs {
 		if job.Test.Benchmark {
 			count++
-			avgDur += job.output.Duration
-			avgCPU += job.stats.CPU
-			avgMem += job.stats.Mem
+			avgDur += job.Output.Duration
+			avgCPU += job.Output.CPU
+			avgMem += job.Output.Memory
 		}
 	}
 	avgDur /= int64(len(jobs))
 	avgCPU /= int64(len(jobs))
 	avgMem /= int64(len(jobs))
-	return SubmissionAverages{
+	return api.SubmissionAverages{
 		AvgDur: avgDur,
 		AvgCPU: avgCPU,
 		AvgMem: avgMem,

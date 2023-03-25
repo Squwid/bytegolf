@@ -15,5 +15,6 @@ type JobOutputDB struct {
 	Duration int64  `bun:"duration,notnull"`
 	Memory   int64  `bun:"memory,notnull"`
 	CPU      int64  `bun:"cpu,notnull"`
-	Correct  bool   `bun:"correct,notnull"`
+
+	Correct bool `bun:"correct,notnull"`
 }

@@ -7,6 +7,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/sirupsen/logrus"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/pgdialect"
 	"github.com/uptrace/bun/driver/pgdriver"
@@ -23,6 +24,13 @@ var (
 var DB *bun.DB
 
 func Open() error {
+	logrus.WithFields(logrus.Fields{
+		"Host":   host,
+		"Port":   port,
+		"User":   user,
+		"DBName": dbname,
+	}).Infof("Connecting to database...")
+
 	sqldb := sql.OpenDB(pgdriver.NewConnector(
 		pgdriver.WithAddr(fmt.Sprintf("%s:%v", host, port)),
 		pgdriver.WithTLSConfig(&tls.Config{InsecureSkipVerify: true}),

@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/Squwid/bytegolf/lib/auth"
+	"github.com/Squwid/bytegolf/lib/comms"
 	"github.com/Squwid/bytegolf/lib/sqldb"
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
@@ -36,17 +37,45 @@ type SubmissionDB struct {
 	Passed bool  `bun:"passed"`
 }
 
-var submissionStatus = map[int]string{
-	0: "PENDING",
-	1: "RUNNING",
-	2: "SUCCESS",
-	3: "FAILURE",
+const (
+	StatusPending = 0
+	StatusRunning = 1
+	StatusSuccess = 2
+	StatusFailure = 3
+
+	StatusPendingStr = "PENDING"
+	StatusRunningStr = "RUNNING"
+	StatusSuccessStr = "SUCCESS"
+	StatusFailureStr = "FAILURE"
+)
+
+// Map of submission status to string.
+var StatusMap = map[int]string{
+	StatusPending: StatusPendingStr,
+	StatusRunning: StatusRunningStr,
+	StatusSuccess: StatusSuccessStr,
+	StatusFailure: StatusFailureStr,
 }
 
 func UpdateSubmissionStatus(ctx context.Context, id string, status int) error {
 	_, err := sqldb.DB.NewUpdate().
 		Model(&SubmissionDB{}).
 		Set("status = ?", status).
+		Where("id = ?", id).
+		Exec(ctx)
+	return err
+}
+
+func CompleteSubmission(ctx context.Context, id string, passed bool,
+	avgs SubmissionAverages) error {
+	_, err := sqldb.DB.NewUpdate().
+		Model(&SubmissionDB{}).
+		Set("status = ?", StatusSuccess).
+		Set("passed = ?", passed).
+		Set("avg_cpu = ?", avgs.AvgCPU).
+		Set("avg_mem = ?", avgs.AvgMem).
+		Set("avg_dur = ?", avgs.AvgDur).
+		Set("compiled_time = ?", time.Now().UTC()).
 		Where("id = ?", id).
 		Exec(ctx)
 	return err
@@ -59,7 +88,7 @@ func (sdb SubmissionDB) Store(ctx context.Context) error {
 
 // Submit submits a submission id to the compiler.
 func (sdb SubmissionDB) Submit(ctx context.Context) error {
-	return sqldb.PubSubClient.Publish(ctx, []byte(sdb.ID))
+	return comms.PublisherImpl.Publish(ctx, []byte(sdb.ID))
 }
 
 // PostSubmissionHandler is the handler to take a submission from a player, parse it, and

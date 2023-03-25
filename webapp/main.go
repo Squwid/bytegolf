@@ -2,9 +2,11 @@ package main
 
 import (
 	"net/http"
+	"os"
 
 	"github.com/Squwid/bytegolf/lib/api"
 	"github.com/Squwid/bytegolf/lib/auth"
+	"github.com/Squwid/bytegolf/lib/comms"
 	"github.com/Squwid/bytegolf/lib/globals"
 	"github.com/Squwid/bytegolf/lib/sqldb"
 	"github.com/gorilla/mux"
@@ -20,6 +22,11 @@ func main() {
 			logrus.WithError(err).Errorf("")
 		}
 	}()
+
+	if err := comms.InitPublisher(
+		os.Getenv("BG_USE_PUBSUB") == "true"); err != nil {
+		logrus.WithError(err).Fatalf("Error initializing publisher")
+	}
 
 	port := globals.Port()
 	env := globals.Env()

@@ -66,6 +66,21 @@ func UpdateSubmissionStatus(ctx context.Context, id string, status int) error {
 	return err
 }
 
+func CompleteSubmission(ctx context.Context, id string, passed bool,
+	avgs SubmissionAverages) error {
+	_, err := sqldb.DB.NewUpdate().
+		Model(&SubmissionDB{}).
+		Set("status = ?", StatusSuccess).
+		Set("passed = ?", passed).
+		Set("avg_cpu = ?", avgs.AvgCPU).
+		Set("avg_mem = ?", avgs.AvgMem).
+		Set("avg_dur = ?", avgs.AvgDur).
+		Set("compiled_time = ?", time.Now().UTC()).
+		Where("id = ?", id).
+		Exec(ctx)
+	return err
+}
+
 func (sdb SubmissionDB) Store(ctx context.Context) error {
 	_, err := sqldb.DB.NewInsert().Model(&sdb).Exec(ctx)
 	return err

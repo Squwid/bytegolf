@@ -99,7 +99,11 @@ func (job *Job) SetOutput(dur time.Duration, output string) {
 }
 
 func (job *Job) init(workerLogger *logrus.Entry) error {
-	job.logger = workerLogger.WithField("JobID", job.ID)
+	job.logger = workerLogger.WithFields(logrus.Fields{
+		"JobID":  job.ID,
+		"SubID":  job.Sub.ID,
+		"TestID": job.Test.ID,
+	})
 	job.ctx = context.Background()
 	job.timings.initTime = time.Now()
 	return job.writeFiles()

@@ -2,6 +2,7 @@ package processor
 
 import (
 	"context"
+	"fmt"
 	"sync"
 	"time"
 
@@ -64,7 +65,6 @@ func ProcessMessage(ctx context.Context, id string) {
 			api.StatusRunning, api.StatusRunningStr)
 	}
 
-	// Generate and send jobs to workers.
 	sub.GenerateJobs()
 	sub.logger = sub.logger.WithField("Jobs", len(sub.jobs))
 	for _, job := range sub.jobs {
@@ -76,7 +76,29 @@ func ProcessMessage(ctx context.Context, id string) {
 	start := time.Now()
 	sub.logger.Infof("Jobs sent to queue. Waiting for jobs to finish...")
 	sub.jobWG.Wait()
-	sub.logger.Infof("All jobs finished in %vms", time.Since(start).Milliseconds())
+
+	passed, countPassed := checkIfPassed(sub.jobs)
+	avgs := calculateAverages(sub.jobs)
+	if err := api.CompleteSubmission(ctx, sub.ID, passed, avgs); err != nil {
+		sub.logger.WithError(err).Errorf("Error updating submission")
+	} else {
+		sub.logger.Debugf("Updated submission status to %v %s", api.StatusSuccess, api.StatusSuccessStr)
+	}
+
+	sub.logger.WithFields(logrus.Fields{
+		"TotalMS":       time.Since(start).Milliseconds(),
+		"AvgCPU":        avgs.AvgCPU,
+		"AvgMem":        avgs.AvgMem,
+		"Passed":        passed,
+		"PercentPassed": fmt.Sprintf("%.2f%%", percent(countPassed, len(sub.jobs))),
+	}).Infof("All jobs finished.")
+}
+
+func percent(countPassed, jobs int) float64 {
+	if jobs == 0 {
+		return 0
+	}
+	return (float64(countPassed) / float64(jobs)) * 100
 }
 
 // waitAndWriteToDB waits for jobs to finish and writes them as they arrive
@@ -90,9 +112,7 @@ func (sub *Submission) waitAndWriteToDB() {
 		}
 
 		job.Output.Correct = job.correct
-		job.logger.Debugf("Writing job output (%v %v) to DB",
-			job.Output.SubmissionID,
-			job.Output.TestID)
+		job.logger.Debugf("Writing job output to DB")
 
 		if _, err := sqldb.DB.
 			NewInsert().

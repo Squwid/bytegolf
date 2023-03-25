@@ -11,7 +11,7 @@ import (
 )
 
 func main() {
-	// logrus.SetLevel(logrus.DebugLevel)
+	logrus.SetLevel(logrus.DebugLevel)
 
 	if err := sqldb.Open(); err != nil {
 		logrus.WithError(err).Fatalf("Error connecting to db")

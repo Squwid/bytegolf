@@ -47,15 +47,21 @@ func Init() {
 	Client = &DockerClient{c: c}
 }
 
-func (dc *DockerClient) Create(image, dir, cmd, file, id string,
+func (dc *DockerClient) Create(
+	image string,
+	absHostCodePath string,
+	targetFileName string,
+	cmd string,
+	id string,
+	testInputFile string,
 	logger *logrus.Entry) (string, io.ReadCloser, error) {
+	// TODO: Change input of this function to include the input command
 	ctx := context.Background()
 	var timeout = 10
 
 	// TODO: echo is here to flush the logs to stdout.
 	// This is a hack and should be removed.
-	fullCmd := fmt.Sprintf("%s %s;echo ''", cmd, file)
-	logger.WithField("Cmd", fullCmd).WithField("Dir", dir).Debugf("Container create")
+	fullCmd := fmt.Sprintf("%s %s;echo ''", cmd, targetFileName)
 
 	containerBody, err := dc.c.ContainerCreate(ctx, &container.Config{
 		OpenStdin:       true,
@@ -73,8 +79,14 @@ func (dc *DockerClient) Create(image, dir, cmd, file, id string,
 		Mounts: []mount.Mount{
 			{
 				Type:     mount.TypeBind,
-				Source:   dir,
-				Target:   "/ci",
+				Source:   absHostCodePath,
+				Target:   "/ci/" + targetFileName,
+				ReadOnly: true,
+			},
+			{
+				Type:     mount.TypeBind,
+				Source:   "/home/squid/code/bytegolf/compiler/code_inputs/" + testInputFile,
+				Target:   "/ci/input.txt",
 				ReadOnly: true,
 			},
 		},

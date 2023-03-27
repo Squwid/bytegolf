@@ -28,10 +28,10 @@ type Job struct {
 
 	timings JobTimings
 
-	// Internal job details
-	dir         string
-	file        string
-	containerID string
+	dir              string // Directory where the temp code file is stored on the host.
+	absoluteFilePath string // Absolute path to the code file on the host.
+	fileName         string // Name of the file, with the extension.
+	containerID      string
 
 	chans JobChannels
 
@@ -114,20 +114,13 @@ func (job *Job) writeFiles() error {
 	if err != nil {
 		return err
 	}
-	job.dir = dir + "/"
+	job.dir = dir
+	job.fileName = fmt.Sprintf("main.%s",
+		job.Sub.Hole.LanguageDB.Extension)
+	job.absoluteFilePath = fmt.Sprintf("%s/%s", job.dir,
+		job.fileName)
 
-	// Write code file.
-	job.file = fmt.Sprintf("main.%s", job.Sub.Hole.LanguageDB.Extension)
-
-	// Write input file.
-	if job.Test.Input != "" {
-		if err := copyPaste("code_inputs/"+job.Test.Input,
-			job.dir+"input.txt"); err != nil {
-			return err
-		}
-	}
-
-	return os.WriteFile(job.dir+job.file,
+	return os.WriteFile(job.absoluteFilePath,
 		[]byte(job.Sub.Submission.Script), 0755)
 }
 
@@ -136,10 +129,11 @@ func (job *Job) writeFiles() error {
 func (job *Job) createContainer() (string, io.ReadCloser, error) {
 	return docker.Client.Create(
 		job.Sub.Hole.LanguageDB.Image,
-		job.dir,
+		job.absoluteFilePath,
+		job.fileName,
 		job.Sub.Hole.LanguageDB.Cmd,
-		job.file,
 		job.ID,
+		job.Test.Input,
 		job.logger,
 	)
 }
@@ -148,36 +142,6 @@ func (job *Job) logAndReportError(err error, msg string) {
 	job.logger.WithError(err).Error(msg)
 	job.chans.errCh <- errors.Wrap(err, msg)
 	job.clean()
-}
-
-func copyPaste(src, dest string) error {
-	fileIn, err := os.Open(src)
-	if err != nil {
-		return err
-	}
-	defer fileIn.Close()
-
-	fileOut, err := os.Create(dest)
-	if err != nil {
-		return err
-	}
-	defer fileOut.Close()
-
-	buf := make([]byte, 1024)
-
-	for {
-		n, err := fileIn.Read(buf)
-		if err != nil && err != io.EOF {
-			return err
-		}
-		if n == 0 {
-			break
-		}
-		if _, err := fileOut.Write(buf[:n]); err != nil {
-			return err
-		}
-	}
-	return nil
 }
 
 func (job *Job) clean() error {

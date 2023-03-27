@@ -30,7 +30,7 @@ func (h *Http) Publish(ctx context.Context, message []byte) error {
 	url := fmt.Sprintf("http://%s:%s/compile", os.Getenv("BG_COMPILER_URL"), h.port)
 
 	req, err := http.NewRequestWithContext(ctx, "POST",
-		url+"/compile", bytes.NewReader(message))
+		url, bytes.NewReader(message))
 	if err != nil {
 		return err
 	}

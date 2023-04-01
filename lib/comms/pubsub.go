@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"cloud.google.com/go/pubsub"
+	"github.com/Squwid/bytegolf/lib/log"
 	"github.com/sirupsen/logrus"
 )
 
@@ -20,7 +21,7 @@ type PubSub struct {
 }
 
 func (p *PubSub) Init() error {
-	logrus.Infof("Initializing PubSub (sub: %s)", subName)
+	log.GetLogger().Infof("Initializing PubSub (sub: %s)", subName)
 
 	ctx := context.Background()
 	client, err := pubsub.NewClient(ctx, os.Getenv("GCP_PROJECT_ID"))
@@ -54,7 +55,7 @@ func (p *PubSub) Listen(processor func(context.Context, string)) {
 func pubsubHandler(processor func(context.Context, string)) func(context.Context, *pubsub.Message) {
 	return func(ctx context.Context, msg *pubsub.Message) {
 		// TODO: Only ack if there is room for the submission in the queue.
-		logger := logrus.WithFields(logrus.Fields{
+		logger := log.GetLogger().WithFields(logrus.Fields{
 			"Action":       "Handler",
 			"MessageID":    msg.ID,
 			"SubmissionID": string(msg.Data),

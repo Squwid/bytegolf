@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/Squwid/bytegolf/lib/api"
+	"github.com/Squwid/bytegolf/lib/log"
 	"github.com/Squwid/bytegolf/lib/sqldb"
 	"github.com/sirupsen/logrus"
 )
@@ -32,7 +33,7 @@ func NewSubmission(id string) *Submission {
 	return &Submission{
 		ID:         id,
 		ReceivedAt: time.Now(),
-		logger:     logrus.WithField("SubID", id),
+		logger:     log.GetLogger().WithField("SubID", id),
 	}
 }
 

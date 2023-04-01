@@ -11,6 +11,7 @@ import (
 
 	"github.com/Squwid/bytegolf/lib/auth"
 	"github.com/Squwid/bytegolf/lib/comms"
+	"github.com/Squwid/bytegolf/lib/log"
 	"github.com/Squwid/bytegolf/lib/sqldb"
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
@@ -95,7 +96,7 @@ func (sdb SubmissionDB) Submit(ctx context.Context) error {
 // send it to the compiler.
 func PostSubmissionHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
-	logger := logrus.WithField("Action", "PostSubmission")
+	logger := log.GetLogger().WithField("Action", "PostSubmission")
 
 	// claims := auth.LoggedIn(r)
 	// if claims == nil {

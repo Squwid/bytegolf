@@ -6,12 +6,13 @@ import (
 	"net/http"
 
 	"github.com/Squwid/bytegolf/lib/globals"
+	"github.com/Squwid/bytegolf/lib/log"
 	"github.com/sirupsen/logrus"
 )
 
 // LoginHandler will send the request to Github to make sure that the user is logged in
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
-	logger := logrus.WithField("Action", "LoginRequest")
+	logger := log.GetLogger().WithField("Action", "LoginRequest")
 	logger.Debugf("New login request.")
 
 	claims := LoggedIn(r)
@@ -36,7 +37,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 // CallbackHandler is the callback from Github to grab the auth token
 func CallbackHandler(w http.ResponseWriter, r *http.Request) {
-	logger := logrus.WithField("Action", "CallbackResponse")
+	logger := log.GetLogger().WithField("Action", "CallbackResponse")
 
 	code := r.URL.Query().Get("code")
 	state := r.URL.Query().Get("state")
@@ -89,7 +90,7 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 
 // ShowClaims shows the claims in the users cookie for the frontend
 func ShowClaims(w http.ResponseWriter, r *http.Request) {
-	logger := logrus.WithField("Action", "ShowClaims")
+	logger := log.GetLogger().WithField("Action", "ShowClaims")
 
 	claims := LoggedIn(r)
 	if claims == nil {

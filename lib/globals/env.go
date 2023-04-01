@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-// Possible environments
+// Possible environments.
 const (
 	EnvLocal = "local"
 	EnvDev   = "dev"

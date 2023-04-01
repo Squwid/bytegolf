@@ -9,11 +9,11 @@ import (
 	"time"
 
 	"github.com/Squwid/bytegolf/lib/docker"
-	"github.com/sirupsen/logrus"
+	"github.com/Squwid/bytegolf/lib/log"
 )
 
 const (
-	timeout = 5 * time.Second
+	timeout = 10 * time.Second
 
 	workerCount = 4
 	jobBacklog  = 5000
@@ -50,7 +50,7 @@ func NewWorker(id int) *WorkerData {
 }
 
 func (worker *WorkerData) Start() {
-	wl := logrus.WithField("Worker", worker.ID)
+	wl := log.GetLogger().WithField("Worker", worker.ID)
 	wl.Info("Worker started")
 	defer wl.Warnf("Worker ded")
 
@@ -79,7 +79,7 @@ func (worker *WorkerData) Start() {
 		go waitAndKillContainer(job.ctx, reader, job)
 
 		// Read the output from the container.
-		output, err := readAmount(reader, bytesToRead, job.logger)
+		output, err := readAmount(reader, bytesToRead)
 		if err != nil {
 			job.logAndReportError(err, "Error reading container output")
 			continue
@@ -110,17 +110,13 @@ func waitAndKillContainer(ctx context.Context, reader io.ReadCloser, job *Job) {
 		job.logger.Debugf("Got error signal to close reader")
 	}
 
-	// TODO: Better error handle the closing of the docker container here.
-	if err := reader.Close(); err != nil {
-		job.logger.WithError(err).Debugf("Error closing reader")
-	}
-
-	docker.Client.Kill(ctx, job.containerID)
-	docker.Client.Delete(ctx, job.containerID)
+	_ = reader.Close()
+	_ = docker.Client.Kill(ctx, job.containerID)
+	_ = docker.Client.Delete(ctx, job.containerID)
 }
 
 // Read only a certain amount of output without using a ton of memory.
-func readAmount(r io.Reader, amount int, logger *logrus.Entry) ([]byte, error) {
+func readAmount(r io.Reader, amount int) ([]byte, error) {
 	var bytes = make([]byte, amount) // buffer that gets returned.
 	const readAmount = 1024          // Amount of bytes to read at a time.
 

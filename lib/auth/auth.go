@@ -6,9 +6,9 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/Squwid/bytegolf/lib/log"
 	"github.com/Squwid/bytegolf/lib/sqldb"
 	"github.com/golang-jwt/jwt"
-	"github.com/sirupsen/logrus"
 )
 
 // LoggedIn looks at the context value Claims and returns the
@@ -34,7 +34,7 @@ func createOrGetDBUser(ctx context.Context, ghu *GithubUser) (*BytegolfUserDB, e
 	}
 
 	if user == nil {
-		logrus.WithField("GithubID", ghu.GithubID).
+		log.GetLogger().WithField("GithubID", ghu.GithubID).
 			Infof("Bytegolf user did not exist, created one.")
 
 		user = NewBytegolfUser(*ghu)
@@ -42,7 +42,7 @@ func createOrGetDBUser(ctx context.Context, ghu *GithubUser) (*BytegolfUserDB, e
 			return nil, err
 		}
 	} else {
-		logrus.WithField("Github", ghu.GithubID).
+		log.GetLogger().WithField("Github", ghu.GithubID).
 			Infof("Found existing bytegolf user. Updating.")
 
 		user.LastUpdatedTime = time.Now().UTC()

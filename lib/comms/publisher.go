@@ -3,7 +3,7 @@ package comms
 import (
 	"context"
 
-	"github.com/sirupsen/logrus"
+	"github.com/Squwid/bytegolf/lib/log"
 )
 
 type Publisher interface {
@@ -24,7 +24,8 @@ func InitPublisher(usePubSub bool) error {
 		pt = CommsTypeHttp
 	}
 
-	logrus.WithField("PublisherType", pt).Infof("Initializing compiler publisher...")
+	log.GetLogger().WithField("PublisherType", pt).
+		Infof("Initializing compiler publisher...")
 
 	if usePubSub {
 		PublisherImpl = &PubSub{}

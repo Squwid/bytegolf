@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 
+	"github.com/Squwid/bytegolf/lib/log"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/mount"
@@ -31,17 +32,17 @@ var (
 // Init initializes the docker client.
 func Init() {
 	if targetArc == "" {
-		logrus.Warnf("'TARGET_ARCH' empty, defaulting to 'amd64'")
+		log.GetLogger().Warnf("'TARGET_ARCH' empty, defaulting to 'amd64'")
 		targetArc = "amd64"
 	}
 	if targetOS == "" {
-		logrus.Warnf("'TARGET_OS' empty, defaulting to 'linux'")
+		log.GetLogger().Warnf("'TARGET_OS' empty, defaulting to 'linux'")
 		targetOS = "linux"
 	}
 
 	c, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
-		logrus.WithError(err).Fatalf("Error creating docker client")
+		log.GetLogger().WithError(err).Fatalf("Error creating docker client")
 	}
 
 	Client = &DockerClient{c: c}
@@ -55,9 +56,7 @@ func (dc *DockerClient) Create(
 	id string,
 	testInputFile string,
 	logger *logrus.Entry) (string, io.ReadCloser, error) {
-	// TODO: Change input of this function to include the input command
 	ctx := context.Background()
-	var timeout = 10
 
 	// TODO: echo is here to flush the logs to stdout.
 	// This is a hack and should be removed.
@@ -70,7 +69,6 @@ func (dc *DockerClient) Create(
 		AttachStdout:    true,
 		Image:           image,
 		NetworkDisabled: true,
-		StopTimeout:     &timeout,
 		Cmd: strslice.StrSlice{
 			"/bin/sh", "-c", fullCmd,
 		},
@@ -85,7 +83,7 @@ func (dc *DockerClient) Create(
 			},
 			{
 				Type:     mount.TypeBind,
-				Source:   "/home/squid/code/bytegolf/compiler/code_inputs/" + testInputFile,
+				Source:   "/home/bytegolf-inputs/" + testInputFile,
 				Target:   "/ci/input.txt",
 				ReadOnly: true,
 			},
@@ -148,6 +146,7 @@ func (dc *DockerClient) start(ctx context.Context, containerID string) (string, 
 	if err := dc.c.ContainerStart(ctx, containerID, types.ContainerStartOptions{}); err != nil {
 		return "", nil, err
 	}
+	// TODO: Remove TTY and use stdout/stderr instead.
 	reader, err := dc.c.ContainerLogs(context.Background(), containerID, types.ContainerLogsOptions{
 		Timestamps: false,
 		Follow:     true,

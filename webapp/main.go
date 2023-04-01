@@ -8,24 +8,24 @@ import (
 	"github.com/Squwid/bytegolf/lib/auth"
 	"github.com/Squwid/bytegolf/lib/comms"
 	"github.com/Squwid/bytegolf/lib/globals"
+	"github.com/Squwid/bytegolf/lib/log"
 	"github.com/Squwid/bytegolf/lib/sqldb"
 	"github.com/gorilla/mux"
-	"github.com/sirupsen/logrus"
 )
 
 func main() {
-	if err := sqldb.Open(); err != nil {
-		logrus.WithError(err).Fatalf("Error connecting to db")
+	if err := sqldb.Open(true); err != nil {
+		log.GetLogger().WithError(err).Fatalf("Error connecting to db")
 	}
 	defer func() {
 		if err := sqldb.Close(); err != nil {
-			logrus.WithError(err).Errorf("")
+			log.GetLogger().WithError(err).Errorf("")
 		}
 	}()
 
 	if err := comms.InitPublisher(
 		os.Getenv("BG_USE_PUBSUB") == "true"); err != nil {
-		logrus.WithError(err).Fatalf("Error initializing publisher")
+		log.GetLogger().WithError(err).Fatalf("Error initializing publisher")
 	}
 
 	port := globals.Port()
@@ -48,7 +48,7 @@ func main() {
 
 	r.HandleFunc("/api/claims", auth.ShowClaims).Methods("GET") // Returns a user's claims and see if they are logged in
 
-	logrus.WithField("Env", env).Infof("Starting container on port :%s", port)
+	log.GetLogger().WithField("Env", env).Infof("Starting container on port :%s", port)
 	http.ListenAndServe(":"+port, loggedIn(cors(r)))
 }
 

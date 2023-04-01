@@ -8,8 +8,8 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/Squwid/bytegolf/lib/log"
 	"github.com/gorilla/mux"
-	"github.com/sirupsen/logrus"
 )
 
 // Http is the receiver type that skips using GCP and is able to receive messages
@@ -21,7 +21,7 @@ type Http struct {
 
 func (h *Http) Init() error {
 	h.port = "8081"
-	logrus.Infof("Initializing HTTP at port %s", h.port)
+	log.GetLogger().Infof("Initializing HTTP at port %s", h.port)
 	h.client = http.DefaultClient
 	return nil
 }
@@ -41,12 +41,12 @@ func (h *Http) Publish(ctx context.Context, message []byte) error {
 func (h *Http) Listen(processor func(context.Context, string)) {
 	r := mux.NewRouter()
 	r.HandleFunc("/compile", httpHandler(processor)).Methods("POST")
-	logrus.Fatalln(http.ListenAndServe(":"+h.port, r))
+	log.GetLogger().Fatalln(http.ListenAndServe(":"+h.port, r))
 }
 
 func httpHandler(processor func(context.Context, string)) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		logger := logrus.WithField("Action", "Http Handler")
+		logger := log.GetLogger().WithField("Action", "Http Handler")
 
 		bs, err := io.ReadAll(r.Body)
 		if err != nil {

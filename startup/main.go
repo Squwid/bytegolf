@@ -13,7 +13,7 @@ import (
 )
 
 func init() {
-	if err := sqldb.Open(); err != nil {
+	if err := sqldb.Open(false); err != nil {
 		logrus.WithError(err).Fatalf("Error connecting to db")
 	}
 }

@@ -7,8 +7,8 @@ import (
 	"net/http"
 
 	"github.com/Squwid/bytegolf/lib/auth"
+	"github.com/Squwid/bytegolf/lib/log"
 	"github.com/Squwid/bytegolf/lib/sqldb"
-	"github.com/sirupsen/logrus"
 	"github.com/uptrace/bun"
 )
 
@@ -40,7 +40,7 @@ func (ldb LanguageDB) toClient() LanguageClient {
 // languages in the database.
 func ListLanguagesHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
-	logger := logrus.WithField("Action", "ListLanguages")
+	logger := log.GetLogger().WithField("Action", "ListLanguages")
 
 	claims := auth.LoggedIn(r)
 	if claims != nil {

@@ -9,9 +9,9 @@ import (
 	"time"
 
 	"github.com/Squwid/bytegolf/lib/auth"
+	"github.com/Squwid/bytegolf/lib/log"
 	"github.com/Squwid/bytegolf/lib/sqldb"
 	"github.com/gorilla/mux"
-	"github.com/sirupsen/logrus"
 	"github.com/uptrace/bun"
 )
 
@@ -78,7 +78,7 @@ func (hdb HoleDB) toClient() HoleClient {
 
 func ListHolesHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
-	logger := logrus.WithField("Action", "ListHoles")
+	logger := log.GetLogger().WithField("Action", "ListHoles")
 
 	claims := auth.LoggedIn(r)
 	if claims != nil {
@@ -120,7 +120,7 @@ func ListHolesHandler(w http.ResponseWriter, r *http.Request) {
 func GetHoleHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
 	holeID := mux.Vars(r)["hole"]
-	logger := logrus.WithField("Action", "GetHole").
+	logger := log.GetLogger().WithField("Action", "GetHole").
 		WithField("HoleID", holeID)
 
 	claims := auth.LoggedIn(r)

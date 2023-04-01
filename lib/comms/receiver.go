@@ -3,7 +3,7 @@ package comms
 import (
 	"context"
 
-	"github.com/sirupsen/logrus"
+	"github.com/Squwid/bytegolf/lib/log"
 )
 
 const (
@@ -29,7 +29,8 @@ func InitReceiver(usePubSub bool) error {
 		rt = CommsTypeHttp
 	}
 
-	logrus.WithField("ReceiverType", rt).Infof("Initializing receiver...")
+	log.GetLogger().WithField("ReceiverType", rt).
+		Infof("Initializing receiver...")
 
 	if usePubSub {
 		ReceiverImpl = &PubSub{}

@@ -7,6 +7,8 @@ import (
 	"os"
 	"time"
 
+	"github.com/Squwid/bytegolf/lib/log"
+	"github.com/oiime/logrusbun"
 	"github.com/sirupsen/logrus"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/pgdialect"
@@ -23,8 +25,8 @@ var (
 
 var DB *bun.DB
 
-func Open() error {
-	logrus.WithFields(logrus.Fields{
+func Open(debugMode bool) error {
+	log.GetLogger().WithFields(logrus.Fields{
 		"Host":   host,
 		"Port":   port,
 		"User":   user,
@@ -48,6 +50,19 @@ func Open() error {
 	}
 
 	DB = bun.NewDB(sqldb, pgdialect.New())
+
+	if debugMode {
+		// https://github.com/oiime/logrusbun for full example.
+		DB.AddQueryHook(logrusbun.NewQueryHook(logrusbun.QueryHookOptions{
+			LogSlow:         time.Second,
+			Logger:          log.GetLogger(),
+			QueryLevel:      logrus.DebugLevel,
+			ErrorLevel:      logrus.ErrorLevel,
+			SlowLevel:       logrus.WarnLevel,
+			MessageTemplate: "{{.Query}}",
+			ErrorTemplate:   "{{.Operation}}[{{.Duration}}]: {{.Query}}: {{.Error}}",
+		}))
+	}
 
 	return DB.Ping()
 }

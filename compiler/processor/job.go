@@ -85,12 +85,13 @@ func NewJob(sub *Submission, test *api.TestDB) *Job {
 	}
 }
 
-func (job *Job) SetOutput(dur time.Duration, output string) {
+func (job *Job) SetOutput(dur time.Duration, stdOut, stdErr string) {
 	job.Output = &api.JobOutputDB{
 		SubmissionID: job.Sub.ID,
 		TestID:       job.Test.ID,
 
-		StdOut:   output,
+		StdOut:   stdOut,
+		StdErr:   stdErr,
 		Duration: dur.Milliseconds(),
 		Memory:   int64(job.Stats.Mem),
 		CPU:      int64(job.Stats.CPU),
@@ -133,7 +134,7 @@ func (job *Job) createContainer() (string, io.ReadCloser, error) {
 		job.fileName,
 		job.Sub.Hole.LanguageDB.Cmd,
 		job.ID,
-		job.Test.Input,
+		fmt.Sprintf("%s/%s", job.Test.Hole, job.Test.Input),
 		job.logger,
 	)
 }

@@ -64,7 +64,7 @@ func (dc *DockerClient) Create(
 
 	containerBody, err := dc.c.ContainerCreate(ctx, &container.Config{
 		OpenStdin:       true,
-		Tty:             true,
+		Tty:             false,
 		AttachStdin:     true,
 		AttachStdout:    true,
 		Image:           image,

@@ -3,7 +3,7 @@ module github.com/Squwid/bytegolf
 require (
 	cloud.google.com/go/pubsub v1.30.0
 	github.com/Squwid/go-randomizer v0.1.2
-	github.com/docker/docker v23.0.1+incompatible
+	github.com/docker/docker v23.0.2+incompatible
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/gorilla/mux v1.8.0
 	github.com/oiime/logrusbun v0.1.1

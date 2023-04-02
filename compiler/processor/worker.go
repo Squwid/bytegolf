@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"strings"
 	"sync"
 	"time"
 
@@ -79,7 +78,7 @@ func (worker *WorkerData) Start() {
 		go waitAndKillContainer(job.ctx, reader, job)
 
 		// Read the output from the container.
-		output, err := readAmount(reader, bytesToRead)
+		stdOut, stdErr, err := docker.ReadLogOutputs(reader)
 		if err != nil {
 			job.logAndReportError(err, "Error reading container output")
 			continue
@@ -89,7 +88,11 @@ func (worker *WorkerData) Start() {
 		job.timings.doneReadingTime = time.Now()
 		job.wg.Wait()
 		job.timings.completedTime = time.Now()
-		job.SetOutput(job.timings.doneReadingTime.Sub(job.timings.initTime), string(output))
+		job.SetOutput(
+			job.timings.doneReadingTime.Sub(job.timings.initTime),
+			string(stdOut.Output()),
+			string(stdErr.Output()),
+		)
 		job.Sub.jobOutputs <- job // Send job output to submission.
 
 		job.clean()
@@ -113,35 +116,4 @@ func waitAndKillContainer(ctx context.Context, reader io.ReadCloser, job *Job) {
 	_ = reader.Close()
 	_ = docker.Client.Kill(ctx, job.containerID)
 	_ = docker.Client.Delete(ctx, job.containerID)
-}
-
-// Read only a certain amount of output without using a ton of memory.
-func readAmount(r io.Reader, amount int) ([]byte, error) {
-	var bytes = make([]byte, amount) // buffer that gets returned.
-	const readAmount = 1024          // Amount of bytes to read at a time.
-
-	var i, read int
-	for {
-		bs := make([]byte, readAmount)
-		n, err := r.Read(bs)
-
-		if read < amount {
-			read += copy(bytes[read:], bs[:n])
-		}
-		// This is what docker does in terms of checking if closed network connection.
-		if err != nil {
-			if err == io.EOF || strings.Contains(err.Error(),
-				"use of closed network connection") {
-				break
-			}
-			return nil, err
-		}
-		i++
-
-		if read >= amount {
-			break
-		}
-	}
-
-	return bytes[0:read], nil
 }

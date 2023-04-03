@@ -19,6 +19,7 @@ func main() {
 			log.GetLogger().WithError(err).Errorf("")
 		}
 	}()
+	processor.Init()
 	docker.Init()
 
 	if err := comms.InitReceiver(

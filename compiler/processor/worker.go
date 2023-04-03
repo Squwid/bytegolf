@@ -14,26 +14,22 @@ import (
 const (
 	timeout = 10 * time.Second
 
-	workerCount = 4
 	jobBacklog  = 5000
 	bytesToRead = 4096
+	workerCount = 4
 )
 
 var JobQueue = make(chan *Job, jobBacklog)
 
-type Worker interface {
-	Start()
-}
-
-type WorkerData struct {
+type Worker struct {
 	ID string
 
 	lock *sync.Mutex
 }
 
-var WorkerPool [workerCount]Worker
+var WorkerPool [workerCount]*Worker
 
-func init() {
+func Init() {
 	for i := 0; i < workerCount; i++ {
 		worker := NewWorker(i)
 		WorkerPool[i] = worker
@@ -41,14 +37,14 @@ func init() {
 	}
 }
 
-func NewWorker(id int) *WorkerData {
-	return &WorkerData{
+func NewWorker(id int) *Worker {
+	return &Worker{
 		ID:   fmt.Sprintf("w%v", id),
 		lock: &sync.Mutex{},
 	}
 }
 
-func (worker *WorkerData) Start() {
+func (worker *Worker) Start() {
 	wl := log.GetLogger().WithField("Worker", worker.ID)
 	wl.Info("Worker started")
 	defer wl.Warnf("Worker ded")

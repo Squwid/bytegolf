@@ -58,10 +58,7 @@ func (dc *DockerClient) Create(
 	logger *logrus.Entry) (string, io.ReadCloser, error) {
 	ctx := context.Background()
 
-	// TODO: echo is here to flush the logs to stdout.
-	// This is a hack and should be removed.
-	fullCmd := fmt.Sprintf("%s %s;echo ''", cmd, targetFileName)
-
+	fullCmd := fmt.Sprintf("%s %s", cmd, targetFileName)
 	containerBody, err := dc.c.ContainerCreate(ctx, &container.Config{
 		OpenStdin:       true,
 		Tty:             false,
@@ -146,7 +143,6 @@ func (dc *DockerClient) start(ctx context.Context, containerID string) (string, 
 	if err := dc.c.ContainerStart(ctx, containerID, types.ContainerStartOptions{}); err != nil {
 		return "", nil, err
 	}
-	// TODO: Remove TTY and use stdout/stderr instead.
 	reader, err := dc.c.ContainerLogs(context.Background(), containerID, types.ContainerLogsOptions{
 		Timestamps: false,
 		Follow:     true,

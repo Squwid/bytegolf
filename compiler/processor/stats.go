@@ -23,7 +23,7 @@ func (job *Job) containerStats(containerID string) {
 
 	var stats = &Stats{}
 
-	var limit = 100
+	var limit = 250
 	var count = 0
 
 	cpuFile := fmt.Sprintf("/sys/fs/cgroup/system.slice/docker-%s.scope/cpu.stat", containerID)

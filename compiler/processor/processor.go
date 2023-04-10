@@ -13,7 +13,7 @@ import (
 )
 
 // benchmarkTestMultiplier is the number of times the benchmark test case should run.
-const benchmarkTestMultiplier = 30
+const benchmarkTestMultiplier = 10
 
 type Submission struct {
 	ID         string

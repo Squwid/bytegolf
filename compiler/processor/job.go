@@ -11,7 +11,6 @@ import (
 
 	"github.com/Squwid/bytegolf/lib/api"
 	"github.com/Squwid/bytegolf/lib/docker"
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
 
@@ -40,6 +39,10 @@ type Job struct {
 	wg     *sync.WaitGroup
 	logger *logrus.Entry
 	ctx    context.Context
+
+	// Job outputs
+	stdOut *docker.LogWriter
+	stdErr *docker.LogWriter
 }
 
 // JobChannels holds the channels used to communicate with the job.
@@ -85,22 +88,26 @@ func NewJob(sub *Submission, test *api.TestDB) *Job {
 	}
 }
 
-func (job *Job) SetOutput(dur time.Duration, stdOut, stdErr string) {
+func (job *Job) SendOutput() {
+	runDur := job.timings.doneReadingTime.Sub(job.timings.initTime)
 	job.Output = &api.JobOutputDB{
 		SubmissionID: job.Sub.ID,
 		TestID:       job.Test.ID,
 
-		StdOut:   stdOut,
-		StdErr:   stdErr,
-		Duration: dur.Milliseconds(),
+		StdOut:   job.stdOut.String(),
+		StdErr:   job.stdErr.String(),
+		Duration: runDur.Milliseconds(),
 		Memory:   job.Stats.Mem,
 		CPU:      job.Stats.CPU,
 		ExitCode: 0, // TODO: Populate exit code.
 	}
+	job.Sub.jobOutputs <- job // Send job output to submission
 }
 
-func (job *Job) init(workerLogger *logrus.Entry) error {
-	job.logger = workerLogger.WithFields(logrus.Fields{
+// init initializes the job by creating a temp directory, writing the
+// code file. It also sets up the logger and context.
+func (job *Job) init(logger *logrus.Entry) error {
+	job.logger = logger.WithFields(logrus.Fields{
 		"JobID":  job.ID,
 		"SubID":  job.Sub.ID,
 		"TestID": job.Test.ID,
@@ -162,6 +169,7 @@ func (job *Job) waitAndKill(logs io.ReadCloser) {
 		job.timedOut = true
 		job.logger.Debugf("Job timed out")
 	case <-job.chans.errCh:
+		// TODO: add an error signal to the job if it failed.
 		job.logger.Debugf("Got error signal to close reader")
 	}
 
@@ -169,12 +177,6 @@ func (job *Job) waitAndKill(logs io.ReadCloser) {
 	_ = docker.Client.Kill(job.ctx, job.containerID)
 	_ = docker.Client.Delete(job.ctx, job.containerID)
 
-}
-
-func (job *Job) logAndReportError(err error, msg string) {
-	job.logger.WithError(err).Error(msg)
-	job.chans.errCh <- errors.Wrap(err, msg)
-	job.clean()
 }
 
 func (job *Job) clean() error {

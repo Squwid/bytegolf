@@ -7,6 +7,7 @@ import (
 
 	"github.com/Squwid/bytegolf/lib/docker"
 	"github.com/Squwid/bytegolf/lib/log"
+	"github.com/pkg/errors"
 )
 
 const (
@@ -43,42 +44,47 @@ func NewWorker(id int) *Worker {
 }
 
 func (worker *Worker) Start() {
-	wl := log.GetLogger().WithField("Worker", worker.ID)
-	wl.Info("Worker started")
-	defer wl.Warnf("Worker ded")
+	workerLogger := log.GetLogger().WithField("Worker", worker.ID)
+	workerLogger.Info("Worker started")
+	defer workerLogger.Warnf("Worker ded")
 
 	for {
 		job := <-JobQueue
-		if err := job.init(wl); err != nil {
-			job.logAndReportError(err, "Error initializing job")
+		if err := job.init(workerLogger); err != nil {
+			workerLogger.WithError(err).Errorf("Error initializing job")
+			job.clean()
 			continue
 		}
 
-		logs, err := job.StartJob()
-		if err != nil {
-			job.logAndReportError(err, "Error starting job")
+		if err := worker.RunJob(job); err != nil {
+			workerLogger.WithError(err).Errorf("Error running job")
+			job.clean()
 			continue
 		}
-		go job.waitAndKill(logs)
-
-		// Read the output from the container.
-		stdOut, stdErr, err := docker.ReadLogOutputs(logs)
-		if err != nil {
-			job.logAndReportError(err, "Error reading container output")
-			continue
-		}
-
-		job.chans.doneCh <- true
 		job.timings.doneReadingTime = time.Now()
-		job.wg.Wait()
+		job.wg.Wait() // Wait for container to exit.
 		job.timings.completedTime = time.Now()
-		job.SetOutput(
-			job.timings.doneReadingTime.Sub(job.timings.initTime),
-			string(stdOut.Output()),
-			string(stdErr.Output()),
-		)
-		job.Sub.jobOutputs <- job // Send job output to submission.
 
+		job.SendOutput()
 		job.clean()
 	}
+}
+
+func (worker *Worker) RunJob(job *Job) error {
+	logs, err := job.StartJob()
+	if err != nil {
+		return errors.Wrap(err, "Error starting job")
+	}
+	go job.waitAndKill(logs)
+
+	// Read the output from the container.
+	job.stdOut, job.stdErr, err = docker.ReadLogOutputs(logs)
+	if err != nil {
+		job.chans.errCh <- errors.Wrap(err, "Error reading container output")
+	} else {
+		job.chans.doneCh <- true
+	}
+	job.timings.doneReadingTime = time.Now()
+
+	return nil
 }

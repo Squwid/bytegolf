@@ -53,6 +53,10 @@ func (lw LogWriter) Output() []byte {
 	return lw.buf.Bytes()[0:maxReadBytes]
 }
 
+func (lw LogWriter) String() string {
+	return string(lw.Output())
+}
+
 // ReadLogOutputs reads log outputs from the docker container and closes the
 // reader once the max number of bytes has been read.
 func ReadLogOutputs(r io.ReadCloser) (*LogWriter, *LogWriter, error) {

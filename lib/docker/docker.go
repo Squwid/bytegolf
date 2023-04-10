@@ -55,7 +55,7 @@ func (dc *DockerClient) Create(
 	cmd string,
 	id string,
 	testInputFile string,
-	logger *logrus.Entry) (string, io.ReadCloser, error) {
+	logger *logrus.Entry) (string, error) {
 	ctx := context.Background()
 
 	fullCmd := fmt.Sprintf("%s %s", cmd, targetFileName)
@@ -100,21 +100,19 @@ func (dc *DockerClient) Create(
 		Variant:      targetVariant,
 	}, id)
 	if err != nil {
-		return "", nil, err
+		return "", err
 	}
+	return containerBody.ID, nil
+}
 
-	return dc.start(ctx, containerBody.ID)
+func (dc *DockerClient) Start(ctx context.Context, containerID string) (io.ReadCloser, error) {
+	_, reader, err := dc.start(ctx, containerID)
+	return reader, err
 }
 
 // Kill terminates the container process but does not remove the container from the docker host.
 func (dc *DockerClient) Kill(ctx context.Context, containerID string) error {
 	return dc.c.ContainerKill(ctx, containerID, "KILL")
-}
-
-// Stats returns the stats of the container. This must be called after the container is done
-// running.
-func (dc *DockerClient) Stats(ctx context.Context, containerID string) (types.ContainerStats, error) {
-	return dc.c.ContainerStats(ctx, containerID, true)
 }
 
 // Delete kills and removes a container from the host

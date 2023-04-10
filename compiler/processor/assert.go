@@ -1,6 +1,8 @@
 package processor
 
-import "github.com/Squwid/bytegolf/lib/api"
+import (
+	"github.com/Squwid/bytegolf/lib/api"
+)
 
 func calculateAverages(jobs []*Job) api.SubmissionAverages {
 	if len(jobs) == 0 {

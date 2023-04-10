@@ -1,9 +1,7 @@
 package processor
 
 import (
-	"context"
 	"fmt"
-	"io"
 	"sync"
 	"time"
 
@@ -16,7 +14,7 @@ const (
 
 	jobBacklog  = 5000
 	bytesToRead = 4096
-	workerCount = 4
+	workerCount = 8
 )
 
 var JobQueue = make(chan *Job, jobBacklog)
@@ -52,29 +50,19 @@ func (worker *Worker) Start() {
 	for {
 		job := <-JobQueue
 		if err := job.init(wl); err != nil {
-			wl.WithError(err).Errorf("Error initializing job")
+			job.logAndReportError(err, "Error initializing job")
 			continue
 		}
 
-		containerID, reader, err := job.createContainer()
+		logs, err := job.StartJob()
 		if err != nil {
-			job.logAndReportError(err, "Error creating container")
+			job.logAndReportError(err, "Error starting job")
 			continue
 		}
-		job.containerID = containerID
-
-		// Continuously poll for stats.
-		stats, err := docker.Client.Stats(job.ctx, job.containerID)
-		if err != nil {
-			job.logAndReportError(err, "Error getting container stats")
-			continue
-		}
-
-		go waitAndGetContainerStats(stats.Body, job)
-		go waitAndKillContainer(job.ctx, reader, job)
+		go job.waitAndKill(logs)
 
 		// Read the output from the container.
-		stdOut, stdErr, err := docker.ReadLogOutputs(reader)
+		stdOut, stdErr, err := docker.ReadLogOutputs(logs)
 		if err != nil {
 			job.logAndReportError(err, "Error reading container output")
 			continue
@@ -93,23 +81,4 @@ func (worker *Worker) Start() {
 
 		job.clean()
 	}
-}
-
-func waitAndKillContainer(ctx context.Context, reader io.ReadCloser, job *Job) {
-	defer job.wg.Done()
-
-	// Wait for the job to finish or timeout.
-	select {
-	case <-job.chans.doneCh:
-		job.logger.Debugf("Got done reading signal to close reader")
-	case <-time.After(timeout):
-		job.timedOut = true
-		job.logger.Debugf("Job timed out")
-	case <-job.chans.errCh:
-		job.logger.Debugf("Got error signal to close reader")
-	}
-
-	_ = reader.Close()
-	_ = docker.Client.Kill(ctx, job.containerID)
-	_ = docker.Client.Delete(ctx, job.containerID)
 }

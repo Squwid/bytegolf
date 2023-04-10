@@ -128,8 +128,18 @@ func (sub *Submission) waitAndWriteToDB() {
 
 // GenerateJobs populates the counts of jobs and the waitgroup.
 func (sub *Submission) GenerateJobs() {
+
+	// TODO: Setup a way to only setup one job
+	// for _, test := range sub.Hole.TestsDB {
+	// 	if !test.Benchmark {
+	// 		sub.jobs = append(sub.jobs, NewJob(sub, test))
+	// 		break
+	// 	}
+	// }
+
 	for _, test := range sub.Hole.TestsDB {
 		var testCount = 1
+		// if true {
 		if test.Benchmark {
 			testCount = benchmarkTestMultiplier
 		}

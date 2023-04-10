@@ -93,8 +93,8 @@ func (job *Job) SetOutput(dur time.Duration, stdOut, stdErr string) {
 		StdOut:   stdOut,
 		StdErr:   stdErr,
 		Duration: dur.Milliseconds(),
-		Memory:   int64(job.Stats.Mem),
-		CPU:      int64(job.Stats.CPU),
+		Memory:   job.Stats.Mem,
+		CPU:      job.Stats.CPU,
 		ExitCode: 0, // TODO: Populate exit code.
 	}
 }
@@ -125,10 +125,11 @@ func (job *Job) writeFiles() error {
 		[]byte(job.Sub.Submission.Script), 0755)
 }
 
-// createContainer is a wrapper around docker.Client.Create to put logic for
-// job creation in a single place.
-func (job *Job) createContainer() (string, io.ReadCloser, error) {
-	return docker.Client.Create(
+// StartJob creates the container, starts the log and metric collection process,
+// and runs the created container. It returns the ReadCloser which is the log
+// stream from the container.
+func (job *Job) StartJob() (io.ReadCloser, error) {
+	containerID, err := docker.Client.Create(
 		job.Sub.Hole.LanguageDB.Image,
 		job.absoluteFilePath,
 		job.fileName,
@@ -137,6 +138,37 @@ func (job *Job) createContainer() (string, io.ReadCloser, error) {
 		fmt.Sprintf("%s/%s", job.Test.Hole, job.Test.Input),
 		job.logger,
 	)
+	if err != nil {
+		return nil, err
+	}
+	job.containerID = containerID
+	go job.containerStats(containerID)
+
+	return docker.Client.Start(job.ctx, containerID)
+}
+
+// wait waitAndKill waits for the job to complete or timeout, then
+// closes all docker connections and deletes the container.
+func (job *Job) waitAndKill(logs io.ReadCloser) {
+	// TODO: Leverage the job context here for killing the container.
+	defer job.wg.Done()
+
+	// Wait for the job to finish or timeout, then
+	// close all docker connections and delete container.
+	select {
+	case <-job.chans.doneCh:
+		job.logger.Debugf("Got done reading signal to close reader")
+	case <-time.After(timeout):
+		job.timedOut = true
+		job.logger.Debugf("Job timed out")
+	case <-job.chans.errCh:
+		job.logger.Debugf("Got error signal to close reader")
+	}
+
+	_ = logs.Close()
+	_ = docker.Client.Kill(job.ctx, job.containerID)
+	_ = docker.Client.Delete(job.ctx, job.containerID)
+
 }
 
 func (job *Job) logAndReportError(err error, msg string) {

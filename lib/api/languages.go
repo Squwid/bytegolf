@@ -36,6 +36,16 @@ func (ldb LanguageDB) toClient() LanguageClient {
 	}
 }
 
+func ListLanguages(ctx context.Context) ([]LanguageDB, error) {
+	var langs []LanguageDB
+	if err := sqldb.DB.NewSelect().Model(&langs).
+		Where("active = true").
+		Scan(ctx); err != nil {
+		return nil, err
+	}
+	return langs, nil
+}
+
 // Rest handler to return LanguageClient struct for all active
 // languages in the database.
 func ListLanguagesHandler(w http.ResponseWriter, r *http.Request) {
@@ -47,10 +57,8 @@ func ListLanguagesHandler(w http.ResponseWriter, r *http.Request) {
 		logger = logger.WithField("User", claims.BGID)
 	}
 
-	var langs []LanguageDB
-	if err := sqldb.DB.NewSelect().Model(&langs).
-		Where("active = true").
-		Scan(ctx); err != nil {
+	langs, err := ListLanguages(ctx)
+	if err != nil {
 		logger.WithError(err).Error("Error retrieving languages")
 		w.WriteHeader(http.StatusInternalServerError)
 		return

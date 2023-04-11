@@ -15,7 +15,7 @@ const (
 
 	jobBacklog  = 5000
 	bytesToRead = 4096
-	workerCount = 8
+	workerCount = 4
 )
 
 var JobQueue = make(chan *Job, jobBacklog)
@@ -45,7 +45,7 @@ func NewWorker(id int) *Worker {
 
 func (worker *Worker) Start() {
 	workerLogger := log.GetLogger().WithField("Worker", worker.ID)
-	workerLogger.Info("Worker started")
+	workerLogger.Debugf("Worker started")
 	defer workerLogger.Warnf("Worker ded")
 
 	for {

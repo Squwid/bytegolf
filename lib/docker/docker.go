@@ -46,6 +46,8 @@ func Init() {
 	}
 
 	Client = &DockerClient{c: c}
+
+	SyncImages(context.Background())
 }
 
 func (dc *DockerClient) Create(

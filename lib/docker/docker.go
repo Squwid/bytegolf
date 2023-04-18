@@ -60,6 +60,23 @@ func (dc *DockerClient) Create(
 	logger *logrus.Entry) (string, error) {
 	ctx := context.Background()
 
+	mounts := []mount.Mount{
+		{
+			Type:     mount.TypeBind,
+			Source:   absHostCodePath,
+			Target:   "/ci/" + targetFileName,
+			ReadOnly: true,
+		},
+	}
+	if testInputFile != "" {
+		mounts = append(mounts, mount.Mount{
+			Type:     mount.TypeBind,
+			Source:   "/home/bytegolf-inputs/" + testInputFile,
+			Target:   "/ci/input.txt",
+			ReadOnly: true,
+		})
+	}
+
 	fullCmd := fmt.Sprintf("%s %s", cmd, targetFileName)
 	containerBody, err := dc.c.ContainerCreate(ctx, &container.Config{
 		OpenStdin:       true,
@@ -73,20 +90,7 @@ func (dc *DockerClient) Create(
 		},
 		WorkingDir: "/ci",
 	}, &container.HostConfig{
-		Mounts: []mount.Mount{
-			{
-				Type:     mount.TypeBind,
-				Source:   absHostCodePath,
-				Target:   "/ci/" + targetFileName,
-				ReadOnly: true,
-			},
-			{
-				Type:     mount.TypeBind,
-				Source:   "/home/bytegolf-inputs/" + testInputFile,
-				Target:   "/ci/input.txt",
-				ReadOnly: true,
-			},
-		},
+		Mounts: mounts,
 
 		LogConfig: container.LogConfig{
 			Type: "json-file",

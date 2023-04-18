@@ -1,0 +1,6 @@
+// You are given a scanner that scans a file line by line.
+// Your task is to write a function that returns the nth most frequently occurring word in the file,
+// and how many times it occurs in the file.
+func mostFrequentWords(scanner *bufio.Scanner, top int) (string, int) {
+    return "", 0
+}

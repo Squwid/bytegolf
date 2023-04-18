@@ -1,0 +1,50 @@
+// You are given a scanner that scans a file line by line.
+// Your task is to write a function that returns the nth most frequently occurring word in the file,
+// and how many times it occurs in the file.
+func mostFrequentWords(scanner *bufio.Scanner, top int) (string, int) {
+	// Create a map to store the frequency of each word
+	wordFrequency := make(map[string]int)
+
+	// Scan through each word in the file
+	for scanner.Scan() {
+		word := strings.ToLower(scanner.Text())
+		word = strings.Trim(word, ".,;:!?\"'()[]{}")
+		wordFrequency[word]++
+	}
+
+	if err := scanner.Err(); err != nil {
+		log.Fatal(err)
+	}
+
+	// Create a slice to store the top n most frequent words
+	topWords := make([]string, top)
+
+	// Find the top n most frequently occurring words
+	for i := 0; i < top; i++ {
+		mostFrequentWord := ""
+		mostFrequentWordCount := 0
+
+		for word, frequency := range wordFrequency {
+			if frequency > mostFrequentWordCount && !contains(topWords, word) {
+				mostFrequentWord = word
+				mostFrequentWordCount = frequency
+			}
+		}
+		topWords[i] = mostFrequentWord
+	}
+
+	// for i := 0; i < len(topWords); i++ {
+	// 	fmt.Printf("%v: %v:%v\n", i+1, topWords[i], wordFrequency[topWords[i]])
+	// }
+
+	return topWords[top-1], wordFrequency[topWords[top-1]]
+}
+
+func contains(s []string, e string) bool {
+	for _, a := range s {
+		if a == e {
+			return true
+		}
+	}
+	return false
+}

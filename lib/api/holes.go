@@ -38,6 +38,7 @@ type HoleDB struct {
 	CreatedAt    time.Time `bun:"created_at,notnull" yaml:"created_at"`
 	Active       bool      `bun:"active,notnull" yaml:"active"`
 	LanguageEnum int64     `bun:"language_enum,notnull" yaml:"language_num"`
+	CodeOutline  string    `bun:"code_outline" yaml:"code_outline"`
 }
 
 type HoleClient struct {

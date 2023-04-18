@@ -15,7 +15,7 @@ const (
 
 	jobBacklog  = 5000
 	bytesToRead = 4096
-	workerCount = 4
+	workerCount = 6
 )
 
 var JobQueue = make(chan *Job, jobBacklog)
@@ -52,13 +52,11 @@ func (worker *Worker) Start() {
 		job := <-JobQueue
 		if err := job.init(workerLogger); err != nil {
 			workerLogger.WithError(err).Errorf("Error initializing job")
-			job.clean()
 			continue
 		}
 
 		if err := worker.RunJob(job); err != nil {
 			workerLogger.WithError(err).Errorf("Error running job")
-			job.clean()
 			continue
 		}
 		job.timings.doneReadingTime = time.Now()
@@ -66,7 +64,6 @@ func (worker *Worker) Start() {
 		job.timings.completedTime = time.Now()
 
 		job.SendOutput()
-		job.clean()
 	}
 }
 

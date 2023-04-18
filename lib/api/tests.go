@@ -21,7 +21,8 @@ type TestDB struct {
 	Benchmark bool `bun:"benchmark,notnull"`
 	Active    bool `bun:"active,notnull"`
 
-	Input       string `bun:"input"`
+	Boilerplate string `bun:"boilerplate,notnull"`
+	InputFile   string `bun:"input_file"`
 	OutputRegex string `bun:"regex,notnull"`
 
 	CreatedAt time.Time `bun:"created_at,notnull"`
@@ -45,8 +46,10 @@ func (tdb TestDB) toClient() TestClient {
 		Hidden:      tdb.Hidden,
 		Description: tdb.Description,
 	}
+
+	// TODO: Need to read the file and not just return the path.
 	if !tdb.Hidden {
-		tc.Input = tdb.Input
+		tc.Input = tdb.InputFile
 	}
 	return tc
 }

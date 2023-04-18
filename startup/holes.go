@@ -9,6 +9,15 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+var codeOutline = `
+// You are given a scanner that scans a file line by line.
+// Your task is to write a function that returns the nth most frequently occurring word in the file,
+// and how many times it occurs in the file.
+func mostFrequentWords(scanner *bufio.Scanner, top int) (string, int) {
+    return "", 0
+}
+`
+
 func populateHoles() {
 	var holes = []api.HoleDB{
 		{
@@ -21,6 +30,7 @@ func populateHoles() {
 			CreatedAt:    time.Now().UTC(),
 			Active:       true,
 			LanguageEnum: 1,
+			CodeOutline:  codeOutline,
 		},
 	}
 	ctx := context.Background()
@@ -36,6 +46,36 @@ func populateHoles() {
 	logrus.Infof("Successfully inserted holes.")
 }
 
+var goBoilerplate = `
+package main
+
+import (
+	"bufio"
+	"fmt"
+	"log"
+	"os"
+	"strings"
+)
+
+func main() {
+	const input = "input.txt"
+
+	file, err := os.Open(input)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	scanner.Split(bufio.ScanWords)
+
+	fifthWord, i := mostFrequentWords(scanner, 5)
+	fmt.Printf("%v:%v\n", fifthWord, i)
+}
+
+{{.UserSolution}}
+`
+
 func populateTests() {
 	var tests = []api.TestDB{
 		{
@@ -45,9 +85,10 @@ func populateTests() {
 			Description: "N/A",
 			Benchmark:   false,
 			Active:      true,
-			Input:       "input1.txt",
+			InputFile:   "input1.txt",
 			OutputRegex: `\bfriends:5\b`,
 			CreatedAt:   time.Now().UTC(),
+			Boilerplate: goBoilerplate,
 		},
 		{
 			Name:        "Queen of Corgis",
@@ -56,9 +97,10 @@ func populateTests() {
 			Description: "N/A",
 			Benchmark:   false,
 			Active:      true,
-			Input:       "input2.txt",
+			InputFile:   "input2.txt",
 			OutputRegex: `\bdaisy:16\b`,
 			CreatedAt:   time.Now().UTC(),
+			Boilerplate: goBoilerplate,
 		},
 		{
 			Name:        "The Big Corgi",
@@ -67,9 +109,10 @@ func populateTests() {
 			Description: "N/A",
 			Benchmark:   true,
 			Active:      true,
-			Input:       "input3.txt",
+			InputFile:   "input3.txt",
 			OutputRegex: `\bhungry:18753\b`,
 			CreatedAt:   time.Now().UTC(),
+			Boilerplate: goBoilerplate,
 		},
 	}
 	ctx := context.Background()

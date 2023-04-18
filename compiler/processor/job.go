@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"os"
 	"regexp"
 	"sync"
 	"time"
@@ -27,10 +26,9 @@ type Job struct {
 
 	timings JobTimings
 
-	dir              string // Directory where the temp code file is stored on the host.
-	absoluteFilePath string // Absolute path to the code file on the host.
-	fileName         string // Name of the file, with the extension.
-	containerID      string
+	hostCodePath  string // Absolute path to the code file on the host.
+	guestCodePath string // Path to the code file on the guest.
+	containerID   string
 
 	chans JobChannels
 
@@ -114,35 +112,30 @@ func (job *Job) init(logger *logrus.Entry) error {
 	})
 	job.ctx = context.Background()
 	job.timings.initTime = time.Now()
-	return job.writeFiles()
-}
-
-func (job *Job) writeFiles() error {
-	dir, err := os.MkdirTemp("", "bg")
-	if err != nil {
-		return err
-	}
-	job.dir = dir
-	job.fileName = fmt.Sprintf("main.%s",
+	job.hostCodePath = fmt.Sprintf("%s/main-%v.%s",
+		job.Sub.tempDir,
+		job.Test.ID,
 		job.Sub.Hole.LanguageDB.Extension)
-	job.absoluteFilePath = fmt.Sprintf("%s/%s", job.dir,
-		job.fileName)
-
-	return os.WriteFile(job.absoluteFilePath,
-		[]byte(job.Sub.Submission.Script), 0755)
+	job.guestCodePath = fmt.Sprintf("main.%s", job.Sub.Hole.LanguageDB.Extension)
+	return nil
 }
 
 // StartJob creates the container, starts the log and metric collection process,
 // and runs the created container. It returns the ReadCloser which is the log
 // stream from the container.
 func (job *Job) StartJob() (io.ReadCloser, error) {
+	var inputFile string
+	if job.Test.InputFile != "" {
+		inputFile = fmt.Sprintf("%s/%s", job.Test.Hole, job.Test.InputFile)
+	}
+
 	containerID, err := docker.Client.Create(
 		job.Sub.Hole.LanguageDB.Image,
-		job.absoluteFilePath,
-		job.fileName,
+		job.hostCodePath,
+		job.guestCodePath,
 		job.Sub.Hole.LanguageDB.Cmd,
 		job.ID,
-		fmt.Sprintf("%s/%s", job.Test.Hole, job.Test.Input),
+		inputFile,
 		job.logger,
 	)
 	if err != nil {
@@ -177,10 +170,6 @@ func (job *Job) waitAndKill(logs io.ReadCloser) {
 	_ = docker.Client.Kill(job.ctx, job.containerID)
 	_ = docker.Client.Delete(job.ctx, job.containerID)
 
-}
-
-func (job *Job) clean() error {
-	return os.RemoveAll(job.dir)
 }
 
 func (job *Job) checkCorrectness() error {

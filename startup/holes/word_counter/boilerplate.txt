@@ -1,0 +1,27 @@
+package main
+
+import (
+	"bufio"
+	"fmt"
+	"log"
+	"os"
+	"strings"
+)
+
+func main() {
+	const input = "input.txt"
+
+	file, err := os.Open(input)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	scanner.Split(bufio.ScanWords)
+
+	fifthWord, i := mostFrequentWords(scanner, 5)
+	fmt.Printf("%v:%v\n", fifthWord, i)
+}
+
+{{.UserSolution}}

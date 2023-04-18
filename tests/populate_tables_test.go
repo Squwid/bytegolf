@@ -79,7 +79,7 @@ func PopulateTests(ctx context.Context, holes api.HolesDB) {
 			Hidden:      randomizer.Number(0, 5) == 1,
 			Active:      randomizer.Number(0, 5) != 1,
 			Description: strings.Join(randomizer.Words(randomizer.Number(3, 10)), " "),
-			Input:       strings.Join(randomizer.Words(randomizer.Number(3, 8)), " "),
+			InputFile:   strings.Join(randomizer.Words(randomizer.Number(3, 8)), " "),
 			OutputRegex: strings.Join(randomizer.Words(randomizer.Number(3, 8)), " "),
 			Benchmark:   false,
 			CreatedAt: randomizer.Date(

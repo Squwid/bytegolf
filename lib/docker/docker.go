@@ -90,7 +90,8 @@ func (dc *DockerClient) Create(
 		},
 		WorkingDir: "/ci",
 	}, &container.HostConfig{
-		Mounts: mounts,
+		Runtime: "runsc",
+		Mounts:  mounts,
 
 		LogConfig: container.LogConfig{
 			Type: "json-file",

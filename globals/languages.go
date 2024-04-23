@@ -4,6 +4,12 @@ import "fmt"
 
 type Languages map[string]JdoodleLang
 
+type BGCompilerLanguage struct {
+	Image     string
+	Extension string
+	Command   string
+}
+
 type JdoodleLang struct {
 	JdoodleLang    string
 	JdoodleVersion string
@@ -69,7 +75,8 @@ func LanguageKey(lang, version string) string {
 	return fmt.Sprintf("%s:%s", lang, version)
 }
 
-// GetLanguage gets an active language using the language and version. If no language exists, nil will be returned
+// GetLanguage gets an active language using the language and version. If no
+// language exists, nil will be returned
 func GetLanguage(lang, version string) *JdoodleLang {
 	return languages.get(lang, version)
 }

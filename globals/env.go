@@ -2,10 +2,8 @@ package globals
 
 import (
 	"os"
-	"strings"
 )
 
-// Possible environments
 const (
 	EnvLocal   = "local"
 	EnvDev     = "dev"
@@ -38,11 +36,6 @@ func FrontendAddr() string {
 }
 
 func Env() string {
-	env := strings.ToLower(os.Getenv("BG_ENV"))
-	switch env {
-	case EnvProd, EnvDev, EnvStaging:
-		return env
-	default:
-		return EnvLocal
-	}
+	// TODO: Add additional environments for development.
+	return EnvProd
 }

@@ -28,7 +28,8 @@ func ListHoles(w http.ResponseWriter, r *http.Request) {
 		log = log.WithField("User", claims.BGID)
 	}
 
-	query := db.HoleCollection().OrderBy("CreatedAt", firestore.Desc).Where("Active", "==", true).Limit(100)
+	query := db.HoleCollection().OrderBy("CreatedAt", firestore.Desc).
+		Where("Active", "==", true).Limit(100)
 
 	hs, err := db.Query(models.NewQuery(query, transformHole))
 	if err != nil {

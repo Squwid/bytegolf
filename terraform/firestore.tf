@@ -1,5 +1,5 @@
 resource "google_firestore_index" "active_holes" {
-  collection = "bg_Hole"
+  collection = "bg_prod_Hole"
 
   fields {
     field_path = "Active"
@@ -14,7 +14,7 @@ resource "google_firestore_index" "active_holes" {
 
 resource "google_firestore_index" "user_best_hole_submission" {
   # collection = "bytegolf_UserBestHoleSub_${local.env}"
-  collection = "bg_Submission"
+  collection = "bg_prod_Submission"
 
   fields {
     field_path = "BGID"
@@ -44,7 +44,7 @@ resource "google_firestore_index" "user_best_hole_submission" {
 }
 
 resource "google_firestore_index" "user_hole_submissions" {
-  collection = "bg_Submission"
+  collection = "bg_prod_Submission"
 
   fields {
     field_path = "BGID"
@@ -64,7 +64,7 @@ resource "google_firestore_index" "user_hole_submissions" {
 }
 
 resource "google_firestore_index" "user_submissions" {
-  collection = "bg_Submission"
+  collection = "bg_prod_Submission"
 
   fields {
     field_path = "BGID"
@@ -79,7 +79,7 @@ resource "google_firestore_index" "user_submissions" {
 }
 
 resource "google_firestore_index" "best_hole_submissions_lang" {
-  collection = "bg_Submission"
+  collection = "bg_prod_Submission"
 
   fields {
     field_path = "Correct"
@@ -112,7 +112,7 @@ resource "google_firestore_index" "best_hole_submissions_lang" {
 }
 
 resource "google_firestore_index" "best_hole_submissions" {
-  collection = "bg_Submission"
+  collection = "bg_prod_Submission"
 
   fields {
     field_path = "Correct"
@@ -136,7 +136,7 @@ resource "google_firestore_index" "best_hole_submissions" {
 }
 
 resource "google_firestore_index" "active_test_cases" {
-  collection = "bg_Test"
+  collection = "bg_prod_Test"
 
   fields {
     field_path = "Active"

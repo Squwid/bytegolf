@@ -7,7 +7,7 @@ terraform {
   required_providers {
     google = {
       source  = "hashicorp/google"
-      version = "4.31.0"
+      version = "5.24.0"
     }
   }
 
@@ -19,7 +19,7 @@ terraform {
 
 locals {
   project       = "squid-cloud"
-  backend_image = "gcr.io/squid-cloud/bytegolf-backend@sha256:16d4b2779db99290c8c3c4057f6d6c77e1d149be907e452aecab8d40dd3d2cd6"
+  backend_image = "crccheck/hello-world"
   frontend_url  = "byte.golf"
   backend_url   = "api.byte.golf"
   cookie_name   = "bg-token"

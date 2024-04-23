@@ -32,7 +32,7 @@ resource "google_cloud_run_service" "backend_service" {
         }
 
         ports {
-          container_port = "8080"
+          container_port = "8000"
         }
 
         env {
@@ -109,8 +109,6 @@ resource "google_cloud_run_service" "backend_service" {
     google_secret_manager_secret.github_client_secret,
     google_secret_manager_secret.github_secret_secret,
     google_secret_manager_secret.github_state_secret,
-    google_secret_manager_secret.jdoodle_client_secret,
-    google_secret_manager_secret.jdoodle_secret_secret,
     google_secret_manager_secret.jwt_secret,
     google_service_account.backend
   ]

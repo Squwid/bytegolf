@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/Squwid/bytegolf/auth"
 	"github.com/Squwid/bytegolf/compiler"
@@ -130,5 +131,88 @@ func SubmissionHandler(w http.ResponseWriter, r *http.Request) {
 			}
 		}(test, userInput)
 	}
+	sub := compiler.NewSubmissionDB(holeID, claims.BGID,
+		userInput.Script, userInput.Language, userInput.Version)
+	i, correct := 0, 0
 
+	timeout := time.NewTimer(time.Second * 60) // Timeout on compiler side is 15 seconds
+
+	// Wait for all tests to be done or timeout
+	for {
+		if i == len(tests) {
+			break
+		}
+
+		select {
+		case out := <-ch:
+			if out.err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				log.WithField("Test", out.test.ID).
+					WithError(out.err).Errorf("Error compiling test")
+				return
+			}
+
+			sub.AddTest(out.test.ID, out.output.StdOut, out.correct, out.test.Hidden)
+			log.WithField("TestID", out.test.ID).
+				WithField("Output", out.output.StdOut).Infof("Correct: %v", out.correct)
+
+			i++
+			if out.correct {
+				correct++
+			}
+
+		case <-timeout.C:
+			w.WriteHeader(http.StatusInternalServerError)
+			log.Warnf("Compiler timed out")
+			return
+		}
+	}
+	close(ch)
+	log = log.WithField("CorrectCount", correct)
+
+	if err := db.Store(sub); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		log.WithError(err).Errorf("Error storing submission")
+		return
+	}
+
+	type response struct {
+		ID           string
+		Correct      bool
+		Length       int64
+		CorrectTests int
+		TotalTests   int
+		BestScore    bool
+	}
+	var resp = response{
+		ID:           sub.ID,
+		Correct:      i == correct,
+		Length:       sub.Length,
+		CorrectTests: correct,
+		TotalTests:   i,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	if !resp.Correct {
+		bs, _ := json.Marshal(resp)
+		log.Infof("Successful compile request")
+		w.Write(bs)
+		return
+	}
+
+	// Sleep for a second to wait for store to finish before checking for final score
+	time.Sleep(1 * time.Second)
+
+	// Compare to best submission for easier frontend displays
+	bestSub, err := compiler.BestSubmission(claims.BGID, holeID)
+	if err != nil {
+		log.WithError(err).Errorf("Error getting best submission")
+	}
+	log.Debugf("Best sub %+v", bestSub)
+
+	resp.BestScore = bestSub != nil && bestSub.ID == sub.ID
+
+	bs, _ := json.Marshal(resp)
+	w.Write(bs)
+	log.WithField("CorrectCount", resp.Correct).Infof("Successful compile request")
 }

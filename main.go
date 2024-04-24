@@ -16,6 +16,8 @@ import (
 )
 
 func main() {
+	log.SetLevel(log.DebugLevel)
+
 	port := globals.Port()
 	env := globals.Env()
 

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/Squwid/bytegolf/holes"
 	"github.com/Squwid/bytegolf/models"
@@ -78,6 +79,7 @@ func (in UserInput) Input(stdIn string, language Language) *Input {
 		Language: language,
 		Script:   in.Script,
 		Count:    1,
+		response: make(chan models.RemoteCompilerOutput, 1),
 	}
 }
 
@@ -93,7 +95,9 @@ func (in Input) Request() (*http.Request, error) {
 		bytes.NewReader(bs))
 }
 func (in Input) Client() *http.Client {
-	return http.DefaultClient
+	return &http.Client{
+		Timeout: 60 * time.Second,
+	}
 }
 func (in Input) ResponseChan() chan models.RemoteCompilerOutput {
 	return in.response

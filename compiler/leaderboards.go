@@ -79,13 +79,13 @@ func LeaderboardQuery(query firestore.Query, limit int) ([]Entry, error) {
 }
 
 // Possible query strings:
-//   "hole": ID of the hole *REQUIRED*
-//   "limit": Limit of entry numbers. Max of 10. Defaults to 10.
-//   "lang": Specific language to query for. Defaults to all languages.
+//
+//	"hole": ID of the hole *REQUIRED*
+//	"limit": Limit of entry numbers. Max of 10. Defaults to 10.
+//	"lang": Specific language to query for. Defaults to all languages.
 func LeaderboardHandler(w http.ResponseWriter, r *http.Request) {
 	log := logrus.WithFields(logrus.Fields{
 		"Action": "Leaderboard",
-		"IP":     r.RemoteAddr,
 	})
 
 	claims := auth.LoggedIn(r)

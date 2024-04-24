@@ -19,7 +19,6 @@ func GetProfile(w http.ResponseWriter, r *http.Request) {
 	log := logrus.WithFields(logrus.Fields{
 		"ID":     id,
 		"Action": "GetProfile",
-		"IP":     r.RemoteAddr,
 	})
 
 	claims := auth.LoggedIn(r)

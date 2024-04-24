@@ -24,7 +24,6 @@ func SubmissionHandler(w http.ResponseWriter, r *http.Request) {
 	log := logrus.WithFields(logrus.Fields{
 		"Hole":   holeID,
 		"Action": "NewSubmission",
-		"IP":     r.RemoteAddr,
 	})
 
 	claims := auth.LoggedIn(r)

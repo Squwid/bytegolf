@@ -20,7 +20,6 @@ import (
 func ListHoles(w http.ResponseWriter, r *http.Request) {
 	log := logrus.WithFields(logrus.Fields{
 		"Action": "ListHoles",
-		"IP":     r.RemoteAddr,
 	})
 
 	claims := auth.LoggedIn(r)
@@ -56,7 +55,6 @@ func GetHole(w http.ResponseWriter, r *http.Request) {
 	log := logrus.WithFields(logrus.Fields{
 		"ID":     id,
 		"Action": "GetHole",
-		"IP":     r.RemoteAddr,
 	})
 
 	claims := auth.LoggedIn(r)
@@ -105,7 +103,6 @@ func GetTest(w http.ResponseWriter, r *http.Request) {
 		"Test":   id,
 		"Hole":   hole,
 		"Action": "GetTest",
-		"IP":     r.RemoteAddr,
 	})
 
 	claims := auth.LoggedIn(r)
@@ -158,7 +155,6 @@ func ListTests(w http.ResponseWriter, r *http.Request) {
 	log := logrus.WithFields(logrus.Fields{
 		"Hole":   hole,
 		"Action": "ListTests",
-		"IP":     r.RemoteAddr,
 	})
 
 	claims := auth.LoggedIn(r)

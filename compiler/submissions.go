@@ -22,11 +22,11 @@ const subLimit = 20
 // It lists submissions in a short submission fasion, without sending the entire script back.
 //
 // Possible query strings:
-//     "hole": Optional query string just to get submissions for a single hole
+//
+//	"hole": Optional query string just to get submissions for a single hole
 func ListSubmissions(w http.ResponseWriter, r *http.Request) {
 	log := logrus.WithFields(logrus.Fields{
 		"Action": "ListSubmissions",
-		"IP":     r.RemoteAddr,
 	})
 
 	claims := auth.LoggedIn(r)

@@ -1,5 +1,6 @@
 FROM node:18.12.1-alpine3.15 as build
 
+COPY . .
 WORKDIR /frontend
 
 # COPY frontend/ ./

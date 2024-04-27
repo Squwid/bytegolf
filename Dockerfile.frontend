@@ -17,4 +17,4 @@ RUN npm run build
 # RUN if gsutil -q stat "gs://${BUCKET_NAME}"; then gsutil -m rm -r "gs://${BUCKET_NAME}/**"; fi 
 # RUN gsutil -m cp -r . "gs://${BUCKET_NAME}"
 
-COPY build/ /output
+COPY frontend/build/ /output

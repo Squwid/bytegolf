@@ -5,4 +5,4 @@ COPY frontend/ ./
 RUN npm install 
 RUN npm run build
 
-COPY /app/build /
+COPY ./build /

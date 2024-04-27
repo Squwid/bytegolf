@@ -1,8 +1,13 @@
-FROM node:18.12.1-alpine3.15
+FROM node:18.12.1-alpine3.15 as build
 
-WORKDIR /app 
 COPY frontend/ ./
 RUN npm install 
 RUN npm run build
 
-COPY ./build /
+FROM gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+COPY --from=build /build /build
+
+WORKDIR /build
+
+RUN if gsutil -q stat "gs://${BUCKET_NAME}"; then gsutil -m rm -r "gs://${BUCKET_NAME}/**"; fi 
+RUN gsutil -m cp -r . "gs://${BUCKET_NAME}"

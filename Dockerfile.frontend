@@ -9,5 +9,7 @@ COPY --from=build /build /build
 
 WORKDIR /build
 
+ENV BUCKET_NAME bytegolf
+
 RUN if gsutil -q stat "gs://${BUCKET_NAME}"; then gsutil -m rm -r "gs://${BUCKET_NAME}/**"; fi 
 RUN gsutil -m cp -r . "gs://${BUCKET_NAME}"

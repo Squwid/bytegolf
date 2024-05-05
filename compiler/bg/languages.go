@@ -16,6 +16,26 @@ var languages = Languages{
 		Extension: "py",
 		Command:   "python3",
 	},
+	LanguageKey("node", "22"): {
+		Image:     "node:22-alpine3.19",
+		Extension: "js",
+		Command:   "node",
+	},
+	LanguageKey("php", "8.2.18"): {
+		Image:     "php:8.2.18-fpm-alpine3.19",
+		Extension: "php",
+		Command:   "php",
+	},
+	LanguageKey("go", "1.22.2"): {
+		Image:     "golang:1.22.2-alpine3.19",
+		Extension: "go",
+		Command:   "go run",
+	},
+	LanguageKey("bash", "5.2.26"): {
+		Image:     "bash:5.2.26",
+		Extension: "sh",
+		Command:   "bash",
+	},
 }
 
 func (langs Languages) get(lang, version string) *Language {

@@ -19,6 +19,32 @@ export const AvailableLanguages: Language[] = [
     language: 'python3',
     version: '3.12.2'
   },
+  {
+    name: 'PHP',
+    editorValue: 'php',
+    language: 'php',
+    version: '7.3.10'
+  },
+  {
+    name: 'Javascript (node 22)',
+    editorValue: 'javascript',
+    language: 'node',
+    version: '22'
+  },
+  {
+    name: 'Go',
+    editorValue: 'golang',
+    language: 'go',
+    version: '1.22.2'
+  },
+  {
+    name: 'Bash',
+    editorValue: 'batchfile',
+    language: 'bash',
+    version: '5.2.26'
+  }
+
+
   // {
   //   name: 'Java',
   //   editorValue: 'java',
@@ -26,22 +52,10 @@ export const AvailableLanguages: Language[] = [
   //   version: 'JDK 11.0.4'
   // },
   // {
-  //   name: 'Javascript',
-  //   editorValue: 'javascript',
-  //   language: 'javascript',
-  //   version: '12.11.1'
-  // },
-  // {
   //   name: 'C++',
   //   editorValue: 'c_cpp',
   //   language: 'c++',
   //   version: 'g++ 17 GCC 9.10'
-  // },
-  // {
-  //   name: 'PHP',
-  //   editorValue: 'php',
-  //   language: 'php',
-  //   version: "7.3.10"
   // },
   // {
   //   name: 'Rust',
@@ -55,20 +69,8 @@ export const AvailableLanguages: Language[] = [
   //   language: 'typescript'
   // },
   // {
-  //   name: 'Go',
-  //   editorValue: 'golang',
-  //   language: 'go',
-  //   version: '1.13.1'
-  // },
-  // {
   //   name: 'Powershell',
   //   editorValue: 'powershell',
   //   language: 'powershell'
   // },
-  // {
-  //   name: 'Bash',
-  //   editorValue: 'batchfile',
-  //   language: 'bash',
-  //   version: '5.0.011'
-  // }
 ]

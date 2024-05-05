@@ -20,7 +20,6 @@ import (
 func ListHoles(w http.ResponseWriter, r *http.Request) {
 	log := logrus.WithFields(logrus.Fields{
 		"Action": "ListHoles",
-		"IP":     r.RemoteAddr,
 	})
 
 	claims := auth.LoggedIn(r)
@@ -28,7 +27,8 @@ func ListHoles(w http.ResponseWriter, r *http.Request) {
 		log = log.WithField("User", claims.BGID)
 	}
 
-	query := db.HoleCollection().OrderBy("CreatedAt", firestore.Desc).Where("Active", "==", true).Limit(100)
+	query := db.HoleCollection().OrderBy("CreatedAt", firestore.Desc).
+		Where("Active", "==", true).Limit(100)
 
 	hs, err := db.Query(models.NewQuery(query, transformHole))
 	if err != nil {
@@ -55,7 +55,6 @@ func GetHole(w http.ResponseWriter, r *http.Request) {
 	log := logrus.WithFields(logrus.Fields{
 		"ID":     id,
 		"Action": "GetHole",
-		"IP":     r.RemoteAddr,
 	})
 
 	claims := auth.LoggedIn(r)
@@ -104,7 +103,6 @@ func GetTest(w http.ResponseWriter, r *http.Request) {
 		"Test":   id,
 		"Hole":   hole,
 		"Action": "GetTest",
-		"IP":     r.RemoteAddr,
 	})
 
 	claims := auth.LoggedIn(r)
@@ -157,7 +155,6 @@ func ListTests(w http.ResponseWriter, r *http.Request) {
 	log := logrus.WithFields(logrus.Fields{
 		"Hole":   hole,
 		"Action": "ListTests",
-		"IP":     r.RemoteAddr,
 	})
 
 	claims := auth.LoggedIn(r)

@@ -1,5 +1,5 @@
 resource "google_cloud_run_service" "backend_service" {
-  name     = "${local.env}-bytegolf-backend"
+  name     = "bytegolf-backend"
   location = "us-central1"
 
   metadata {
@@ -17,19 +17,14 @@ resource "google_cloud_run_service" "backend_service" {
     }
 
     spec {
-      service_account_name = google_service_account.backend.email
+      service_account_name  = google_service_account.backend.email
       container_concurrency = 20
-      timeout_seconds = 30
+      timeout_seconds       = 30
 
       containers {
         image = local.backend_image
 
         resources {
-          # requests = {
-          #   memory = "256Mi"
-          #   cpu = "1000m"
-          # }
-
           limits = {
             memory = "128Mi"
             cpu    = "1000m"
@@ -37,22 +32,22 @@ resource "google_cloud_run_service" "backend_service" {
         }
 
         ports {
-          container_port = "8080"
+          container_port = "8000"
         }
 
         env {
           name  = "BG_ENV"
-          value = local.env
+          value = "prod"
         }
 
         env {
           name  = "BG_FRONTEND_ADDR"
-          value = local.frontend_addr
+          value = "https://${local.frontend_url}"
         }
 
         env {
           name  = "BG_BACKEND_ADDR"
-          value = local.backend_addr
+          value = "https://${local.backend_url}"
         }
 
         env {
@@ -91,26 +86,6 @@ resource "google_cloud_run_service" "backend_service" {
         }
 
         env {
-          name = "JDOODLE_CLIENT"
-          value_from {
-            secret_key_ref {
-              name = google_secret_manager_secret.jdoodle_client_secret.secret_id
-              key  = "latest"
-            }
-          }
-        }
-
-        env {
-          name = "JDOODLE_SECRET"
-          value_from {
-            secret_key_ref {
-              name = google_secret_manager_secret.jdoodle_secret_secret.secret_id
-              key  = "latest"
-            }
-          }
-        }
-
-        env {
           name = "JWT_SECRET"
           value_from {
             secret_key_ref {
@@ -134,8 +109,6 @@ resource "google_cloud_run_service" "backend_service" {
     google_secret_manager_secret.github_client_secret,
     google_secret_manager_secret.github_secret_secret,
     google_secret_manager_secret.github_state_secret,
-    google_secret_manager_secret.jdoodle_client_secret,
-    google_secret_manager_secret.jdoodle_secret_secret,
     google_secret_manager_secret.jwt_secret,
     google_service_account.backend
   ]
@@ -179,8 +152,8 @@ resource "google_cloud_run_domain_mapping" "backend" {
 #################################################
 
 resource "google_service_account" "backend" {
-  account_id   = "bg-backend-${local.env}"
-  display_name = "Backend Service Account - ${local.env}"
+  account_id   = "bg-backend"
+  display_name = "Bytegolf Backend Service Account"
 }
 
 # TODO: Find a better way to limit access to specific secrets that should be unaccessable 

@@ -5,7 +5,7 @@ import (
 
 	"github.com/Squwid/bytegolf/auth"
 	"github.com/Squwid/bytegolf/compiler"
-	"github.com/Squwid/bytegolf/compiler/jdoodle"
+	"github.com/Squwid/bytegolf/compiler/bg"
 	_ "github.com/Squwid/bytegolf/db"
 	"github.com/Squwid/bytegolf/globals"
 	"github.com/Squwid/bytegolf/holes"
@@ -16,6 +16,8 @@ import (
 )
 
 func main() {
+	log.SetLevel(log.DebugLevel)
+
 	port := globals.Port()
 	env := globals.Env()
 
@@ -34,7 +36,7 @@ func main() {
 	r.HandleFunc("/api/submissions", compiler.ListSubmissions).Methods("GET")
 	r.HandleFunc("/api/submissions/{id}", compiler.GetSubmission).Methods("GET")
 	r.HandleFunc("/api/submissions/best/{hole}", compiler.GetBestSubmissionHandler).Methods("GET")
-	r.HandleFunc("/api/submit/{hole}", jdoodle.SubmissionHandler).Methods("POST")
+	r.HandleFunc("/api/submit/{hole}", bg.SubmissionHandler).Methods("POST")
 	r.HandleFunc("/api/leaderboards", compiler.LeaderboardHandler).Methods("GET")
 
 	r.HandleFunc("/api/profile/{id}", profiles.GetProfile).Methods("GET") // checks if a user is logged in

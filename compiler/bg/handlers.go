@@ -1,4 +1,4 @@
-package jdoodle
+package bg
 
 import (
 	"encoding/json"
@@ -11,7 +11,6 @@ import (
 	"github.com/Squwid/bytegolf/db"
 	"github.com/Squwid/bytegolf/holes"
 	"github.com/Squwid/bytegolf/models"
-
 	"github.com/gorilla/mux"
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
@@ -19,12 +18,12 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+// SubmissionHandler is the HTTP handler for the Bytegolf Compiler
 func SubmissionHandler(w http.ResponseWriter, r *http.Request) {
 	holeID := mux.Vars(r)["hole"]
 	log := logrus.WithFields(logrus.Fields{
 		"Hole":   holeID,
 		"Action": "NewSubmission",
-		"IP":     r.RemoteAddr,
 	})
 
 	claims := auth.LoggedIn(r)
@@ -35,7 +34,6 @@ func SubmissionHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	log = log.WithField("User", claims.BGID)
 
-	// Make sure hole exists
 	out, err := db.Get(models.NewGet(db.HoleCollection().Doc(holeID), nil))
 	if err != nil {
 		if status.Code(err) == codes.NotFound {
@@ -48,6 +46,7 @@ func SubmissionHandler(w http.ResponseWriter, r *http.Request) {
 		log.WithError(err).Errorf("Error getting hole")
 		return
 	}
+
 	var hole holes.Hole
 	if err := mapstructure.Decode(out, &hole); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -60,27 +59,22 @@ func SubmissionHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Validate user input
 	var userInput UserInput
 	if err := json.NewDecoder(r.Body).Decode(&userInput); err != nil {
 		http.Error(w, "Bad Input: "+err.Error(), http.StatusBadRequest)
 		log.WithError(err).Errorf("Error parsing user input")
 		return
 	}
-	v := userInput.validate()
-	if !v.valid {
-		log.Infof("Invalid compile request: %s", v.msg)
-		http.Error(w, v.msg, http.StatusBadRequest)
+	validationOutput := userInput.validate()
+	if !validationOutput.valid {
+		log.Infof("Invalid compile request: %s", validationOutput.msg)
+		http.Error(w, validationOutput.msg, http.StatusBadRequest)
 		return
 	}
 	log.Debugf("Hole active & exists, getting test cases")
+	log.WithField("Language", userInput.Language).WithField("Version",
+		userInput.Version).Debugf("Valid request")
 
-	// Language and version specific to Jdoodle
-	userInput.Language = v.jdoodle.JdoodleLang
-	userInput.Version = v.jdoodle.JdoodleVersion
-	log.WithField("Language", userInput.Language).WithField("Version", userInput.Version).Debugf("Valid request")
-
-	// Get all tests for the hole
 	tests, err := holes.GetTests(hole.ID)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -90,12 +84,12 @@ func SubmissionHandler(w http.ResponseWriter, r *http.Request) {
 	log = log.WithField("Tests", len(tests))
 	log.Debugf("Test cases: %+v", tests)
 
-	// Run each test individually and compare results
+	// Run each test individually and compare results.
 	var ch = make(chan compileResult, len(tests))
 	for _, test := range tests {
 
 		go func(test holes.Test, input UserInput) {
-			compileInput := userInput.Input(test.Input)
+			compileInput := userInput.Input(test.Input, *validationOutput.language)
 			go compiler.Compile(compileInput)
 
 			compileOutput := <-compileInput.response
@@ -106,18 +100,26 @@ func SubmissionHandler(w http.ResponseWriter, r *http.Request) {
 				ch <- result
 
 			} else if compileOutput.StatusCode != http.StatusOK {
-				result.err = fmt.Errorf("got bad status code %v from compiler", compileOutput.StatusCode)
+				result.err = fmt.Errorf("got bad status code %v from compiler",
+					compileOutput.StatusCode)
 				ch <- result
 			} else {
-				var output Output
-				if err := json.NewDecoder(compileOutput.Body).Decode(&output); err != nil {
+				var outputs []Output
+				if err := json.NewDecoder(compileOutput.Body).
+					Decode(&outputs); err != nil {
 					result.err = err
 					ch <- result
 					return
 				}
 
-				result.output = &output
-				correct, err := test.Check(output.Output)
+				if len(outputs) != 1 {
+					result.err = fmt.Errorf("expected 1 output, got %v", len(outputs))
+					ch <- result
+					return
+				}
+
+				result.output = &outputs[0]
+				correct, err := test.Check(result.output.StdOut)
 				if err != nil {
 					result.err = err
 					ch <- result
@@ -128,10 +130,11 @@ func SubmissionHandler(w http.ResponseWriter, r *http.Request) {
 			}
 		}(test, userInput)
 	}
-
-	sub := compiler.NewSubmissionDB(holeID, claims.BGID, userInput.Script, v.jdoodle.JdoodleLang, v.jdoodle.JdoodleVersion)
+	sub := compiler.NewSubmissionDB(holeID, claims.BGID,
+		userInput.Script, userInput.Language, userInput.Version)
 	i, correct := 0, 0
-	timeout := time.NewTimer(time.Second * 20) // Timeout on compiler side is 15 seconds
+
+	timeout := time.NewTimer(time.Second * 60) // Timeout on compiler side is 15 seconds
 
 	// Wait for all tests to be done or timeout
 	for {
@@ -143,12 +146,14 @@ func SubmissionHandler(w http.ResponseWriter, r *http.Request) {
 		case out := <-ch:
 			if out.err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
-				log.WithField("Test", out.test.ID).WithError(out.err).Errorf("Error compiling test")
+				log.WithField("Test", out.test.ID).
+					WithError(out.err).Errorf("Error compiling test")
 				return
 			}
 
-			sub.AddTest(out.test.ID, out.output.Output, out.correct, out.test.Hidden)
-			log.WithField("TestID", out.test.ID).WithField("Output", out.output.Output).Infof("Correct: %v", out.correct)
+			sub.AddTest(out.test.ID, out.output.StdOut, out.correct, out.test.Hidden)
+			log.WithField("TestID", out.test.ID).
+				WithField("Output", out.output.StdOut).Infof("Correct: %v", out.correct)
 
 			i++
 			if out.correct {

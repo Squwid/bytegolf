@@ -45,3 +45,4 @@ yarn-error.log*
 terraform.tfstate.d/
 
 frontend/public/
+frontend/build/

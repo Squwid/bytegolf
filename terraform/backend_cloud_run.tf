@@ -26,13 +26,13 @@ resource "google_cloud_run_service" "backend_service" {
 
         resources {
           limits = {
-            memory = "128Mi"
+            memory = "256Mi"
             cpu    = "1000m"
           }
         }
 
         ports {
-          container_port = "8000"
+          container_port = "8080"
         }
 
         env {

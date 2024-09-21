@@ -4,3 +4,5 @@ bytegolf
 vendor/
 scripts/
 terraform/
+frontend/build/
+frontend/node_modules/

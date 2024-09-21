@@ -22,7 +22,7 @@ resource "google_cloud_run_service" "frontend_service" {
       timeout_seconds       = 30
 
       containers {
-        image = "squwid/bgcs-site-proxy:v0.3"
+        image = "squwid/bgcs-site-proxy:v0.2"
 
         resources {
           limits = {

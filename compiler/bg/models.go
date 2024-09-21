@@ -91,7 +91,7 @@ func (in Input) Request() (*http.Request, error) {
 		return nil, err
 	}
 
-	return http.NewRequest("POST", "https://compiler.byte.golf/compile",
+	return http.NewRequest("POST", "http://compiler.byte.golf:8080/compile",
 		bytes.NewReader(bs))
 }
 func (in Input) Client() *http.Client {

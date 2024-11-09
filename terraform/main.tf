@@ -19,9 +19,9 @@ terraform {
 
 locals {
   project       = "squid-cloud"
-  backend_image = "crccheck/hello-world"
-  frontend_url  = "byte.golf"
-  backend_url   = "api.byte.golf"
+  backend_image = "us-central1-docker.pkg.dev/squid-cloud/bytegolf/backend:a3"
+  frontend_url  = "play.byte.golf"
+  backend_url   = "api.play.byte.golf"
   cookie_name   = "bg-token"
 }
 

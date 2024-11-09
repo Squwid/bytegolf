@@ -69,3 +69,37 @@ This was animated in Adobe After Effects!
 
 - How were the logos and icons made?
     - They were made in Photoshop and After Effects
+
+
+## Deployment
+
+This section walks through generally how this is deployed today without any real pipelines in
+place to pick up building.
+
+### Frontend
+
+*Assumes Terraform has already been run*
+
+1. Build frontend
+
+```sh
+cd frontend/
+npm run build
+```
+
+2. Build the frontend and upload files to frontend bucket.
+
+### Backend
+
+1. Build backend container
+
+```sh
+docker build -t us-central1-docker.pkg.dev/squid-cloud/bytegolf/backend:XX .
+```
+
+2. Push container
+```sh
+docker push us-central1-docker.pkg.dev/squid-cloud/bytegolf/backend:XX
+```
+
+3. Update terraform to point to new container and re-run.

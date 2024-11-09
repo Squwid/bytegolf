@@ -11,7 +11,7 @@ const ProfileRedirectScreen: React.FC = () => {
     let url = `${BackendURL()}/claims`;
     console.log(`*** ${url}`);
 
-    fetch(url, {credentials: 'include'})
+    fetch(url, { credentials: 'include' })
       .then(async resp => {
         console.log(`*** RESP STATUS FROM LOGIN CHECK ${resp.status}`);
 

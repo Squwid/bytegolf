@@ -1,3 +1,5 @@
+# TODO: Split this into its own database, but everything currently works...
+
 resource "google_firestore_index" "active_holes" {
   collection = "bg_prod_Hole"
 
